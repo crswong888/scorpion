@@ -27,7 +27,7 @@ include $(FRAMEWORK_DIR)/moose.mk
 ALL_MODULES         := no
 
 CHEMICAL_REACTIONS  := no
-CONTACT             := no
+CONTACT             := yes
 FLUID_PROPERTIES    := no
 HEAT_CONDUCTION     := no
 MISC                := no
@@ -37,7 +37,7 @@ RDG                 := no
 RICHARDS            := no
 SOLID_MECHANICS     := no
 STOCHASTIC_TOOLS    := no
-TENSOR_MECHANICS    := no
+TENSOR_MECHANICS    := yes
 XFEM                := no
 POROUS_FLOW         := no
 
