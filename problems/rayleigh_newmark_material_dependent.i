@@ -1,3 +1,5 @@
+# THIS INPUT FILE WAS COPIED FROM THE OFFICIAL MOOSE GITHUB
+
 # Test for rayleigh damping implemented using Newmark time integration
 
 # The test is for an 1D bar element of  unit length fixed on one end

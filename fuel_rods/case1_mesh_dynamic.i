@@ -1,11 +1,7 @@
 # Case 1: Cladding only length of 10 pellets
-# Tests Case 1 - Static loading using a 3D annular mesh
+# Tests Case 1 - Dynamic impulse loading using a 3D annular mesh
 
 # Fastest on 3 processors and 3 threads
-
-[GlobalParams]
-  displacements = 'disp_x disp_y disp_z'
-[]
 
 [Mesh]
   type = AnnularMesh
@@ -39,9 +35,103 @@
   [../]
 []
 
-[Modules/TensorMechanics/Master]
-  [./all]
-    add_variables = True
+[Variables]
+  [./disp_x]
+  [../]
+  [./disp_y]
+  [../]
+  [./disp_z]
+  [../]
+[]
+
+[AuxVariables]
+  [./vel_x]
+  [../]
+  [./accel_x]
+  [../]
+  [./vel_y]
+  [../]
+  [./accel_y]
+  [../]
+  [./vel_z]
+  [../]
+  [./accel_z]
+  [../]
+[]
+
+[Kernels]
+  [./DynamicTensorMechanics]
+    displacements = 'disp_x disp_y disp_z'
+    zeta = 9.2412E-4
+  [../]
+  [./inertia_x]
+    type = InertialForce
+    variable = disp_x
+    velocity = vel_x
+    acceleration = accel_x
+    beta = 0.25
+    gamma = 0.5
+    eta = 0.0
+  [../]
+  [./inertia_y]
+    type = InertialForce
+    variable = disp_y
+    velocity = vel_y
+    acceleration = accel_y
+    beta = 0.25
+    gamma = 0.5
+    eta = 0.1216
+  [../]
+  [./inertia_z]
+    type = InertialForce
+    variable = disp_z
+    velocity = vel_z
+    acceleration = accel_z
+    beta = 0.25
+    gamma = 0.5
+    eta = 0.0
+  [../]
+[]
+
+[AuxKernels]
+  [./accel_x]
+    type = NewmarkAccelAux
+    variable = accel_x
+    displacement = disp_x
+    velocity = vel_x
+    beta = 0.25
+  [../]
+  [./vel_x]
+    type = NewmarkVelAux
+    variable = vel_x
+    acceleration = accel_x
+    gamma = 0.5
+  [../]
+  [./accel_y]
+    type = NewmarkAccelAux
+    variable = accel_y
+    displacement = disp_y
+    velocity = vel_y
+    beta = 0.25
+  [../]
+  [./vel_y]
+    type = NewmarkVelAux
+    variable = vel_y
+    acceleration = accel_y
+    gamma = 0.5
+  [../]
+  [./accel_z]
+    type = NewmarkAccelAux
+    variable = accel_z
+    displacement = disp_z
+    velocity = vel_z
+    beta = 0.25
+  [../]
+  [./vel_z]
+    type = NewmarkVelAux
+    variable = vel_z
+    acceleration = accel_z
+    gamma = 0.5
   [../]
 []
 
@@ -50,7 +140,7 @@
     type = Gravity
     variable = disp_y
     value = -9810
-    enable = false # gravity=true
+    enable = false #gravity?
   [../]
 []
 
@@ -66,8 +156,8 @@
 
 [Functions]
   [./load]
-    type = ConstantFunction
-    value = -19.53125 # total_load/no_nodes=2500N/128node=19.53125N/node
+    type = ParsedFunction
+    value = 'if(t<0.2, -19.53125*sin(pi*t/0.2), 0*t)' #2500N/128node=19.53125N/node
   [../]
 []
 
@@ -122,10 +212,15 @@
     youngs_modulus = 9.93E4
     poissons_ratio = 0.37
   [../]
+  [./strain]
+    type = ComputeSmallStrain
+    displacements = 'disp_x disp_y disp_z'
+  [../]
   [./stress]
     type = ComputeLinearElasticStress
     #outputs = exodus
     #output_properties = stress
+    store_old_stress = true
   [../]
   [./density]
     type = GenericConstantMaterial
@@ -145,8 +240,10 @@
 
 [Executioner]
   type = Transient
-  solve_type = Newton
-  num_steps = 1
+  solve_type = NEWTON
+  start_time = 0.0
+  dt = 0.01
+  end_time = 1.0
 []
 
 [Postprocessors]
@@ -155,7 +252,17 @@
     variable = disp_y
     boundary = mid_point
   [../]
-  [./force_y]
+  [./vel_y]
+    type = NodalMaxValue
+    variable = vel_y
+    boundary = mid_point
+  [../]
+  [./accel_y]
+    type = NodalMaxValue
+    variable = accel_y
+    boundary = mid_point
+  [../]
+  [./pressure]
     type = FunctionValuePostprocessor
     function = load
   [../]

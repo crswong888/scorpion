@@ -1,5 +1,5 @@
 # Case 1: Cladding only length of 10 pellets
-# Tests Case 1 - Static loading using a 1D line element mesh
+# Tests Case 1 - Dynamic impulse loading using a 1D line element mesh
 
 # Fastest with single processor
 
@@ -30,6 +30,23 @@
     Iy = 245.0624
     Iz = 245.0624
     y_orientation = '0.0 1.0 0.0'
+
+    # dynamic simulation using consistent density/inertia matrix
+    dynamic_consistent_inertia = True
+
+    velocities = 'vel_x vel_y vel_z'
+    accelerations = 'accel_x accel_y accel_z'
+    rotational_velocities = 'rot_vel_x rot_vel_y rot_vel_z'
+    rotational_accelerations = 'rot_accel_x rot_accel_y rot_accel_z'
+
+    density = 'density'
+    beta = 0.25 # Newmark time integraion parameter
+    gamma = 0.5 # Newmark time integraion parameter
+
+    # optional parameters for numerical (alpha) and Rayleigh damping
+    alpha = 0.0 # HHT time integration parameter
+    eta = 0.1216 # Mass proportional Rayleigh damping
+    zeta = 9.2412E-4 # Stiffness proportional Rayleigh damping
   [../]
 []
 
@@ -54,82 +71,82 @@
 
 [Functions]
   [./load]
-    type = ConstantFunction
-    value = -2.5E3
+    type = ParsedFunction
+    value = 'if(t<0.1, -250*sin(pi*t/0.1), 0*t)'
   [../]
 []
 
 [BCs]
   [./fixx1]
-    type = PresetBC
+    type = DirichletBC
     variable = disp_x
     boundary = left
     value = 0.0
   [../]
   [./fixy1]
-    type = PresetBC
+    type = DirichletBC
     variable = disp_y
     boundary = left
     value = 0.0
   [../]
   [./fixz1]
-    type = PresetBC
+    type = DirichletBC
     variable = disp_z
     boundary = left
     value = 0.0
   [../]
   [./fixrx1]
-    type = PresetBC
+    type = DirichletBC
     variable = rot_x
     boundary = left
     value = 0.0
   [../]
   [./fixry1]
-    type = PresetBC
+    type = DirichletBC
     variable = rot_y
     boundary = left
     value = 0.0
   [../]
   [./fixrz1]
-    type = PresetBC
+    type = DirichletBC
     variable = rot_z
     boundary = left
     value = 0.0
     enable = false # pin=false, fix=true
   [../]
   [./fixx2]
-    type = PresetBC
+    type = DirichletBC
     variable = disp_x
     boundary = right
     value = 0.0
     enable = false # roller=false, fix=true
   [../]
   [./fixy2]
-    type = PresetBC
+    type = DirichletBC
     variable = disp_y
     boundary = right
     value = 0.0
   [../]
   [./fixz2]
-    type = PresetBC
+    type = DirichletBC
     variable = disp_z
     boundary = right
     value = 0.0
   [../]
   [./fixrx2]
-    type = PresetBC
+    type = DirichletBC
     variable = rot_x
     boundary = right
     value = 0.0
   [../]
   [./fixry2]
-    type = PresetBC
+    type = DirichletBC
     variable = rot_y
     boundary = right
     value = 0.0
   [../]
   [./fixrz2]
-    type = PresetBC
+    type = DirichletBC
     variable = rot_z
     boundary = right
     value = 0.0
@@ -167,14 +184,25 @@
 
 [Executioner]
   type = Transient
-  solve_type = Newton
-  num_steps = 1
+  solve_type = NEWTON
+  dt = 0.01
+  end_time = 10.0
 []
 
 [Postprocessors]
   [./disp_y]
     type = NodalMaxValue
     variable = disp_y
+    boundary = mid_point
+  [../]
+  [./vel_y]
+    type = NodalMaxValue
+    variable = vel_y
+    boundary = mid_point
+  [../]
+  [./accel_y]
+    type = NodalMaxValue
+    variable = accel_y
     boundary = mid_point
   [../]
   [./force_y]

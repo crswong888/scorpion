@@ -1,3 +1,5 @@
+# THIS INPUT FILE WAS COPIED FROM THE OFFICIAL MOOSE GITHUB
+
 # Test for damped small strain euler beam vibration in y direction
 
 # An impulse load is applied at the end of a cantilever beam of length 4m.

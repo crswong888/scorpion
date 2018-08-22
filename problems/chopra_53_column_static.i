@@ -1,3 +1,5 @@
+# Tests the stiffness for chopra_53_column.i
+
 [Mesh]
   type = GeneratedMesh
   dim = 3

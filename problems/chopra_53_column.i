@@ -99,7 +99,7 @@
     acceleration = accel_x
     beta = 0.25
     gamma = 0.5
-    eta= 0.0
+    eta = 0.0
   [../]
   [./inertia_y]
     type = InertialForce
@@ -108,7 +108,7 @@
     acceleration = accel_y
     beta = 0.25
     gamma = 0.5
-    eta= 0.6283
+    eta = 0.6283
   [../]
   [./inertia_z]
     type = InertialForce

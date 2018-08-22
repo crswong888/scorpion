@@ -1,3 +1,5 @@
+# THIS INPUT FILE WAS COPIED FROM THE OFFICIAL MOOSE GITHUB
+
 # Test for small strain Euler beam bending in y direction
 
 # A unit load is applied at the end of a cantilever beam of length 4m.
