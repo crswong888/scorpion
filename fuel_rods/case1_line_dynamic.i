@@ -1,6 +1,11 @@
 # Case 1: Cladding only length of 10 pellets
 # Tests Case 1 - Dynamic impulse loading using a 1D line element mesh
 
+# Material properties are of unirradiated, in-tact Zr-4 cladding.
+
+# With eta = 87.8291 and zeta = 5.4026E-6, damping is 2% to 3% from 1st to 3rd mode frequency of 
+# 276.1030-Hz to 1491.4494-Hz, respectively. 
+
 # Fastest with single processor
 
 [Mesh]
@@ -45,8 +50,8 @@
 
     # optional parameters for numerical (alpha) and Rayleigh damping
     alpha = 0.0 # HHT time integration parameter
-    eta = 0.1216 # Mass proportional Rayleigh damping
-    zeta = 9.2412E-4 # Stiffness proportional Rayleigh damping
+    eta = 87.8291 # Mass proportional Rayleigh damping
+    zeta = 5.4026E-6 # Stiffness proportional Rayleigh damping
   [../]
 []
 
@@ -72,7 +77,7 @@
 [Functions]
   [./load]
     type = ParsedFunction
-    value = 'if(t<0.1, -250*sin(pi*t/0.1), 0*t)'
+    value = 'if(t<0.002, -25.0*sin(pi*t/0.002), 0*t)'
   [../]
 []
 
@@ -112,14 +117,14 @@
     variable = rot_z
     boundary = left
     value = 0.0
-    enable = false # pin=false, fix=true
+    enable = true # pin=false, fix=true
   [../]
   [./fixx2]
     type = DirichletBC
     variable = disp_x
     boundary = right
     value = 0.0
-    enable = false # roller=false, fix=true
+    enable = true # roller=false, fix=true
   [../]
   [./fixy2]
     type = DirichletBC
@@ -150,7 +155,7 @@
     variable = rot_z
     boundary = right
     value = 0.0
-    enable = false # roller=false, fix=true
+    enable = true # roller=false, fix=true
   [../]
 []
 
@@ -169,7 +174,7 @@
   [./density]
     type = GenericConstantMaterial
     prop_names = 'density'
-    prop_values = 6.0E-9
+    prop_values = 6.0E-9 # Approximate density of Zr-4
   [../]
 []
 
@@ -185,8 +190,8 @@
 [Executioner]
   type = Transient
   solve_type = NEWTON
-  dt = 0.01
-  end_time = 10.0
+  dt = 1.0E-5
+  end_time = 0.005
 []
 
 [Postprocessors]

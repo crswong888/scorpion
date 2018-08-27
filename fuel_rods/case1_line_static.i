@@ -1,6 +1,8 @@
 # Case 1: Cladding only length of 10 pellets
 # Tests Case 1 - Static loading using a 1D line element mesh
 
+# Material properties are of unirradiated, in-tact Zr-4 cladding.
+
 # Fastest with single processor
 
 [Mesh]
@@ -152,7 +154,7 @@
   [./density]
     type = GenericConstantMaterial
     prop_names = 'density'
-    prop_values = 6.0E-9
+    prop_values = 6.0E-9 # Approximate density of Zr-4
   [../]
 []
 

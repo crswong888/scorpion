@@ -1,6 +1,11 @@
 # Case 1: Cladding only length of 10 pellets
 # Tests Case 1 - Dynamic impulse loading using a 3D annular mesh
 
+# Material properties are of unirradiated, in-tact Zr-4 cladding.
+
+# With eta = 87.8291 and zeta = 5.4026E-6, damping is 2% to 3% from 1st to 3rd mode frequency of 
+# 276.1030-Hz to 1491.4494-Hz, respectively. 
+
 # Fastest on 3 processors and 3 threads
 
 [Mesh]
@@ -62,7 +67,7 @@
 [Kernels]
   [./DynamicTensorMechanics]
     displacements = 'disp_x disp_y disp_z'
-    zeta = 9.2412E-4
+    zeta = 5.4026E-6
   [../]
   [./inertia_x]
     type = InertialForce
@@ -80,7 +85,7 @@
     acceleration = accel_y
     beta = 0.25
     gamma = 0.5
-    eta = 0.1216
+    eta = 87.8291
   [../]
   [./inertia_z]
     type = InertialForce
@@ -89,7 +94,7 @@
     acceleration = accel_z
     beta = 0.25
     gamma = 0.5
-    eta = 0.0
+    eta = 87.8291
   [../]
 []
 
@@ -140,7 +145,7 @@
     type = Gravity
     variable = disp_y
     value = -9810
-    enable = false #gravity?
+    enable = false # gravity=true
   [../]
 []
 
@@ -157,7 +162,7 @@
 [Functions]
   [./load]
     type = ParsedFunction
-    value = 'if(t<0.2, -19.53125*sin(pi*t/0.2), 0*t)' #2500N/128node=19.53125N/node
+    value = 'if(t<0.002, -0.1953*sin(pi*t/0.002), 0*t)' # 25.0N/128node=0.19535N/node
   [../]
 []
 
@@ -225,7 +230,7 @@
   [./density]
     type = GenericConstantMaterial
     prop_names = 'density'
-    prop_values = 6.0E-9
+    prop_values = 6.0E-9 # Approximate density of Zr-4
   [../]
 []
 
@@ -242,8 +247,8 @@
   type = Transient
   solve_type = NEWTON
   start_time = 0.0
-  dt = 0.01
-  end_time = 1.0
+  dt = 1.0E-5
+  end_time = 0.005
 []
 
 [Postprocessors]
