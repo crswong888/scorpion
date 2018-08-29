@@ -1,4 +1,4 @@
-# Case 1: Cladding only length of 10 pellets
+# Case 1: Cladding only length of 10 pellets (128.8-mm)
 # Tests Case 1 - Static loading using a 3D annular mesh
 
 # Material properties are of unirradiated, in-tact Zr-4 cladding.

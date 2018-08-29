@@ -1,10 +1,10 @@
-# Case 1: Cladding only length of 10 pellets
+# Case 1: Cladding only length of 10 pellets (128.8-mm)
 # Tests Case 1 - Dynamic impulse loading using a 1D line element mesh
 
 # Material properties are of unirradiated, in-tact Zr-4 cladding.
 
-# With eta = 87.8291 and zeta = 5.4026E-6, damping is 2% to 3% from 1st to 3rd mode frequency of 
-# 276.1030-Hz to 1491.4494-Hz, respectively. 
+# With (eta) = 996.7809 and (zeta) = 4.7603E-7, damping is 2.2% to 3% from 1st to 3rd mode 
+# frequency of 3133.5193-Hz to 16926.5999-Hz, respectively. 
 
 # Fastest with single processor
 
@@ -50,8 +50,8 @@
 
     # optional parameters for numerical (alpha) and Rayleigh damping
     alpha = 0.0 # HHT time integration parameter
-    eta = 87.8291 # Mass proportional Rayleigh damping
-    zeta = 5.4026E-6 # Stiffness proportional Rayleigh damping
+    eta = 996.7809 # Mass proportional Rayleigh damping
+    zeta = 4.7603E-7 # Stiffness proportional Rayleigh damping
   [../]
 []
 

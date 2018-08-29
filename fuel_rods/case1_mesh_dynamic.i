@@ -1,10 +1,10 @@
-# Case 1: Cladding only length of 10 pellets
+# Case 1: Cladding only length of 10 pellets (128.8-mm)
 # Tests Case 1 - Dynamic impulse loading using a 3D annular mesh
 
 # Material properties are of unirradiated, in-tact Zr-4 cladding.
 
-# With eta = 87.8291 and zeta = 5.4026E-6, damping is 2% to 3% from 1st to 3rd mode frequency of 
-# 276.1030-Hz to 1491.4494-Hz, respectively. 
+# With (eta) = 996.7809 and (zeta) = 4.7603E-7, damping is 2.2% to 3% from 1st to 3rd mode 
+# frequency of 3133.5193-Hz to 16926.5999-Hz, respectively. 
 
 # Fastest on 3 processors and 3 threads
 
@@ -67,7 +67,7 @@
 [Kernels]
   [./DynamicTensorMechanics]
     displacements = 'disp_x disp_y disp_z'
-    zeta = 5.4026E-6
+    zeta = 4.7603E-7
   [../]
   [./inertia_x]
     type = InertialForce
@@ -85,7 +85,7 @@
     acceleration = accel_y
     beta = 0.25
     gamma = 0.5
-    eta = 87.8291
+    eta = 996.7809
   [../]
   [./inertia_z]
     type = InertialForce
@@ -94,7 +94,7 @@
     acceleration = accel_z
     beta = 0.25
     gamma = 0.5
-    eta = 87.8291
+    eta = 996.7809
   [../]
 []
 

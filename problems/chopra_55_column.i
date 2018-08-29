@@ -263,7 +263,7 @@
   [../]
   [./stress]
     type = ComputeMultiPlasticityStress
-    ep_plastic_tolerance = 1.0e-3
+    ep_plastic_tolerance = 10.0e-3
     plastic_models = plastic
     store_stress_old = True
     perform_finite_strain_rotations = False
@@ -291,8 +291,8 @@
   nl_rel_tol = 1e-8
   nl_abs_tol = 1e-8
   start_time = 0.0
-  dt = 0.01
-  end_time = 10.0
+  dt = 0.1
+  end_time = 1.0
   timestep_tolerance = 1e-6
 []
 
