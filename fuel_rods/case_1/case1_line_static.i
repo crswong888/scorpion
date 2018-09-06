@@ -144,7 +144,7 @@
     type = ComputeElasticityBeam
     youngs_modulus = 9.93E4
     poissons_ratio = 0.37
-    shear_coefficient = 0.8915
+    shear_coefficient = 0.5392
   [../]
   [./stress]
     type = ComputeBeamResultants
