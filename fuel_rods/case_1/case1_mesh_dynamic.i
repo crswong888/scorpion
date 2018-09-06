@@ -6,6 +6,8 @@
 # With (eta) = 996.7809 and (zeta) = 4.7603E-7, damping is 2.2% to 3% from 1st to 3rd mode 
 # frequency of 3133.5193-Hz to 16926.5999-Hz, respectively. 
 
+# These Rayleigh parameters are valid only for a fixed-fixed scenario
+
 # Fastest on 3 processors and 3 threads
 
 [Mesh]
@@ -13,8 +15,8 @@
   nt = 32
   rmax = 5.36
   rmin = 4.76
-  growth_r = 1.0
-  nr = 3
+  growth_r = 1
+  nr = 4
   #parallel_type = DISTRIBUTED
   partitioner = centroid
   centroid_partitioner_direction = z
@@ -24,18 +26,32 @@
   [./make3D]
     type = MeshExtruder
     extrusion_vector = '0 0 128.8'
-    num_layers = 30
-    bottom_sideset = 'bottom'
-    top_sideset = 'top'
+    num_layers = 64
+    bottom_sideset = 'left'
+    top_sideset = 'right'
     existing_subdomains = '0'
-    layers = '14 15'
-    new_ids = '15 16'
+    layers = '31 32'
+    new_ids = '32 33'
   [../]
   [./mid_point]
     type = SideSetsBetweenSubdomains
-    master_block = 15
-    paired_block = 16
+    master_block = 32
+    paired_block = 33
     new_boundary = mid_point
+    depends_on = make3D
+  [../]
+  [./fix_nodes_left]
+    type = BoundingBoxNodeSet
+    new_boundary = 'left_center'
+    top_right = '5.36 0.01 0'
+    bottom_left = '-5.36 0 0'
+    depends_on = make3D
+  [../]
+  [./fix_nodes_right]
+    type = BoundingBoxNodeSet
+    new_boundary = 'right_center'
+    top_right = '5.36 0.01 128.8'
+    bottom_left = '-5.36 0 128.8'
     depends_on = make3D
   [../]
 []
@@ -162,7 +178,7 @@
 [Functions]
   [./load]
     type = ParsedFunction
-    value = 'if(t<0.002, -0.1953*sin(pi*t/0.002), 0*t)' # 25.0N/128node=0.19535N/node
+    value = 'if(t<0.002, -0.15625*sin(pi*t/0.002), 0*t)' # 25.0N/160node=0.15625N/node
   [../]
 []
 
@@ -173,41 +189,73 @@
     boundary = 'rmin rmax'
     value = 0.0
   [../]
+
+
+  # LEFT BOUNDARY CONDITIONS
+
+  [./fixy1_center]
+    type = PresetBC
+    variable = 'disp_y'
+    boundary = left_center
+    value = 0.0
+  [../]
+  [./fixz1_center]
+    type = PresetBC
+    variable = 'disp_z'
+    boundary = left_center
+    value = 0.0
+  [../]
+
   [./fixx1]
     type = PresetBC
     variable = disp_x
-    boundary = top
+    boundary = left
     value = 0.0
   [../]
   [./fixy1]
     type = PresetBC
     variable = disp_y
-    boundary = top
+    boundary = left
     value = 0.0
+    enable = true # pin=false, fix=true
   [../]
   [./fixz1]
     type = PresetBC
     variable = disp_z
-    boundary = top
+    boundary = left
+    value = 0.0
+    enable = true # pin=false, fix=true
+  [../]
+
+
+  # RIGHT BOUNDARY CONDITIONS
+
+  [./fixy2_center]
+    type = PresetBC
+    variable = 'disp_y'
+    boundary = right_center
     value = 0.0
   [../]
+
   [./fixx2]
     type = PresetBC
     variable = disp_x
-    boundary = bottom
+    boundary = right
     value = 0.0
   [../]
   [./fixy2]
     type = PresetBC
     variable = disp_y
-    boundary = bottom
+    boundary = right
     value = 0.0
+    enable = true # roller=false, fix=true
   [../]
   [./fixz2]
     type = PresetBC
     variable = disp_z
-    boundary = bottom
+    boundary = right
     value = 0.0
+    enable = true # roller=false, fix=true
   [../]
 []
 

@@ -6,6 +6,8 @@
 # With (eta) = 996.7809 and (zeta) = 4.7603E-7, damping is 2.2% to 3% from 1st to 3rd mode 
 # frequency of 3133.5193-Hz to 16926.5999-Hz, respectively. 
 
+# These Rayleigh parameters are valid only for a fixed-fixed scenario
+
 # Fastest with single processor
 
 [Mesh]
