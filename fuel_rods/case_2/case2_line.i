@@ -58,8 +58,8 @@
     Iz = 568.6904
     y_orientation = '0.0 1.0 0.0'
 
-    # dynamic simulation using consistent density/inertia matrix
-    dynamic_consistent_inertia = True
+    # dynamic simulation using consistent mass/inertia matrix
+    dynamic_consistent_inertia = true
 
     velocities = 'vel_x vel_y vel_z'
     accelerations = 'accel_x accel_y accel_z'
@@ -87,9 +87,9 @@
 []
 
 [Functions]
-  [./ground_accel]
+  [./ground_displacement]
     type = ParsedFunction
-    value = 'if(t<0.05, 3*9810*sin(pi*t/0.0025), 0*t)'
+    value = 'if(t<0.1, 5.1*sin(pi*t/0.025), 0*t)'
   [../]
 []
 
@@ -100,12 +100,6 @@
     boundary = 'support_a support_b support_c support_d'
     value = 0.0
   [../]
-  [./fixy]
-    type = DirichletBC
-    variable = disp_y
-    boundary = 'support_a support_b support_c support_d'
-    value = 0.0
-  [../]    
   [./fixz]
     type = PresetBC
     variable = disp_z
@@ -130,14 +124,11 @@
     boundary = 'support_a support_b support_c support_d'
     value = 0.0
   [../]
-  [./preset_acceleration]
-    type = PresetAcceleration
+  [./induce_displacement]
+    type = FunctionPresetBC
     variable = disp_y
     boundary = 'support_a support_b support_c support_d'
-    function = ground_accel
-    acceleration = accel_y
-    velocity = vel_y
-    beta = 0.25
+    function = ground_displacement
   [../]
 []
 
@@ -174,7 +165,7 @@
   solve_type = NEWTON
   start_time = 0.0
   dt = 2.5E-4
-  end_time = 0.25
+  end_time = 0.4
 []
 
 [Postprocessors]
@@ -223,9 +214,14 @@
     variable = accel_y
     boundary = accelerometer_c
   [../]
-  [./ground_accel]
+  [./accel_support]
+    type = NodalMaxValue
+    variable = accel_y
+    boundary = support_a
+  [../]
+  [./ground_displacement]
     type = FunctionValuePostprocessor
-    function = ground_accel
+    function = ground_displacement
   [../]
 []    
 

@@ -85,7 +85,7 @@
 [Kernels]
   [./DynamicTensorMechanics]
     displacements = 'disp_x disp_y disp_z'
-    zeta = 0
+    zeta = 1.3986E-5
   [../]
   [./inertia_x]
     type = InertialForce
@@ -94,7 +94,7 @@
     acceleration = accel_x
     beta = 0.25
     gamma = 0.5
-    eta = 0
+    eta = 40.9536
   [../]
   [./inertia_y]
     type = InertialForce
@@ -103,7 +103,7 @@
     acceleration = accel_y
     beta = 0.25
     gamma = 0.5
-    eta = 0
+    eta = 40.9536
   [../]
   [./inertia_z]
     type = InertialForce
@@ -112,7 +112,7 @@
     acceleration = accel_z
     beta = 0.25
     gamma = 0.5
-    eta = 0
+    eta = 40.9536
   [../]
   [./gravity]
     type = Gravity
@@ -165,9 +165,9 @@
 []
 
 [Functions]
-  [./ground_accel]
+  [./ground_displacement]
     type = ParsedFunction
-    value = 'if(t<0.05, 3*9810*sin(pi*t/0.0025), 0*t)'
+    value = 'if(t<0.1, 5.1*sin(pi*t/0.025), 0*t)'
   [../]
 []
 
@@ -184,14 +184,11 @@
     boundary = 'support_a support_b support_c support_d'
     value = 0.0
   [../]
-  [./preset_acceleration]
-    type = PresetAcceleration
+  [./induce_displacement]
+    type = FunctionPresetBC
     variable = disp_x
     boundary = 'support_a support_b support_c support_d'
-    function = ground_accel
-    acceleration = accel_x
-    velocity = vel_x
-    beta = 0.25
+    function = ground_displacement
   [../]
 []
 
@@ -232,58 +229,63 @@
   solve_type = NEWTON
   start_time = 0.0
   dt = 2.5E-4
-  end_time = 0.25
+  end_time = 0.4
 []
 
 [Postprocessors]
   [./disp_a]
     type = NodalMaxValue
-    variable = disp_x
+    variable = disp_y
     boundary = accelerometer_a
   [../]
   [./vel_a]
     type = NodalMaxValue
-    variable = vel_x
+    variable = vel_y
     boundary = accelerometer_a
   [../]
   [./accel_a]
     type = NodalMaxValue
-    variable = accel_x
+    variable = accel_y
     boundary = accelerometer_a
   [../]
   [./disp_b]
     type = NodalMaxValue
-    variable = disp_x
+    variable = disp_y
     boundary = accelerometer_b
   [../]
   [./vel_b]
     type = NodalMaxValue
-    variable = vel_x
+    variable = vel_y
     boundary = accelerometer_b
   [../]
   [./accel_b]
     type = NodalMaxValue
-    variable = accel_x
+    variable = accel_y
     boundary = accelerometer_b
   [../]
   [./disp_c]
     type = NodalMaxValue
-    variable = disp_x
+    variable = disp_y
     boundary = accelerometer_c
   [../]
   [./vel_c]
     type = NodalMaxValue
-    variable = vel_x
+    variable = vel_y
     boundary = accelerometer_c
   [../]
   [./accel_c]
     type = NodalMaxValue
-    variable = accel_x
+    variable = accel_y
     boundary = accelerometer_c
   [../]
-  [./ground_accel]
+  [./accel_support]
+    type = NodalMaxValue
+    variable = accel_y
+    boundary = support_a
+  [../]
+  [./ground_displacement]
     type = FunctionValuePostprocessor
-    function = ground_accel
+    function = ground_displacement
   [../]
 []
 
