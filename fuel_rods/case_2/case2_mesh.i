@@ -1,3 +1,17 @@
+# THIS MODEL IS CURRENTLY UNDER CONSTRUCTION
+
+# Works best 3 processors, 3 threads, linear partitioner type
+# Centroid_z similar but a little longer solve time
+
+# The ExplicitEuler TimeIntegration scheme is slightly faster than ImplicitEuler (default)
+
+# Using FunctionPresetBC to induce shake-table motion at supports
+# When using a Dirichlet BC, it creates a lot of noise with the acceleration
+# MOOSE has also reported this issue
+
+# MOOSE reccomends to use PresetDisplacement or PresetAcceleration
+# At this point, I am having issues when using these BC types
+
 [Mesh]
   type = AnnularMesh
   nt = 32
@@ -5,54 +19,45 @@
   rmin = 5.48
   growth_r = 1
   nr = 3
-  #parallel_type = DISTRIBUTED
-  partitioner = centroid
-  centroid_partitioner_direction = z
+  partitioner = linear
+  #partitioner = centroid
+  #centroid_partitioner_direction = z
 []
 
 [MeshModifiers]
   [./make3D]
     type = MeshExtruder
     extrusion_vector = '0 0 1676'
-    num_layers = 1676
+    num_layers = 838
     bottom_sideset = 'support_a'
     top_sideset = 'support_d'
     existing_subdomains = '0'
-    layers = '260 261 521 522 782 783 1043 1044 1359 1360'
-    new_ids = '261 262 522 523 783 784 1044 1045 1360 1361'
+    layers = '129 260 261 390 521 522 679 680'
+    new_ids = '130 261 262 391 522 523 680 681'
   [../]
-  [./accelerometer_a]
-    type = SideSetsBetweenSubdomains
-    master_block = 261
-    paired_block = 262
-    new_boundary = accelerometer_a
-    depends_on = make3D
+  [./rename_blocks]
+    type = RenameBlock
+    old_block_id = '130 391'
+    new_block_name = 'accelerometer_a accelerometer_b'
   [../]
   [./support_b]
     type = SideSetsBetweenSubdomains
-    master_block = 522
-    paired_block = 523
+    master_block = 261
+    paired_block = 262
     new_boundary = support_b
-    depends_on = make3D
-  [../]
-  [./accelerometer_b]
-    type = SideSetsBetweenSubdomains
-    master_block = 783
-    paired_block = 784
-    new_boundary = accelerometer_b
     depends_on = make3D
   [../]
   [./support_c]
     type = SideSetsBetweenSubdomains
-    master_block = 1044
-    paired_block = 1045
+    master_block = 522
+    paired_block = 523
     new_boundary = support_c
     depends_on = make3D
   [../]
   [./accelerometer_c]
     type = SideSetsBetweenSubdomains
-    master_block = 1360
-    paired_block = 1361
+    master_block = 680
+    paired_block = 681
     new_boundary = accelerometer_c
     depends_on = make3D
   [../]
@@ -172,9 +177,16 @@
 []
 
 [BCs]
+  [./no_disp_x]
+    type = PresetBC
+    variable = disp_x
+    boundary = 'rmin rmax'
+    value = 0.0
+  [../]
+  
   [./fixy]
     type = PresetBC
-    variable = disp_y
+    variable = disp_x
     boundary = 'support_a support_b support_c support_d'
     value = 0.0
   [../]
@@ -184,9 +196,10 @@
     boundary = 'support_a support_b support_c support_d'
     value = 0.0
   [../]
+
   [./induce_displacement]
     type = FunctionPresetBC
-    variable = disp_x
+    variable = disp_y
     boundary = 'support_a support_b support_c support_d'
     function = ground_displacement
   [../]
@@ -206,7 +219,7 @@
     type = ComputeLinearElasticStress
     #outputs = exodus
     #output_properties = stress
-    store_old_stress = true
+    store_stress_old = true
   [../]
   [./density]
     type = GenericConstantMaterial
@@ -227,41 +240,43 @@
 [Executioner]
   type = Transient
   solve_type = NEWTON
+  scheme = explicit-euler
   start_time = 0.0
-  dt = 2.5E-4
+  dt = 1.0E-3
   end_time = 0.4
+  line_search = none
 []
 
 [Postprocessors]
   [./disp_a]
-    type = NodalMaxValue
+    type = ElementExtremeValue
     variable = disp_y
-    boundary = accelerometer_a
+    block = 'accelerometer_a'
   [../]
   [./vel_a]
-    type = NodalMaxValue
+    type = ElementExtremeValue
     variable = vel_y
-    boundary = accelerometer_a
+    block = 'accelerometer_a'
   [../]
   [./accel_a]
-    type = NodalMaxValue
+    type = ElementExtremeValue
     variable = accel_y
-    boundary = accelerometer_a
+    block = 'accelerometer_a'
   [../]
   [./disp_b]
-    type = NodalMaxValue
+    type = ElementExtremeValue
     variable = disp_y
-    boundary = accelerometer_b
+    block = 'accelerometer_b'
   [../]
   [./vel_b]
-    type = NodalMaxValue
+    type = ElementExtremeValue
     variable = vel_y
-    boundary = accelerometer_b
+    block = 'accelerometer_b'
   [../]
   [./accel_b]
-    type = NodalMaxValue
+    type = ElementExtremeValue
     variable = accel_y
-    boundary = accelerometer_b
+    block = 'accelerometer_b'
   [../]
   [./disp_c]
     type = NodalMaxValue
@@ -277,6 +292,16 @@
     type = NodalMaxValue
     variable = accel_y
     boundary = accelerometer_c
+  [../]
+  [./disp_support]
+    type = NodalMaxValue
+    variable = disp_y
+    boundary = support_a
+  [../]
+  [./vel_support]
+    type = NodalMaxValue
+    variable = vel_y
+    boundary = support_a
   [../]
   [./accel_support]
     type = NodalMaxValue

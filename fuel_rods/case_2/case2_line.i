@@ -1,3 +1,16 @@
+# THIS MODEL IS CURRENTLY UNDER CONSTRUCTION
+
+# Works best 3 processors, 3 threads, default partitioner type
+
+# The ExplicitEuler TimeIntegration scheme is slightly faster than ImplicitEuler (default)
+
+# Using FunctionPresetBC to induce shake-table motion at supports
+# When using a Dirichlet BC, it creates a lot of noise with the acceleration
+# MOOSE has also reported this issue
+
+# MOOSE reccomends to use PresetDisplacement or PresetAcceleration
+# At this point, I am having issues when using these BC types
+
 [Mesh]
   type = GeneratedMesh
   dim = 1
@@ -67,8 +80,8 @@
     rotational_accelerations = 'rot_accel_x rot_accel_y rot_accel_z'
 
     density = 'density'
-    beta = 0.25 # Newmark time integraion parameter
-    gamma = 0.5 # Newmark time integraion parameter
+    beta = 0.25 # Newmark time integration parameter
+    gamma = 0.5 # Newmark time integration parameter
 
     # optional parameters for numerical (alpha) and Rayleigh damping
     alpha = 0.0 # HHT time integration parameter
@@ -163,9 +176,11 @@
 [Executioner]
   type = Transient
   solve_type = NEWTON
+  scheme = explicit-euler
   start_time = 0.0
-  dt = 2.5E-4
+  dt = 1.0E-3
   end_time = 0.4
+  line_search = none
 []
 
 [Postprocessors]
@@ -213,6 +228,16 @@
     type = NodalMaxValue
     variable = accel_y
     boundary = accelerometer_c
+  [../]
+  [./disp_support]
+    type = NodalMaxValue
+    variable = disp_y
+    boundary = support_a
+  [../]
+  [./vel_support]
+    type = NodalMaxValue
+    variable = vel_y
+    boundary = support_a
   [../]
   [./accel_support]
     type = NodalMaxValue
