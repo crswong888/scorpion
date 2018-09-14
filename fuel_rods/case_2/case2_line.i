@@ -59,43 +59,275 @@
   [../]
 []
 
+[Variables]
+  [./disp_x]
+  [../]
+  [./disp_y]
+  [../]
+  [./disp_z]
+  [../]
+  [./rot_x]
+  [../]
+  [./rot_y]
+  [../]
+  [./rot_z]
+  [../]
+[]
+
+[AuxVariables]
+  [./vel_x]
+  [../]
+  [./vel_y]
+  [../]
+  [./vel_z]
+  [../]
+  [./accel_x]
+  [../]
+  [./accel_y]
+  [../]
+  [./accel_z]
+  [../]
+  [./rot_vel_x]
+  [../]
+  [./rot_vel_y]
+  [../]
+  [./rot_vel_z]
+  [../]
+  [./rot_accel_x]
+  [../]
+  [./rot_accel_y]
+  [../]
+  [./rot_accel_z]
+  [../]
+[]
+
 [Modules/TensorMechanics/LineElementMaster]
   [./all]
-    add_variables = true
     displacements = 'disp_x disp_y disp_z'
-    rotations = 'rot_x rot_y rot_z'
-
-    # Geometry parameters
-    area = 32.3336
+    rotations = 'rot_y rot_x rot_z'
+    area = 32.3363
     Iy = 568.6904
     Iz = 568.6904
+    Ay = 60.987522
+    Az = 60.987522
     y_orientation = '0.0 1.0 0.0'
-
-    # dynamic simulation using consistent mass/inertia matrix
-    dynamic_consistent_inertia = true
-
-    velocities = 'vel_x vel_y vel_z'
-    accelerations = 'accel_x accel_y accel_z'
-    rotational_velocities = 'rot_vel_x rot_vel_y rot_vel_z'
-    rotational_accelerations = 'rot_accel_x rot_accel_y rot_accel_z'
-
-    density = 'density'
-    beta = 0.25 # Newmark time integration parameter
-    gamma = 0.5 # Newmark time integration parameter
-
-    # optional parameters for numerical (alpha) and Rayleigh damping
-    alpha = 0.0 # HHT time integration parameter
-    eta = 40.9536 # Mass proportional Rayleigh damping
-    zeta = 1.3986E-5 # Stiffness proportional Rayleigh damping
+    zeta = 1.3986E-5
   [../]
 []
 
 [Kernels]
+  [./inertial_force_x]
+    type = InertialForceBeam
+    displacements = 'disp_x disp_y disp_z'
+    rotations = 'rot_x rot_y rot_z'
+    velocities = 'vel_x vel_y vel_z'
+    accelerations = 'accel_x accel_y accel_z'
+    rotational_velocities = 'rot_vel_x rot_vel_y rot_vel_z'
+    rotational_accelerations = 'rot_accel_x rot_accel_y rot_accel_z'
+    beta = 0.25
+    gamma = 0.5
+    area = 32.3363
+    Iy = 568.6904
+    Iz = 568.6904
+    Ay = 60.987522
+    Az = 60.987522
+    component = 0
+    variable = disp_x
+    eta = 40.9536
+  [../]
+  [./inertial_force_y]
+    type = InertialForceBeam
+    displacements = 'disp_x disp_y disp_z'
+    rotations = 'rot_x rot_y rot_z'
+    velocities = 'vel_x vel_y vel_z'
+    accelerations = 'accel_x accel_y accel_z'
+    rotational_velocities = 'rot_vel_x rot_vel_y rot_vel_z'
+    rotational_accelerations = 'rot_accel_x rot_accel_y rot_accel_z'
+    beta = 0.25
+    gamma = 0.5
+    area = 32.3363
+    Iy = 568.6904
+    Iz = 568.6904
+    Ay = 60.987522
+    Az = 60.987522
+    component = 1
+    variable = disp_y
+    eta = 40.9536
+  [../]
+  [./inertial_force_z]
+    type = InertialForceBeam
+    displacements = 'disp_x disp_y disp_z'
+    rotations = 'rot_x rot_y rot_z'
+    velocities = 'vel_x vel_y vel_z'
+    accelerations = 'accel_x accel_y accel_z'
+    rotational_velocities = 'rot_vel_x rot_vel_y rot_vel_z'
+    rotational_accelerations = 'rot_accel_x rot_accel_y rot_accel_z'
+    beta = 0.25
+    gamma = 0.5
+    area = 32.3363
+    Iy = 568.6904
+    Iz = 568.6904
+    Ay = 60.987522
+    Az = 60.987522
+    component = 2
+    variable = disp_z
+    eta = 40.9536
+  [../]
+  [./inertial_force_rot_x]
+    type = InertialForceBeam
+    displacements = 'disp_x disp_y disp_z'
+    rotations = 'rot_x rot_y rot_z'
+    velocities = 'vel_x vel_y vel_z'
+    accelerations = 'accel_x accel_y accel_z'
+    rotational_velocities = 'rot_vel_x rot_vel_y rot_vel_z'
+    rotational_accelerations = 'rot_accel_x rot_accel_y rot_accel_z'
+    beta = 0.25
+    gamma = 0.5
+    area = 32.3363
+    Iy = 568.6904
+    Iz = 568.6904
+    Ay = 60.987522
+    Az = 60.987522
+    component = 3
+    variable = rot_x
+    eta = 40.9536
+  [../]
+  [./inertial_force_rot_y]
+    type = InertialForceBeam
+    displacements = 'disp_x disp_y disp_z'
+    rotations = 'rot_x rot_y rot_z'
+    velocities = 'vel_x vel_y vel_z'
+    accelerations = 'accel_x accel_y accel_z'
+    rotational_velocities = 'rot_vel_x rot_vel_y rot_vel_z'
+    rotational_accelerations = 'rot_accel_x rot_accel_y rot_accel_z'
+    beta = 0.25
+    gamma = 0.5
+    area = 32.3363
+    Iy = 568.6904
+    Iz = 568.6904
+    Ay = 60.987522
+    Az = 60.987522
+    component = 4
+    variable = rot_y
+    eta = 40.9536
+  [../]
+  [./inertial_force_rot_z]
+    type = InertialForceBeam
+    displacements = 'disp_x disp_y disp_z'
+    rotations = 'rot_x rot_y rot_z'
+    velocities = 'vel_x vel_y vel_z'
+    accelerations = 'accel_x accel_y accel_z'
+    rotational_velocities = 'rot_vel_x rot_vel_y rot_vel_z'
+    rotational_accelerations = 'rot_accel_x rot_accel_y rot_accel_z'
+    beta = 0.25
+    gamma = 0.5
+    area = 32.3363
+    Iy = 568.6904
+    Iz = 568.6904
+    Ay = 60.987522
+    Az = 60.987522
+    component = 5
+    variable = rot_z
+    eta = 40.9536
+  [../]
   [./gravity]
     type = Gravity
     variable = disp_y
     value = -9810
     enable = false # gravity? ... I don't think it works well with LineElementMaster
+  [../]
+[]
+
+[AuxKernels]
+  [./accel_x]
+    type = NewmarkAccelAux
+    variable = accel_x
+    displacement = disp_x
+    velocity = vel_x
+    beta = 0.25
+    execute_on = TIMESTEP_END
+  [../]
+  [./vel_x]
+    type = NewmarkVelAux
+    variable = vel_x
+    acceleration = accel_x
+    gamma = 0.5
+    execute_on = TIMESTEP_END
+  [../]
+  [./accel_y]
+    type = NewmarkAccelAux
+    variable = accel_y
+    displacement = disp_y
+    velocity = vel_y
+    beta = 0.25
+    execute_on = TIMESTEP_END
+  [../]
+  [./vel_y]
+    type = NewmarkVelAux
+    variable = vel_y
+    acceleration = accel_y
+    gamma = 0.5
+    execute_on = TIMESTEP_END
+  [../]
+  [./accel_z]
+    type = NewmarkAccelAux
+    variable = accel_z
+    displacement = disp_z
+    velocity = vel_z
+    beta = 0.25
+    execute_on = TIMESTEP_END
+  [../]
+  [./vel_z]
+    type = NewmarkVelAux
+    variable = vel_z
+    acceleration = accel_z
+    gamma = 0.5
+    execute_on = TIMESTEP_END
+  [../]
+  [./rot_accel_x]
+    type = NewmarkAccelAux
+    variable = rot_accel_x
+    displacement = rot_x
+    velocity = rot_vel_x
+    beta = 0.25
+    execute_on = TIMESTEP_END
+  [../]
+  [./rot_vel_x]
+    type = NewmarkVelAux
+    variable = rot_vel_x
+    acceleration = rot_accel_x
+    gamma = 0.5
+    execute_on = TIMESTEP_END
+  [../]
+  [./rot_accel_y]
+    type = NewmarkAccelAux
+    variable = rot_accel_y
+    displacement = rot_y
+    velocity = rot_vel_y
+    beta = 0.25
+    execute_on = TIMESTEP_END
+  [../]
+  [./rot_vel_y]
+    type = NewmarkVelAux
+    variable = rot_vel_y
+    acceleration = rot_accel_y
+    gamma = 0.5
+    execute_on = TIMESTEP_END
+  [../]
+  [./rot_accel_z]
+    type = NewmarkAccelAux
+    variable = rot_accel_z
+    displacement = rot_z
+    velocity = rot_vel_z
+    beta = 0.25
+    execute_on = TIMESTEP_END
+  [../]
+  [./rot_vel_z]
+    type = NewmarkVelAux
+    variable = rot_vel_z
+    acceleration = rot_accel_z
+    gamma = 0.5
+    execute_on = TIMESTEP_END
   [../]
 []
 
@@ -142,6 +374,17 @@
     variable = disp_y
     boundary = 'support_a support_b support_c support_d'
     function = ground_displacement
+    enable = false
+  [../]
+  [./induce_predisplacement]
+    type = PresetDisplacement
+    variable = disp_y
+    velocity = vel_y
+    acceleration = accel_y
+    boundary = 'support_a support_b support_c support_d'
+    function = ground_displacement
+    beta = 0.25
+    enable = true
   [../]
 []
 
