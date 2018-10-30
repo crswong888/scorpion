@@ -1,23 +1,52 @@
-# Case 1: Cladding only length of 10 pellets (128.8-mm)
-# Tests Case 1 - Static loading using a 1D line element mesh
-
-# Material properties are of unirradiated, in-tact Zr-4 cladding.
-
-# Fastest with single processor
-
 [Mesh]
   type = GeneratedMesh
   dim = 1
-  nx = 6
+  nx = 4
   xmin = 0.0
-  xmax = 128.8
+  xmax = 200.0
 []
 
 [MeshModifiers]
   [./mid_point]
     type = AddExtraNodeset
-    coord = '64.4'
+    coord = 100.0
     new_boundary = mid_point
+  [../]
+  [./q_point1]
+    type = AddExtraNodeset
+    coord = 50.0
+    new_boundary = q_point_1
+  [../]
+  [./q_point2]
+    type = AddExtraNodeset
+    coord = 150.0
+    new_boundary = q_point_2
+  [../]
+
+
+  [./span1]
+    type = SubdomainBoundingBox
+    top_right = '50 0 0'
+    bottom_left = '0 0 0'
+    block_id = 1
+  [../]
+  [./span2]
+    type = SubdomainBoundingBox
+    top_right = '100 0 0'
+    bottom_left = '50 0 0'
+    block_id = 2
+  [../]
+  [./span3]
+    type = SubdomainBoundingBox
+    top_right = '150 0 0'
+    bottom_left = '100 0 0'
+    block_id = 3
+  [../]
+  [./span4]
+    type = SubdomainBoundingBox
+    top_right = '200 0 0'
+    bottom_left = '150 0 0'
+    block_id = 4
   [../]
 []
 
@@ -28,19 +57,10 @@
     rotations = 'rot_x rot_y rot_z'
 
     # Geometry parameters
-    area = 19.0758
-    Iy = 245.0624
-    Iz = 245.0624
+    area = 32.3336
+    Iy = 568.6904
+    Iz = 568.6904
     y_orientation = '0.0 1.0 0.0'
-  [../]
-[]
-
-[Kernels]
-  [./gravity]
-    type = Gravity
-    variable = disp_y
-    value = -9810
-    enable = false # gravity? ... I don't think it works well with LineElementMaster
   [../]
 []
 
@@ -50,7 +70,6 @@
     variable = disp_y
     function = load
     boundary = mid_point
-    enable = true # apply_force=true
   [../]
 []
 
@@ -62,99 +81,49 @@
 []
 
 [BCs]
-  [./fixx1]
+  [./fixx]
     type = PresetBC
     variable = disp_x
-    boundary = left
+    boundary = 'left right'
     value = 0.0
   [../]
-  [./fixy1]
+  [./fixy]
     type = PresetBC
     variable = disp_y
-    boundary = left
+    boundary = 'left right'
     value = 0.0
   [../]
-  [./fixz1]
+  [./fixz]
     type = PresetBC
     variable = disp_z
-    boundary = left
+    boundary = 'left right'
     value = 0.0
   [../]
-  [./fixrx1]
+  [./fixrx]
     type = PresetBC
     variable = rot_x
-    boundary = left
+    boundary = 'left right'
     value = 0.0
   [../]
-  [./fixry1]
+  [./fixry]
     type = PresetBC
     variable = rot_y
-    boundary = left
+    boundary = 'left right'
     value = 0.0
-  [../]
-  [./fixrz1]
-    type = PresetBC
-    variable = rot_z
-    boundary = left
-    value = 0.0
-    enable = false # pin=false, fix=true
-  [../]
-  [./fixx2]
-    type = PresetBC
-    variable = disp_x
-    boundary = right
-    value = 0.0
-    enable = false # roller=false, fix=true
-  [../]
-  [./fixy2]
-    type = PresetBC
-    variable = disp_y
-    boundary = right
-    value = 0.0
-  [../]
-  [./fixz2]
-    type = PresetBC
-    variable = disp_z
-    boundary = right
-    value = 0.0
-  [../]
-  [./fixrx2]
-    type = PresetBC
-    variable = rot_x
-    boundary = right
-    value = 0.0
-  [../]
-  [./fixry2]
-    type = PresetBC
-    variable = rot_y
-    boundary = right
-    value = 0.0
-  [../]
-  [./fixrz2]
-    type = PresetBC
-    variable = rot_z
-    boundary = right
-    value = 0.0
-    enable = false # roller=false, fix=true
   [../]
 []
 
 [Materials]
   [./elasticity]
     type = ComputeElasticityBeam
-    youngs_modulus = 9.93E4
-    poissons_ratio = 0.37
-    shear_coefficient = 0.5392
+    youngs_modulus = 117211
+    poissons_ratio = 0.355
+    shear_coefficient = 0.5397
   [../]
   [./stress]
     type = ComputeBeamResultants
     outputs = exodus
     output_properties = 'forces moments'
-  [../]
-  [./density]
-    type = GenericConstantMaterial
-    prop_names = 'density'
-    prop_values = 6.0E-9 # Approximate density of Zr-4
   [../]
 []
 
@@ -183,6 +152,41 @@
   [./force_y]
     type = FunctionValuePostprocessor
     function = load
+  [../]
+  [./rot_left]
+    type = NodalMaxValue
+    variable = rot_z
+    boundary = left
+  [../]
+  [./rot_right]
+    type = NodalMaxValue
+    variable = rot_z
+    boundary = right
+  [../]
+
+  [./mom_1]
+    type = ElementExtremeValue
+    value_type = min
+    variable = moments_z
+    block = 1
+  [../]
+  [./mom_2]
+    type = ElementExtremeValue
+    value_type = min
+    variable = moments_z
+    block = 2
+  [../]
+  [./mom_3]
+    type = ElementExtremeValue
+    value_type = min
+    variable = moments_z
+    block = 3
+  [../]
+  [./mom_4]
+    type = ElementExtremeValue
+    value_type = min
+    variable = moments_z
+    block = 4
   [../]
 []
 

@@ -1,8 +1,8 @@
 # THIS MODEL IS CURRENTLY UNDER CONSTRUCTION
 
-# This is an input file for a 1D line mesh model of a half-length surrogate Cu nuclear fuel rod with torsional spring supports
+# This is an input file for a 1D line mesh model of a half-length surrogate Cu nuclear fuel rod with fixed supports
 
-# Works best 3 processors, 3-12 threads, default partitioner type
+# Works best 3 processors, 3-15 threads, default partitioner type
 
 # The ExplicitEuler TimeIntegration scheme is slightly faster than ImplicitEuler (default)
 
@@ -112,13 +112,6 @@
     # dynamic simulation using consistent mass/inertia matrix
     dynamic_consistent_inertia = true
 
-    # Nodal geometry parameters
-    dynamic_nodal_rotational_inertia = true
-    nodal_Ixx = 1.7063
-    nodal_Iyy = 1.7063
-    nodal_Izz = 1.7063
-    boundary = 'support_a support_b support_c support_d'
-
     velocities = 'vel_x vel_y vel_z'
     accelerations = 'accel_x accel_y accel_z'
     rotational_velocities = 'rot_vel_x rot_vel_y rot_vel_z'
@@ -130,8 +123,8 @@
 
     # optional parameters for numerical (alpha) and Rayleigh damping
     alpha = 0.0 # HHT time integration parameter
-    eta = 19.2355 # Mass proportional Rayleigh damping
-    zeta = 2.3287E-5 # Stiffness proportional Rayleigh damping
+    eta = 40.9536 # Mass proportional Rayleigh damping
+    zeta = 1.3986E-5 # Stiffness proportional Rayleigh damping
   [../]
 []
 
@@ -147,12 +140,12 @@
 [Functions]
   [./ground_displacement]
     type = PiecewiseLinear
-    data_file = 'displacement.csv' #if(0.0001<t<0.1, 5.1*sin(40*pi*t), 0*t)
+    data_file = 'displacement2.csv' #if(0.0001<t<0.1, 5.1*sin(290*pi*t), 0*t)
     format = columns
   [../]
   [./ground_acceleration]
     type = PiecewiseLinear
-    data_file = 'acceleration.csv' #if(0.0001<t<0.1, -5.1*(40*pi)^2*sin(40*pi*t), 0*t)
+    data_file = 'acceleration2.csv' #if(0.0001<t<0.1, -5.1*(290*pi)^2*sin(290*pi*t), 0*t)
     format = columns
   [../]
 []
@@ -187,7 +180,7 @@
     variable = rot_z
     boundary = 'support_a support_b support_c support_d'
     value = 0.0
-    enable = false #fixed support = true
+    enable = true #fixed support = true
   [../]
 
 
@@ -333,29 +326,6 @@
     variable = accel_y
     boundary = support_a
   [../]
-
-
-  [./rot_support_a]
-    type = NodalMaxValue
-    variable = rot_z
-    boundary = support_a
-  [../]
-  [./rot_support_b]
-    type = NodalMaxValue
-    variable = rot_z
-    boundary = support_b
-  [../]
-  [./rot_support_c]
-    type = NodalMaxValue
-    variable = rot_z
-    boundary = support_c
-  [../]
-  [./rot_support_d]
-    type = NodalMaxValue
-    variable = rot_z
-    boundary = support_d
-  [../]
-
 
 
   [./ground_displacement]

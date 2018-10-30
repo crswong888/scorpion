@@ -192,6 +192,8 @@
 [Executioner]
   type = Transient
   solve_type = NEWTON
+  scheme = explicit-euler
+  start_time = 0.0
   dt = 1.0E-5
   end_time = 0.005
 []

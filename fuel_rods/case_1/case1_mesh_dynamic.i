@@ -16,27 +16,27 @@
   rmax = 5.36
   rmin = 4.76
   growth_r = 1
-  nr = 4
-  #parallel_type = DISTRIBUTED
-  partitioner = centroid
-  centroid_partitioner_direction = z
+  nr = 3
+  partitioner = linear
+  #partitioner = centroid
+  #centroid_partitioner_direction = z
 []
 
 [MeshModifiers]
   [./make3D]
     type = MeshExtruder
     extrusion_vector = '0 0 128.8'
-    num_layers = 64
+    num_layers = 30
     bottom_sideset = 'left'
     top_sideset = 'right'
     existing_subdomains = '0'
-    layers = '31 32'
-    new_ids = '32 33'
+    layers = '14 15'
+    new_ids = '15 16'
   [../]
   [./mid_point]
     type = SideSetsBetweenSubdomains
-    master_block = 32
-    paired_block = 33
+    master_block = 15
+    paired_block = 16
     new_boundary = mid_point
     depends_on = make3D
   [../]
@@ -178,7 +178,7 @@
 [Functions]
   [./load]
     type = ParsedFunction
-    value = 'if(t<0.002, -0.15625*sin(pi*t/0.002), 0*t)' # 25.0N/160node=0.15625N/node
+    value = 'if(t<0.002, -0.195313*sin(pi*t/0.002), 0*t)' # 25.0N/128node=0.195313N/node
   [../]
 []
 
@@ -294,6 +294,7 @@
 [Executioner]
   type = Transient
   solve_type = NEWTON
+  scheme = explicit-euler
   start_time = 0.0
   dt = 1.0E-5
   end_time = 0.005

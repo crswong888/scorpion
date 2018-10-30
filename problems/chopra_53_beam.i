@@ -79,7 +79,7 @@
     rotational_accelerations = 'rot_accel_x rot_accel_y rot_accel_z'
 
     nodal_mass = 0.4559
-    beta = 0.25 # Newmark time integration parameter
+    beta = 1e-9 # Newmark time integration parameter
     gamma = 0.5 # Newmark time integration parameter
 
     # optional parameters for numerical (alpha) and Rayleigh damping

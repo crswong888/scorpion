@@ -15,7 +15,6 @@
 *.aux
 *.toc
 *.snm
-*.csv
 *.dylib
 *.so
 *.so.*

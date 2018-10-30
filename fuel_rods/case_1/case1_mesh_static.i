@@ -15,7 +15,7 @@
   rmax = 5.36
   rmin = 4.76
   growth_r = 1
-  nr = 4
+  nr = 3
   #parallel_type = DISTRIBUTED
   partitioner = centroid
   centroid_partitioner_direction = z
@@ -25,17 +25,17 @@
   [./make3D]
     type = MeshExtruder
     extrusion_vector = '0 0 128.8'
-    num_layers = 64
+    num_layers = 30
     bottom_sideset = 'left'
     top_sideset = 'right'
     existing_subdomains = '0'
-    layers = '31 32'
-    new_ids = '32 33'
+    layers = '14 15'
+    new_ids = '15 16'
   [../]
   [./mid_point]
     type = SideSetsBetweenSubdomains
-    master_block = 32
-    paired_block = 33
+    master_block = 15
+    paired_block = 16
     new_boundary = mid_point
     depends_on = make3D
   [../]
@@ -66,7 +66,7 @@
     type = Gravity
     variable = disp_y
     value = -9810
-    enable = false # gravity=true
+    enable = true # gravity=true
   [../]
 []
 
@@ -76,14 +76,14 @@
     variable = disp_y
     function = load
     boundary = mid_point
-    enable = true # apply_force=true
+    enable = false # apply_force=true
   [../]
 []
 
 [Functions]
   [./load]
     type = ConstantFunction
-    value = -15.625 # total_load/no_nodes=2500N/160node=15.625N/node
+    value = -19.5313 # total_load/no_nodes=2500N/128node=19.5313N/node
   [../]
 []
 
@@ -117,19 +117,20 @@
     boundary = left
     value = 0.0
   [../]
+
   [./fixy1]
     type = PresetBC
     variable = disp_y
     boundary = left
     value = 0.0
-    enable = false # pin=false, fix=true
+    enable = true # pin=false, fix=true
   [../]
   [./fixz1]
     type = PresetBC
     variable = disp_z
     boundary = left
     value = 0.0
-    enable = false # pin=false, fix=true
+    enable = true # pin=false, fix=true
   [../]
 
 
@@ -145,22 +146,23 @@
   [./fixx2]
     type = PresetBC
     variable = disp_x
-    boundary = right
+    boundary = 'right right_center'
     value = 0.0
   [../]
+
   [./fixy2]
     type = PresetBC
     variable = disp_y
     boundary = right
     value = 0.0
-    enable = false # roller=false, fix=true
+    enable = true # roller=false, fix=true
   [../]
   [./fixz2]
     type = PresetBC
     variable = disp_z
     boundary = right
     value = 0.0
-    enable = false # roller=false, fix=true
+    enable = true # roller=false, fix=true
   [../]
 []
 
@@ -194,6 +196,7 @@
 [Executioner]
   type = Transient
   solve_type = Newton
+  scheme = explicit-euler
   num_steps = 1
 []
 

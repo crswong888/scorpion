@@ -1,6 +1,6 @@
 # THIS MODEL IS CURRENTLY UNDER CONSTRUCTION
 
-# Works best 3 processors, 3 threads, linear partitioner type
+# Works best 3 processors, 3-15 threads, linear partitioner type
 # Centroid_z similar but a little longer solve time
 
 # The ExplicitEuler TimeIntegration scheme is slightly faster than ImplicitEuler (default)
@@ -8,9 +8,6 @@
 # Using FunctionPresetBC to induce shake-table motion at supports
 # When using a Dirichlet BC, it creates a lot of noise with the acceleration
 # MOOSE has also reported this issue
-
-# MOOSE reccomends to use PresetDisplacement or PresetAcceleration
-# At this point, I am having issues when using these BC types
 
 [Mesh]
   type = AnnularMesh
@@ -130,16 +127,18 @@
 [AuxKernels]
   [./accel_x]
     type = NewmarkAccelAux
-    variable = accel_x
+    variable = accel_x  perf_graph = true
     displacement = disp_x
     velocity = vel_x
     beta = 0.25
+    execute_on = TIMESTEP_END
   [../]
   [./vel_x]
     type = NewmarkVelAux
     variable = vel_x
     acceleration = accel_x
     gamma = 0.5
+    execute_on = TIMESTEP_END
   [../]
   [./accel_y]
     type = NewmarkAccelAux
@@ -147,12 +146,14 @@
     displacement = disp_y
     velocity = vel_y
     beta = 0.25
+    execute_on = TIMESTEP_END
   [../]
   [./vel_y]
     type = NewmarkVelAux
     variable = vel_y
     acceleration = accel_y
     gamma = 0.5
+    execute_on = TIMESTEP_END
   [../]
   [./accel_z]
     type = NewmarkAccelAux
@@ -160,19 +161,27 @@
     displacement = disp_z
     velocity = vel_z
     beta = 0.25
+    execute_on = TIMESTEP_END
   [../]
   [./vel_z]
     type = NewmarkVelAux
     variable = vel_z
     acceleration = accel_z
     gamma = 0.5
+    execute_on = TIMESTEP_END
   [../]
 []
 
 [Functions]
   [./ground_displacement]
-    type = ParsedFunction
-    value = 'if(t<0.1, 5.1*sin(pi*t/0.025), 0*t)'
+    type = PiecewiseLinear
+    data_file = 'displacement.csv' #if(0.001<t<0.1, 5.1*sin(pi*t/0.025), 0*t)
+    format = columns
+  [../]
+  [./ground_acceleration]
+    type = PiecewiseLinear
+    data_file = 'acceleration.csv'INT and SAVE this confirmation number** 
+    format = columns
   [../]
 []
 
@@ -184,7 +193,7 @@
     value = 0.0
   [../]
   
-  [./fixy]
+  [./fixx]
     type = PresetBC
     variable = disp_x
     boundary = 'support_a support_b support_c support_d'
@@ -192,16 +201,30 @@
   [../]
   [./fixz]
     type = PresetBC
-    variable = disp_z
+    variable = disp_z  perf_graph = true
     boundary = 'support_a support_b support_c support_d'
     value = 0.0
   [../]
 
   [./induce_displacement]
-    type = FunctionPresetBC
+    type = PresetDisplacement
     variable = disp_y
+    velocity = vel_y
+    acceleration = accel_y
     boundary = 'support_a support_b support_c support_d'
     function = ground_displacement
+    beta = 0.25
+    enable = true
+  [../]
+  [./induce_acceleration]
+    type = PresetAcceleration
+    variable = disp_y
+    velocity = vel_y
+    acceleration = accel_y
+    boundary = 'support_a support_b support_c support_d'
+    function = ground_acceleration
+    beta = 0.25
+    enable = false
   [../]
 []
 
@@ -209,7 +232,7 @@
   [./elasticity_tensor]
     type = ComputeIsotropicElasticityTensor
     youngs_modulus = 117211
-    poissons_ratio = 0.355
+    poissons_ratio = 0.355  perf_graph = true
   [../]
   [./strain]
     type = ComputeSmallStrain
@@ -248,7 +271,7 @@
 []
 
 [Postprocessors]
-  [./disp_a]
+   [./disp_a]
     type = ElementExtremeValue
     variable = disp_y
     block = 'accelerometer_a'
@@ -311,6 +334,10 @@
   [./ground_displacement]
     type = FunctionValuePostprocessor
     function = ground_displacement
+  [../]
+  [./ground_acceleration]
+    type = FunctionValuePostprocessor
+    function = ground_acceleration
   [../]
 []
 
