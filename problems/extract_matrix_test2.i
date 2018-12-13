@@ -1,3 +1,5 @@
+# released all DOFS and applied unit force/moment vector to all DOFS
+
 [Mesh]
   type = GeneratedMesh
   dim = 1
@@ -174,8 +176,4 @@
   exodus = true
   perf_graph = true
   csv = true
-  [./DOFMap]
-    type = DOFMap
-    execute_on = FINAL
-  [../]
 []

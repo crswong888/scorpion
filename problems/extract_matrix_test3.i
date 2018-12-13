@@ -1,3 +1,5 @@
+# restained all DOFs except u 1_2 and applied force of 2500N in this direction
+
 [Mesh]
   type = GeneratedMesh
   dim = 1
