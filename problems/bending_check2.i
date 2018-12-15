@@ -1,9 +1,11 @@
+# Bending of a very thick and short beam
+
 [Mesh]
   type = GeneratedMesh
   dim = 1
-  nx = 100
+  nx = 1
   xmin = 0.0000
-  xmax = 8000.0000
+  xmax = 10.0000
 []
 
 [Modules/TensorMechanics/LineElementMaster]
@@ -35,7 +37,7 @@
 [Functions]
   [./load]
     type = ConstantFunction
-    value = -1.0000E6
+    value = -1.0000E9
   [../]
 []
 
