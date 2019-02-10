@@ -10,6 +10,7 @@
 *-prof
 *-devel
 *.e
+*.csv
 *.nav
 *.log
 *.aux
