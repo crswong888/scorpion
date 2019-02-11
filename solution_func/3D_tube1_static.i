@@ -194,6 +194,35 @@
   [../]
 []
 
+[UserObjects]
+  [./soln]
+    type = SolutionUserObject
+    mesh = RZ_tube1_static_out.e
+    system_variables = 'disp_x disp_y'
+  [../]
+[]
+
+[Functions]
+  [./soln_func_disp_x]
+    type = Axisymmetric2D3DSolutionFunction
+    solution = soln
+    from_variables = 'disp_x disp_y'
+    component = 0
+  [../]
+  [./soln_func_disp_y]
+    type = Axisymmetric2D3DSolutionFunction
+    solution = soln
+    from_variables = 'disp_x disp_y'
+    component = 1
+  [../]
+  [./soln_func_disp_z]
+    type = Axisymmetric2D3DSolutionFunction
+    solution = soln
+    from_variables = 'disp_x disp_y'
+    component = 2
+  [../]
+[]
+
 [Modules/TensorMechanics/Master]
   [./all]
     add_variables = true
@@ -229,35 +258,6 @@
   [../]
 []
 
-[UserObjects]
-  [./soln]
-    type = SolutionUserObject
-    mesh = RZ_tube1_static_out.e
-    system_variables = 'disp_x disp_y'
-  [../]
-[]
-
-[Functions]
-  [./soln_func_disp_x]
-    type = Axisymmetric2D3DSolutionFunction
-    solution = soln
-    from_variables = 'disp_x disp_y'
-    component = 0
-  [../]
-  [./soln_func_disp_y]
-    type = Axisymmetric2D3DSolutionFunction
-    solution = soln
-    from_variables = 'disp_x disp_y'
-    component = 1
-  [../]
-  [./soln_func_disp_z]
-    type = Axisymmetric2D3DSolutionFunction
-    solution = soln
-    from_variables = 'disp_x disp_y'
-    component = 2
-  [../]
-[]
-
 [BCs]
   [./x_soln_bc]
     type = FunctionPresetBC
@@ -282,7 +282,7 @@
 [Materials]
   [./elasticity_tensor]
     type = ComputeIsotropicElasticityTensor
-    youngs_modulus = 200.0e9
+    youngs_modulus = 120.0e9
     poissons_ratio = 0.3
   [../]
   [./stress]

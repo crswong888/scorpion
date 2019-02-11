@@ -21,6 +21,21 @@
   coord_type = RZ
 []
 
+[Functions]
+  [./temp_inner]
+    type = ConstantFunction
+    value = 973.2   # Constant inner temp T_i = 973.2K ~ 700C
+  [../]
+  [./temp_outer]
+    type = ConstantFunction
+    value = 293.2   # Constnat outer temp T_o = 293.2K ~ 20C
+  [../]
+  [./pressure]
+    type = ConstantFunction
+    value = 2.5e7   # Constant internal pressure P = 2.5e7Pa
+  [../]
+[]
+
 [Variables]
   [./temp]
     initial_condition = 293.2   # T_0 = 293.2K ~ 20C, or room temp.
@@ -38,7 +53,7 @@
   [./all]
     add_variables = true
     eigenstrain_names = thermal_expansion
-    generate_output = 'strain_xx strain_yy strain_zz stress_xx stress_yy stress_zz vonmises_stress'
+    generate_output = 'strain_xx strain_yy strain_zz stress_xx stress_yy stress_zz vonmises_stress hydrostatic_stress'
   [../]
 []
 
@@ -67,21 +82,6 @@
     variable = hoop_stress
     scalar_type = HoopStress
     execute_on = timestep_end
-  [../]
-[]
-
-[Functions]
-  [./temp_inner]
-    type = ConstantFunction
-    value = 973.2   # Constant inner temp T_i = 973.2K ~ 700C
-  [../]
-  [./temp_outer]
-    type = ConstantFunction
-    value = 293.2   # Constnat outer temp T_o = 293.2K ~ 20C
-  [../]
-  [./pressure]
-    type = ConstantFunction
-    value = 2.5e7   # Constant internal pressure P = 2.5e7Pa
   [../]
 []
 
