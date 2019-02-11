@@ -180,7 +180,7 @@
   [../]
   [./ground_acceleration]
     type = PiecewiseLinear
-    data_file = 'acceleration.csv'INT and SAVE this confirmation number** 
+    data_file = 'acceleration.csv'
     format = columns
   [../]
 []

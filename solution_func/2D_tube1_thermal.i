@@ -1,4 +1,4 @@
-# Computes the axisymmetric stress-strain state of a thick-walled tube subject to internal pressure.
+# Computes the axisymmetric stress-strain state of a thick-walled tube subject to internal pressure and internal heat.
 
 [GlobalParams]
   disp_x = disp_x
@@ -21,9 +21,23 @@
   coord_type = RZ
 []
 
+[Variables]
+  [./temp]
+    initial_condition = 293.2   # T_0 = 293.2K ~ 20C, or room temp.
+  [../]
+[]
+
+[Kernels]
+  [./heat]
+    type = HeatConduction
+    variable = temp
+  [../]
+[]
+
 [Modules/TensorMechanics/Master]
   [./all]
     add_variables = true
+    eigenstrain_names = thermal_expansion
     generate_output = 'strain_xx strain_yy strain_zz stress_xx stress_yy stress_zz vonmises_stress'
   [../]
 []
@@ -57,6 +71,14 @@
 []
 
 [Functions]
+  [./temp_inner]
+    type = ConstantFunction
+    value = 973.2   # Constant inner temp T_i = 973.2K ~ 700C
+  [../]
+  [./temp_outer]
+    type = ConstantFunction
+    value = 293.2   # Constnat outer temp T_o = 293.2K ~ 20C
+  [../]
   [./pressure]
     type = ConstantFunction
     value = 2.5e7   # Constant internal pressure P = 2.5e7Pa
@@ -64,6 +86,18 @@
 []
 
 [BCs]
+  [./t_in]
+    type = FunctionPresetBC
+    variable = temp
+    boundary = left
+    function = temp_inner
+  [../]
+  [./t_out]
+    type = FunctionPresetBC
+    variable = temp
+    boundary = right
+    function = temp_outer
+  [../]
   [./Pressure]
     [./internal_pressure]
       boundary = left
@@ -75,11 +109,28 @@
 [Materials]
   [./elasticity_tensor]
     type = ComputeIsotropicElasticityTensor
-    youngs_modulus = 120.0e9   # representative of aluminium, E = 120.0e9Pa
+    youngs_modulus = 120.0e9   # representative of pure aluminium, E = 120.0e9Pa
     poissons_ratio = 0.3
   [../]
   [./stress]
     type = ComputeLinearElasticStress
+  [../]
+  [./thermal_properties]
+    type = HeatConductionMaterial
+    thermal_conductivity = 236.0   # avg. conductivity of pure aluminium from 300K to 600K, K_avg = 236.0W/(m*K)
+    specific_heat = 903.0   # pure aluminium, c = 903.0J/(kg*K)
+    temp = 293.2   # T_0 = 293.2K ~ 20C, or room temp.
+  [../]
+  [./thermal_expansion]
+    type = ComputeThermalExpansionEigenstrain
+    thermal_expansion_coeff = 23.0e-6   # pure aluminum, alpha = 23.6K^-1
+    stress_free_temperature = 293.2   # T_0 = 293.2K ~ 20C, or room temp.
+    temperature = temp
+    eigenstrain_name = thermal_expansion
+  [../]
+  [./density]
+    type = Density
+    density = 2702.0   # pure aluminium, rho = 2702.0kg/m^3
   [../]
 []
 
@@ -94,8 +145,10 @@
 
 [Executioner]
   type = Transient
-  solve_type = NEWTON
-  num_steps = 1
+  solve_type = Newton
+  start_time = 0.0
+  dt = 1.0
+  end_time = 1.0
 []
 
 [Outputs]

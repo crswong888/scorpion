@@ -197,7 +197,7 @@
 [Modules/TensorMechanics/Master]
   [./all]
     add_variables = true
-    generate_output = 'stress_xx stress_yy stress_zz vonmises_stress'
+    generate_output = 'strain_xx strain_yy strain_zz stress_xx stress_yy stress_zz vonmises_stress'
   [../]
 []
 

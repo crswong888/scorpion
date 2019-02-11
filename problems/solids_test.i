@@ -27,7 +27,7 @@
 [Functions]
   [./load]
     type = ConstantFunction
-    value = -0.2   # 60N/300NODE = 0.2N/NODE
+    value = -0.2   # 60N/300NODE = 0.2N/NODEpea
   [../]
 []
 
