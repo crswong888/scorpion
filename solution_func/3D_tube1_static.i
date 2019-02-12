@@ -1,7 +1,6 @@
+# Transforms the axisymmetric solution of a thick-walled tube subject to internal pressure to 3D, XYZ coordinates.
+
 [GlobalParams]
-  disp_x = disp_x
-  disp_y = disp_y
-  disp_z = disp_z
   displacements = 'disp_x disp_y disp_z'
 []
 

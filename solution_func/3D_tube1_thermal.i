@@ -1,3 +1,5 @@
+# Transforms the axisymmetric solution of a thick-walled tube subject to internal pressure and internal heat to 3D, XYZ coordinates.
+
 [GlobalParams]
   disp_x = disp_x
   disp_y = disp_y

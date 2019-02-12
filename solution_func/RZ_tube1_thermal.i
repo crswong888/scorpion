@@ -22,14 +22,6 @@
 []
 
 [Functions]
-  [./temp_inner]
-    type = ConstantFunction
-    value = 973.2   # Constant inner temp T_i = 973.2K ~ 700C
-  [../]
-  [./temp_outer]
-    type = ConstantFunction
-    value = 293.2   # Constnat outer temp T_o = 293.2K ~ 20C
-  [../]
   [./pressure]
     type = ConstantFunction
     value = 2.5e7   # Constant internal pressure P = 2.5e7Pa
@@ -38,7 +30,6 @@
 
 [Variables]
   [./temp]
-    initial_condition = 293.2   # T_0 = 293.2K ~ 20C, or room temp.
   [../]
 []
 
@@ -86,17 +77,17 @@
 []
 
 [BCs]
-  [./t_in]
-    type = FunctionPresetBC
+  [./temp_inner]
+    type = PresetBC
     variable = temp
     boundary = left
-    function = temp_inner
+    value = 973.2   # Constant inner temp T_i = 973.2K ~ 700C
   [../]
-  [./t_out]
-    type = FunctionPresetBC
+  [./temp_outter]
+    type = PresetBC
     variable = temp
     boundary = right
-    function = temp_outer
+    value = 293.2   # Constnat outer temp T_o = 293.2K ~ 20C
   [../]
   [./Pressure]
     [./internal_pressure]
