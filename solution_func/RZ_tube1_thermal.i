@@ -87,7 +87,7 @@
     type = PresetBC
     variable = temp
     boundary = right
-    value = 293.2   # Constnat outer temp T_o = 293.2K ~ 20C
+    value = 293.2   # Constant outer temp T_o = 293.2K ~ 20C (room temp.)
   [../]
   [./Pressure]
     [./internal_pressure]
