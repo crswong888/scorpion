@@ -1,99 +1,104 @@
-# THIS MODEL IS CURRENTLY UNDER CONSTRUCTION
-
-# This is an input file for a 1D line mesh model of a half-length surrogate Cu nuclear fuel rod with fixed supports
-
-# Works best 3 processors, 3-15 threads, default partitioner type
-
-# The ExplicitEuler TimeIntegration scheme is slightly faster than ImplicitEuler (default)
-
-# Using FunctionPresetBC to induce shake-table motion at supports
-# When using a Dirichlet BC, it creates a lot of noise with the acceleration
-# MOOSE has also reported this issue
-
+# Test [MeshGenerators] to make meshing of this model more flexible
+# Test modified version of PresetAcceleration.C
 
 [Mesh]
-  type = GeneratedMesh
-  dim = 1
-  nx = 1676
-  xmin = 0
-  xmax = 1676
+  type = MeshGeneratorMesh
   construct_node_list_from_side_list = false
 []
 
-[MeshModifiers]
-  [./support_a]
-    type = AddExtraNodeset
+[MeshGenerators]
+  [./support_A_accelerometer_A]
+    type = GeneratedMeshGenerator
+    dim = 1
+    nx = 65
+    xmin = 0
+    xmax = 260
+  [../]
+  [./accelerometer_A]
+    type = GeneratedMeshGenerator
+    dim = 1
+    nx = 2
+    xmin = 260
+    xmax = 262
+  [../]
+  [./accelerometer_A_support_B]
+    type = GeneratedMeshGenerator
+    dim = 1
+    nx = 65
+    xmin = 262
+    xmax = 522
+  [../]
+  [./support_B_accelerometer_B]
+    type = GeneratedMeshGenerator
+    dim = 1
+    nx = 65
+    xmin = 522
+    xmax = 782
+  [../]
+  [./accelerometer_B]
+   type = GeneratedMeshGenerator
+   dim = 1
+   nx = 2
+   xmin = 782
+   xmax = 784
+  [../]
+  [./accelerometer_B_support_C]
+    type = GeneratedMeshGenerator
+    dim = 1
+    nx = 65
+    xmin = 784
+    xmax = 1044
+  [../]
+  [./support_C_support_D]
+    type = GeneratedMeshGenerator
+    dim = 1
+    nx = 158
+    xmin = 1044
+    xmax = 1676
+  [../]
+
+
+  [./node_support_A]
+    type = ExtraNodesetGenerator
+    input = support_A_accelerometer_A
     coord = 0
     new_boundary = support_a
   [../]
-  [./accelerometer_a]
-    type = AddExtraNodeset
+  [./node_accelerometer_A]
+    type = ExtraNodesetGenerator
+    input = accelerometer_A
     coord = 261
     new_boundary = accelerometer_a
   [../]
-  [./support_b]
-    type = AddExtraNodeset
+  [./node_support_B]
+    type = ExtraNodesetGenerator
+    input = accelerometer_A_support_B
     coord = 522
     new_boundary = support_b
-    force_prepare = true
   [../]
-  [./accelerometer_b]
-    type = AddExtraNodeset
+  [./node_accelerometer_B]
+    type = ExtraNodesetGenerator
+    input = accelerometer_B
     coord = 783
     new_boundary = accelerometer_b
   [../]
-  [./support_c]
-    type = AddExtraNodeset
+  [./node_support_C]
+    type = ExtraNodesetGenerator
+    input = accelerometer_B_support_C
     coord = 1044
     new_boundary = support_c
   [../]
-  [./accelerometer_c]
-    type = AddExtraNodeset
+  [./node_accelerometer_C]
+    type = ExtraNodesetGenerator
+    input = support_C_support_D
     coord = 1360
     new_boundary = accelerometer_c
   [../]
-  [./support_d]
-    type = AddExtraNodeset
+  [./node_support_D]
+    type = ExtraNodesetGenerator
+    input = support_C_support_D
     coord = 1676
     new_boundary = support_d
-  [../]
-
-
-  [./element_a]
-    type = SubdomainBoundingBox
-    top_right = '1 0 0'
-    bottom_left = '0 0 0'
-    block_id = 1
-  [../]
-  [./element_b1]
-    type = SubdomainBoundingBox
-    top_right = '522 0 0'
-    bottom_left = '521 0 0'
-    block_id = 2
-  [../]
-  [./element_b2]
-    type = SubdomainBoundingBox
-    top_right = '523 0 0'
-    bottom_left = '522 0 0'
-    block_id = 3
-  [../]
-  [./element_c1]
-    type = SubdomainBoundingBox
-    top_right = '1044 0 0'
-    bottom_left = '1043 0 0'
-    block_id = 4
-  [../]
-  [./element_c2]
-    type = SubdomainBoundingBox
-    top_right = '1045 0 0'
-    bottom_left = '1044 0 0'
-    block_id = 5
-  [../]
-  [./element_d]
-    type = SubdomainBoundingBox
-    top_right = '1676 0 0'
-    bottom_left = '1675 0 0'
-    block_id = 6
   [../]
 []
 
@@ -335,64 +340,6 @@
   [./ground_acceleration]
     type = FunctionValuePostprocessor
     function = ground_acceleration
-  [../]
-
-
-  [./moment_element_a]
-    type = ElementAverageValue
-    variable = moments_z
-    block = 1
-  [../]
-  [./rotation_support_a]
-    type = LinearCombinationPostprocessor
-    pp_names = moment_element_a
-    pp_coefs = 1.25E-6 #1/8.0E5 N*mm
-  [../]
-
-
-  [./moment_element_b1]
-    type = ElementAverageValue
-    variable = moments_z
-    block = 2
-  [../]
-  [./moment_element_b2]
-    type = ElementAverageValue
-    variable = moments_z
-    block = 3
-  [../]
-  [./rotation_support_b]
-    type = LinearCombinationPostprocessor
-    pp_names = 'moment_element_b1 moment_element_b2'
-    pp_coefs = '1.25E-6 1.25E-6' #1/8.0E5 N*mm
-  [../]
-
-
-  [./moment_element_c1]
-    type = ElementAverageValue
-    variable = moments_z
-    block = 4
-  [../]
-  [./moment_element_c2]
-    type = ElementAverageValue
-    variable = moments_z
-    block = 5
-  [../]
-  [./rotation_support_c]
-    type = LinearCombinationPostprocessor
-    pp_names = 'moment_element_c1 moment_element_c2'
-    pp_coefs = '1.25E-6 1.25E-6' #1/8.0E5 N*mm
-  [../]
-
-
-  [./moment_element_d]
-    type = ElementAverageValue
-    variable = moments_z
-    block = 6
-  [../]
-  [./rotation_support_d]
-    type = LinearCombinationPostprocessor
-    pp_names = moment_element_d
-    pp_coefs = 1.25E-6 #1/8.0E5 N*mm
   [../]
 []
 

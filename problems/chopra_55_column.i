@@ -42,13 +42,13 @@
 
 # Values from the first few time steps, as given by Chopra, are as follows:
 # time   disp_y      vel_y    accel_y       f_s
-# 0.0    0.0000     0.0000     0.0000    0.0000               
+# 0.0    0.0000     0.0000     0.0000    0.0000
 # 0.1    0.1213     2.4259    48.5187    2.1833
 # 0.2    0.6462     8.0714    64.3899   11.6309
 # 0.3    1.7002    13.0092    34.3673   30.6034
 # 0.4    3.1034    15.0553     6.5534   36.0000
 # 0.5    4.5434    13.7448   -32.7628   36.0000
-# 0.6    5.6262     7.9102   -83.9283   36.0000                    
+# 0.6    5.6262     7.9102   -83.9283   36.0000
 # 0.7    6.0103    -0.2269   -78.8151   36.0000
 # 0.8    5.6409    -7.1614   -59.8736   29.3505
 # 0.9    4.7224   -11.2085   -21.0693   12.8176
@@ -243,8 +243,8 @@
   [./plastic]
     type = TensorMechanicsPlasticTensileMulti
     tensile_strength = strength
-    yield_function_tolerance = 1.0e-9
-    internal_constraint_tolerance = 1.0e-9
+    yield_function_tolerance = 1.0e-8
+    internal_constraint_tolerance = 1.0e-8
     use_custom_returnMap = False
     use_custom_cto = False
     max_iterations = 20
@@ -263,7 +263,7 @@
   [../]
   [./stress]
     type = ComputeMultiPlasticityStress
-    ep_plastic_tolerance = 10.0e-3
+    ep_plastic_tolerance = 1.0e-8
     plastic_models = plastic
     store_stress_old = True
     perform_finite_strain_rotations = False
@@ -279,21 +279,18 @@
   [./smp]
     type = SMP
     full = true
+    petsc_options_iname = '-ksp_type -pc_type -sub_pc_type -snes_atol -snes_rtol -snes_max_it -ksp_atol -ksp_rtol -sub_pc_factor_shift_type'
+    petsc_options_value = 'gmres asm lu 1E-8 1E-8 25 1E-8 1E-8 NONZERO'
   [../]
 []
 
 [Executioner]
   type = Transient
-  solve_type = NEWTON
-  line_search = 'none'
-  l_tol = 1e-8
-  nl_max_its = 15
-  nl_rel_tol = 1e-8
-  nl_abs_tol = 1e-8
+  solve_type = Newton
+  scheme = explicit-euler
   start_time = 0.0
-  dt = 0.1
-  end_time = 1.0
-  timestep_tolerance = 1e-6
+  dt = 0.01
+  end_time = 10.0
 []
 
 [Postprocessors]
