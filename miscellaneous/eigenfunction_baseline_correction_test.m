@@ -12,7 +12,7 @@ u_dot(1) = 0 ;
 u_(1) = 0 ;
 
 for i = 1:N-1
-    if t(i) < 0.05 -dt
+    if t(i) < 0.05 - dt
         u_dot_dot(i+1) = - (200 * pi)^2 * sin(200 * pi * t(i+1)) ;
     else
         u_dot_dot(i+1) = 0 ;
@@ -20,3 +20,9 @@ for i = 1:N-1
     u_dot(i+1) = u_dot(i) + (1-gamma) * dt * u_dot_dot(i) + gamma * dt * u_dot_dot(i+1) ;
     u_(i+1) = u_(i) + dt * u_dot(i) + (0.5 - beta) * dt * dt * u_dot_dot(i) + beta * dt * dt * u_dot_dot(i+1) ;
 end
+
+figure
+plot (t,u_)
+
+figure
+plot(t,u_dot_dot)
