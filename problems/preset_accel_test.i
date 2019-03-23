@@ -159,6 +159,11 @@
     variable = vel_y
     boundary = mid_point
   [../]
+  [./relative_vel_mid]
+    type = DifferencePostprocessor
+    value1 = vel_mid
+    value2 = vel_support
+  [../]
   [./accel_mid]
     type = NodalMaxValue
     variable = accel_y
