@@ -23,9 +23,10 @@ public:
   virtual ~scorpionTestApp();
 
   static void registerApps();
-  static void registerObjects(Factory & factory);
-  static void associateSyntax(Syntax & syntax, ActionFactory & action_factory);
-  static void registerExecFlags(Factory & factory);
+  static void registerAll(Factory & factory,
+                          ActionFactory & action_factory,
+                          Syntax & syntax,
+                          bool use_test_objs = false);
 };
 
 #endif /* SCORPIONTESTAPP_H */
