@@ -1,3 +1,6 @@
+# PresetAccel test Case 1: a fixed-fixed beam with accel BC
+# applied equally at both ends
+
 [Mesh]
   type = GeneratedMesh
   dim = 1
@@ -172,7 +175,8 @@
 []
 
 [Outputs]
+  file_base = outputs/preset_accel_test1_out
   exodus = true
-  perf_graph = true
   csv = true
+  perf_graph = true
 []
