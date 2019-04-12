@@ -38,15 +38,15 @@
     gamma = 0.5
 
     # Rayleigh damping parameters (target 5% damping)
-    eta = 3.6783 # mass proportional damping
-    zeta = 3.5833E-4 # stiffness proportional damping
+    eta = 6.4805E-1 # mass proportional damping
+    zeta = 7.8787E-4 # stiffness proportional damping
   [../]
 []
 
 [Functions]
   [./applied_accel]
     type = ParsedFunction
-    value = 'if(t<1, -1974*sin(10*pi*t), 0*t)' #in/s^2
+    value = 'if(t<5, -178*sin(3*pi*t), 0*t)' #in/s^2
   [../]
 []
 
@@ -129,8 +129,8 @@
   type = Transient
   solve_type = NEWTON
   start_time = 0.0
-  dt = 0.01
-  end_time = 2.0
+  dt = 0.025
+  end_time = 10.0
   line_search = none
 
   [./TimeIntegrator]
