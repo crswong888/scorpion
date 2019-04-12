@@ -1,6 +1,5 @@
-# PresetAccel test Case 1: a fixed-fixed beam with accel BC
-# applied equally at both ends. This model is undamped. The mass
-# is uniformly distributed along its length.
+# PresetAccel test Case 1: same as case 1, except with Rayleigh
+# damping with a target ratio of 0.5
 
 [Mesh]
   type = GeneratedMesh
@@ -44,6 +43,10 @@
     # Newmark constant average acceleration parameters
     beta = 0.25
     gamma = 0.5
+
+    # Rayleigh damping parameters (target 5% damping)
+    eta = 1.1481E2 # mass proportional damping
+    zeta = 1.1481E-5 # stiffness proportional damping
   [../]
 []
 
@@ -178,7 +181,7 @@
 []
 
 [Outputs]
-  file_base = outputs/preset_accel_test1_out
+  file_base = outputs/preset_accel_test2_out
   exodus = true
   csv = true
   perf_graph = true
