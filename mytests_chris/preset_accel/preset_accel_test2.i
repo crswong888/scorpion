@@ -1,4 +1,4 @@
-# PresetAccel test Case 1: same as case 1, except with Rayleigh
+# PresetAccel test Case 2: same as case 1, except with Rayleigh
 # damping with a target ratio of 0.5
 
 [Mesh]
