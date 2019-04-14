@@ -1,0 +1,18 @@
+*Node
+      1,  0.0, 0.0, 0.
+      2, 30.0, 40.0, 0.
+      3, 80.0, 40.0, 0.
+*Element, type=B31
+1, 1, 2
+2, 2, 3
+*Nset, nset=A
+  1
+*Nset, nset=B
+  2
+*Nset, nset=C
+  3
+*Elset, elset=elem_AB
+  1
+*Elset, elset=elem_BC
+  2
+*End Part
