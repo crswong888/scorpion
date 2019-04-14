@@ -1,4 +1,4 @@
-*.odf
+*.ods
 
 .libs
 *.la

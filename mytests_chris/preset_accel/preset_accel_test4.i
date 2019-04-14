@@ -1,6 +1,6 @@
-# PresetAccel test Case 3: a cantilever beam with accel BC applied at the free
-# end. This is a damped model with a target ratio of 0.05. The mass is
-# uniformly distributed along its length.
+# PresetAccel test Case 4: This one is sort of the opposite of case 3.
+# Everything is the same, except in this one, the acceleration is applied at
+# the fixed support. This should at least allow the free end to oscillate.
 
 [Mesh]
   type = GeneratedMesh
@@ -58,12 +58,6 @@
     boundary = left
     value = 0.0
   [../]
-  [./fixy]
-    type = PresetBC
-    variable = disp_y
-    boundary = left
-    value = 0.0
-  [../]
   [./fixz]
     type = PresetBC
     variable = disp_z
@@ -94,8 +88,8 @@
     variable = disp_y
     velocity = vel_y
     acceleration = accel_y
-    boundary = right
-    function = applied_accel
+    boundary = left
+    function = wall_accel
     beta = 0.25
   [../]
 []
@@ -131,12 +125,26 @@
   solve_type = NEWTON
   scheme = explicit-euler
   start_time = 0.0
-  dt = 0.025
-  end_time = 10.0
-  line_search = none
+  dt = 0.001
+  end_time = 2.0
 []
 
 [Postprocessors]
+  [./disp_wall]
+    type = NodalMaxValue
+    variable = disp_y
+    boundary = left
+  [../]
+  [./vel_wall]
+    type = NodalMaxValue
+    variable = vel_y
+    boundary = left
+  [../]
+  [./accel_wall]
+    type = NodalMaxValue
+    variable = accel_y
+    boundary = left
+  [../]
   [./disp_free_end]
     type = NodalMaxValue
     variable = disp_y
@@ -147,15 +155,20 @@
     variable = vel_y
     boundary = right
   [../]
-  [./accel_free_end]
-    type = NodalMaxValue
-    variable = accel_y
-    boundary = right
+  [./disp_rel_free_end]
+    type = DifferencePostprocessor
+    value1 = disp_free_end
+    value2 = disp_wall
+  [../]
+  [./vel_rel_free_end]
+    type = DifferencePostprocessor
+    value1 = vel_free_end
+    value2 = vel_wall
   [../]
 []
 
 [Outputs]
-  file_base = outputs/preset_accel_test3_out
+  file_base = outputs/preset_accel_test4_out
   exodus = true
   csv = true
   perf_graph = true
