@@ -1,8 +1,8 @@
 # A.K. Chopra, "Dynamics of Structures," Example 5.3 - SDOF system response to half-sine impulse
 # By: Christopher Wong, University of New Hampshire
 
-# This input file attempts to replicate the results from Chopra, Example 5.3, using a 
-# 25.0 x 1.0 x 1.0 cm cantilever beam with its mass lumped on the unsupported end and the same  
+# This input file attempts to replicate the results from Chopra, Example 5.3, using a
+# 25.0 x 1.0 x 1.0 cm cantilever beam with its mass lumped on the unsupported end and the same
 # half-sine impulse defined in the problem.
 
 # The values given in the problem are as follows:
@@ -35,14 +35,14 @@
 
 # Values from the first few time steps, as given by Chopra, are as follows:
 # time   disp_y      vel_y     accel_y
-# 0.0    0.0000     0.0000      0.0000               
-# 0.1    0.1213     2.4259     48.5188 
+# 0.0    0.0000     0.0000      0.0000
+# 0.1    0.1213     2.4259     48.5188
 # 0.2    0.6462     8.0714     64.3902
 # 0.3    1.7002    13.0093     34.3676
 # 0.4    3.0071    13.1280    -31.9927
 # 0.5    3.9749     6.2281   -106.0050
-# 0.6    3.9530    -6.6657   -151.8716                       
-# 0.7    2.6727   -18.9400    -93.6151 
+# 0.6    3.9530    -6.6657   -151.8716
+# 0.7    2.6727   -18.9400    -93.6151
 # 0.8    0.5299   -23.9155     -5.8945
 # 0.9   -1.6788   -20.2598     79.0081
 # 1.0   -3.1783    -9.7299    131.5900
