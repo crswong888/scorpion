@@ -7,6 +7,7 @@
   file = grid1.inp
   displacements = 'disp_x disp_y disp_z'
   construct_side_list_from_node_list = true
+  allow_renumbering = false
 []
 
 [Modules/TensorMechanics/Master]
