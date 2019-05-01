@@ -4,8 +4,10 @@
 
 [Mesh]
   type = FileMesh
-  file = Quad8_3D_deformed.e
-  partitioner = linear
+  file = Quad8_3D_deformed.e  # this creates a blank (0 stress) deformed mesh
+                              # of the Quad8 model.
+  partitioner = centroid
+  centroid_partitioner_direction = y
 [../]
 
 [UserObjects]
@@ -31,8 +33,9 @@
   [../]
   [./load]
     type = ConstantFunction
-    value = 1.5932E8
-  [../]
+    value = 1.5932E8   # actually I want this to point in the negative
+                       # direction, but it appears that the PressureBC object
+  [../]                # points in the negative by default
 []
 
 [Modules/TensorMechanics/Master]
@@ -41,21 +44,15 @@
   [../]
 []
 
-[NodalKernels]
-  [./compress_top]
-    type = UserForcingFunctionNodalKernel
-    variable = disp_y
-    function = load
-    boundary = top
-    enable = false
-  [../]
-[]
-
 [AuxVariables]
   ## store elastic moduli as nodal variables
   [./poissons_ratio]
+    order = CONSTANT
+    family = MONOMIAL
   [../]
   [./youngs_modulus]
+    order = CONSTANT
+    family = MONOMIAL
   [../]
 
   ## check elasticity tensor components for verification
