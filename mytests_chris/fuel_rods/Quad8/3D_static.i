@@ -31,7 +31,7 @@
   [../]
   [./load]
     type = ConstantFunction
-    value = -250
+    value = 1.5932E8
   [../]
 []
 
@@ -47,7 +47,7 @@
     variable = disp_y
     function = load
     boundary = top
-    enable = true
+    enable = false
   [../]
 []
 
@@ -105,20 +105,10 @@
 []
 
 [Materials]
-  [./poissons_ratio]
-    type = VariableGradientMaterial
-    prop = poissons_ratio
-    variable = poissons_ratio
-  [../]
-  [./youngs_modulus]
-    type = VariableGradientMaterial
-    prop = youngs_modulus
-    variable = youngs_modulus
-  [../]
-  [./elasticity_tensor]
-    type = ADComputeVariableIsotropicElasticityTensor
-    poissons_ratio = poissons_ratio
+  [./elasticity_tesnors]
+    type = VariableElasticModulus
     youngs_modulus = youngs_modulus
+    poissons_ratio = poissons_ratio
   [../]
   [./stress]
     type = ComputeLinearElasticStress
@@ -130,7 +120,7 @@
     type = PresetBC
     variable = disp_x
     value = 0
-    boundary = bottom
+    boundary = 'bottom top'
   [../]
   [./fixy]
     type = PresetBC
@@ -142,7 +132,13 @@
     type = PresetBC
     variable = disp_z
     value = 0
-    boundary = bottom
+    boundary = 'bottom top'
+  [../]
+  [./Pressure]
+    [./compress_top]
+      boundary = top
+      function = load
+    [../]
   [../]
 []
 

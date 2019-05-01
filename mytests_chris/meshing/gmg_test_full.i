@@ -13,7 +13,7 @@
   rotations = 'rot_x rot_y rot_z'
 
   # Geometry parameters
-  area = 
+  area =
   Iy =
   Iz =
 
