@@ -1,13 +1,15 @@
 #include "VariableElasticModulus.h"
 
-registerMOOSEObject("scorpionApp", VariableElasticModulus);
+registerMooseObject("scorpionApp", VariableElasticModulus);
 
 template <>
 InputParameters
 validParams<VariableElasticModulus>()
 {
-  InputParameters = validParams<ComputeElasticityTensorBase>();
-  params.addClassDescription();
+  InputParameters params = validParams<ComputeElasticityTensorBase>();
+  params.addClassDescription(
+      "Couples the Young's modulus and Poisson's ratio to a field variable "
+      "and computes an isotropic elasticity tensor at those quadature points.");
   params.addCoupledVar("youngs_modulus",
       "The field variable to be coupled to Young's modulus");
   params.addCoupledVar("poissons_ratio",
@@ -20,7 +22,7 @@ VariableElasticModulus::VariableElasticModulus(const InputParameters & parameter
     _youngs_modulus(coupledValue("youngs_modulus")),
     _poissons_ratio(coupledValue("poissons_ratio"))
 {
-  issueGaurantee(_elasticity_tensor_name, Guarantee::ISOTROPIC);
+  issueGuarantee(_elasticity_tensor_name, Guarantee::ISOTROPIC);
 }
 
 void

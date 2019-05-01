@@ -1,7 +1,6 @@
 #ifndef VARIABLEELASTICMODULUS_H
 #define VARIABLEELASTICMODULUS_H
 
-#include "Material.h"
 #include "ComputeElasticityTensorBase.h"
 
 class VariableElasticModulus;
