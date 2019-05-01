@@ -1,0 +1,6 @@
+vtkCompositeIndexArray,vtkOriginalIndices,vtkOriginalCellIds,Cell Type,GlobalElementId,PedigreeElementId,__vtkIsSelected__,aux_poissons_ratio,aux_youngs_modulus
+2,0,472,23,2233,2233,0,0.365474,71272900000
+2,1,473,23,2234,2234,0,0.366106,70870200000
+2,2,474,23,2235,2235,0,0.366732,70475900000
+2,3,475,23,2236,2236,0,0.367333,70101900000
+,,,,,,,0.36641125,70680225000
