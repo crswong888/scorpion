@@ -1,3 +1,14 @@
+# This is a 3D rodlet model of irradiated Zr-4 cladding subject to a
+# uni-axial loading of 2500N.
+
+# The displacements and material properties are those expected at the typical
+# level of radiation for a 2.5-yr LWR run.
+
+# The displacements were the sum total of elastic, thermoelastic, and plastic
+# strains. The empty mesh assumes the deformed nodal coordiantes.
+
+# The elastic moduli were computed using the MATPRO material model.
+
 [GlobalParams]
   displacements = 'disp_x disp_y disp_z'
 []
@@ -45,7 +56,7 @@
 []
 
 [AuxVariables]
-  ## store elastic moduli as nodal variables
+  ## store elastic moduli element qp variables
   [./poissons_ratio]
     order = CONSTANT
     family = MONOMIAL
@@ -132,6 +143,7 @@
     boundary = 'bottom top'
   [../]
   [./Pressure]
+    # apply axial compressive load as pressure to top boundary in y-direction
     [./compress_top]
       boundary = top
       function = load
@@ -143,7 +155,8 @@
   [./smp]
     type = SMP
     full = true
-    petsc_options_iname = '-ksp_type -pc_type -sub_pc_type -snes_atol -snes_rtol -snes_max_it -ksp_atol -ksp_rtol -sub_pc_factor_shift_type'
+    petsc_options_iname = '-ksp_type -pc_type -sub_pc_type -snes_atol -snes_rtol
+                     -snes_max_it -ksp_atol -ksp_rtol -sub_pc_factor_shift_type'
     petsc_options_value = 'gmres asm lu 1E-8 1E-8 25 1E-8 1E-8 NONZERO'
   [../]
 []
