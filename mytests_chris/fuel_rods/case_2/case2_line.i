@@ -6,20 +6,19 @@
 
 [GlobalParams]
   displacements = 'disp_x disp_y disp_z'
+  rotations = 'rot_x rot_y rot_z'
 []
 
 [Mesh]
   type = FileMesh
-  file = case2_line.inp
+  file = case2_line.e
   partitioner = linear
   allow_renumbering = false
 []
 
 [Modules/TensorMechanics/LineElementMaster]
-  [./all]
+  [./fuel_rod]
     add_variables = true
-    rotations = 'rot_x rot_y rot_z'
-
     velocities = 'vel_x vel_y vel_z'
     accelerations = 'accel_x accel_y accel_z'
     rotational_velocities = 'rot_vel_x rot_vel_y rot_vel_z'
@@ -33,11 +32,34 @@
 
     # dynamic simulation using consistent mass/inertia matrix
     dynamic_consistent_inertia = true
-    density = 'density'
+    density = density
     beta = 0.25
     gamma = 0.5
     eta = 19.2355
-    zeta = 2.3287E-5
+    zeta = 2.3287e-5
+
+    block = fuel_rod
+  [../]
+  [./springs]
+    add_variables = true
+    velocities = 'vel_x vel_y vel_z'
+    accelerations = 'accel_x accel_y accel_z'
+    rotational_velocities = 'rot_vel_x rot_vel_y rot_vel_z'
+    rotational_accelerations = 'rot_accel_x rot_accel_y rot_accel_z'
+
+    # Geometry parameters
+    area = 1.0e10
+    Iy = 12.0
+    Iz = 12.0
+    y_orientation = '0.0 1.0 0.0'
+
+    # dynamic simulation using consistent mass/inertia matrix
+    dynamic_consistent_inertia = true
+    density = density
+    beta = 0.25
+    gamma = 0.5
+
+    block = springs
   [../]
 []
 
@@ -47,6 +69,8 @@
     variable = disp_z
     value = -9810
     enable = false # gravity? ... I don't think it works well with LineElementMaster
+    # possibly need to implement a way to use gravity with beams and include
+    # a static_initialization parameter in stressdivergencebeam
   [../]
 []
 
@@ -68,21 +92,36 @@
 []
 
 [Materials]
-  [./elasticity]
+  [./fuel_rod_elasticity]
     type = ComputeElasticityBeam
     youngs_modulus = 117211
     poissons_ratio = 0.355
     shear_coefficient = 0.5397
+    block = fuel_rod
+  [../]
+  [./springs_elasticity]
+    type = ComputeElasticityBeam
+    youngs_modulus = 1.0e5
+    poissons_ratio = 0.5
+    shear_coefficient = 1.0
+    block = springs
   [../]
   [./stress]
     type = ComputeBeamResultants
     outputs = exodus
     output_properties = 'forces moments'
   [../]
-  [./density]
+  [./rod_density]
     type = GenericConstantMaterial
-    prop_names = 'density'
-    prop_values = 8.94E-9
+    prop_names = density
+    prop_values = 8.94e-9
+    block = fuel_rod
+  [../]
+  [./spring_density]
+    type = GenericConstantMaterial
+    prop_names = density
+    prop_values = 9.0e-7 # really big to make its frequency really low
+    block = springs
   [../]
 []
 
@@ -92,7 +131,7 @@
     type = FunctionIC
     variable = vel_y
     function = initial_vel
-    boundary = 'support_a support_b support_c support_d'
+    boundary = 'spring_a spring_b spring_c spring_d'
   [../]
 []
 
@@ -100,31 +139,31 @@
   [./fixx]
     type = PresetBC
     variable = disp_x
-    boundary = 'support_a support_b support_c support_d'
+    boundary = 'spring_a spring_b spring_c spring_d'
     value = 0.0
   [../]
   [./fixz]
     type = PresetBC
     variable = disp_z
-    boundary = 'support_a support_b support_c support_d'
+    boundary = 'spring_a spring_b spring_c spring_d'
     value = 0.0
   [../]
   [./fixrx]
     type = PresetBC
     variable = rot_x
-    boundary = 'support_a support_b support_c support_d'
+    boundary = 'spring_a spring_b spring_c spring_d'
     value = 0.0
   [../]
   [./fixry]
     type = PresetBC
     variable = rot_y
-    boundary = 'support_a support_b support_c support_d'
+    boundary = 'spring_a spring_b spring_c spring_d'
     value = 0.0
   [../]
   [./fixrz]
     type = PresetBC
     variable = rot_z
-    boundary = 'support_a support_b support_c support_d'
+    boundary = 'spring_a spring_b spring_c spring_d'
     value = 0.0
     enable = true #fixed support = true
   [../]
@@ -134,7 +173,7 @@
     variable = disp_y
     velocity = vel_y
     acceleration = accel_y
-    boundary = 'support_a support_b support_c support_d'
+    boundary = 'spring_a spring_b spring_c spring_d'
     function = ground_acceleration
     beta = 0.25
     enable = true
@@ -143,7 +182,7 @@
   [./fixy]
     type = PresetBC
     variable = disp_y
-    boundary = 'support_a support_b support_c support_d'
+    boundary = 'spring_a spring_b spring_c spring_d'
     value = 0.0
   [../]
 []
