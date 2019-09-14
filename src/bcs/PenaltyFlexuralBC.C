@@ -6,12 +6,7 @@ template <>
 InputParameters
 validParams<PenaltyFlexuralBC>()
 {
-  InputParameters params = validParams<IntegratedBC>();
-  params.addRequiredParam<Real>("penalty", "Penalty parameter");
-  params.addRequiredCoupledVar("displacements",
-      "The vector of displacement variables");
-  params.addRequiredParam<unsigned int>("component",
-      "An integer corresponding to the direction (0 for x, 1 for y, 2 for z)");
+  InputParameters params = validParams<NodalBC>();
   params.addRequiredParam<RealVectorValue>("axis_origin",
       "Origin of the neutral axis");
       // axis origin can be any coordinates
@@ -20,6 +15,12 @@ validParams<PenaltyFlexuralBC>()
   params.addRequiredParam<RealVectorValue>("transverse_direction",
       "Direction of the transverse direction");
       // directions must be unit vectors
+  params.addRequiredParam<unsigned int>("component",
+      "An integer corresponding to the direction (0 for x, 1 for y, 2 for z)");
+  params.addRequiredCoupledVar("displacements",
+      "The vector of displacement variables");
+  params.addRequiredParam<Real>("penalty",
+      "Penalty parameter");
   params.addClassDescription(
       "Penalty Enforcement constraining a boundary to rotate about a defined "
       "neutral axis as a rigid surface. This BC can be used to model simple "
@@ -29,13 +30,14 @@ validParams<PenaltyFlexuralBC>()
 
 PenaltyFlexuralBC::PenaltyFlexuralBC(const InputParameters & parameters)
   : NodalBC(parameters),
-    _ndisp(coupledComponents("displacements")),
-    _disp_var(_ndisp)
-    _disp(3),
-    _component(getParam<unsigned int>("component")),
     _y_bar(getParam<RealVectorValue>("axis_origin")),
     //_axis_direction(getParam<RealVectorValue>("axis_direction"))
     // I'll eventually use this parameter
+    _transverse_direction(getParam<RealVectorValue>("transverse_direction")),
+    _component(getParam<unsigned int>("component")),
+    _disp(3),
+    _ndisp(coupledComponents("displacements")),
+    _disp_var(_ndisp),
     _penalty(getParam<Real>("penalty"))
 {
   for (unsigned int i = 0; i < _ndisp; ++i)
@@ -49,19 +51,23 @@ PenaltyFlexuralBC::PenaltyFlexuralBC(const InputParameters & parameters)
 
 void
 PenaltyFlexuralBC::computeConstraintSurfaceNormal() {
+  // I should somehow be writing print statements or something to see what
+  // these variables coming out to. MOOSE debugging options?
+  // Can I just put a print statement right here in this code?
   Point p(*_current_node);
 
-  Real y = transverse_direction * (p - _y_bar);
-       theta = std:acos((*_disp[0])[_qp] / y);
-       tan_0 = -y * std:cos(theta);
-       tan_1 = y * std:cos(theta) ;
+  // this is wrong, I need to take a closer look at formulation
+  Real y = _transverse_direction * (p - _y_bar),
+       theta = std::acos((*_disp[0])[_qp] / y),
+       tan_0 = -y * std::cos(theta),
+       tan_1 = y * std::sin(theta);
 
   // these unit normals are totally going to depend on which displacement
   // component is being used for each
-  ColumnMajorMatrix surface_norm(0, 0) = tan_0 / std:sqrt(tan_0 * tan_0 + tan_1 * tan_1);
-                    surface_norm(1, 0) = tan_1 / std:sqrt(tan_0 * tan_0 + tan_1 * tan_1);
-
-  return surface_norm;
+  ColumnMajorMatrix surface_norm(3, 1);
+  surface_norm(0, 0) = tan_0 / std::sqrt(tan_0 * tan_0 + tan_1 * tan_1);
+  surface_norm(1, 0) = tan_1 / std::sqrt(tan_0 * tan_0 + tan_1 * tan_1);
+  surface_norm(2, 0) = 0;
 }
 
 // in this penalty formulation, its similar to the multi-point constraint
@@ -73,9 +79,7 @@ PenaltyFlexuralBC::computeConstraintSurfaceNormal() {
 Real
 PenaltyFlexuralBC::computeQpResidual()
 {
-  Real v = 0;
-  ColumnMajorMatrix surface_norm = computeConstraintSurfaceNormal();
-
+  Real u_dot_n = 0;
   for (unsigned int i = 0; i < _ndisp; ++i) // just assume z is 0 for now
     u_dot_n += (*_disp[i])[_qp] * surface_norm(i, 0);
 
@@ -88,23 +92,20 @@ PenaltyFlexuralBC::computeQpResidual()
 Real
 PenaltyFlexuralBC::computeQpJacobian()
 {
-  ColumnMajorMatrix surface_norm = computeConstraintSurfaceNormal();
-
   //this is beta_i for K_ii
   //or beta_j for K_jj
   return _penalty * surface_norm(_component, 0) * surface_norm(_component);
 }
 
-PenaltyInclinedNoDisplacementBC::computeQpOffDiagJacobian(unsigned int j)
+Real
+PenaltyFlexuralBC::computeQpOffDiagJacobian(unsigned int jvar)
 {
-  ColumnMajorMatrix surface_norm = computeConstraintSurfaceNormal();
-
   //this is beta_i * beta_j for K_ij and K_ji
   //beta_i or j being the constraint, i.e., the normal of the circle
   for (unsigned int coupled_component = 0; coupled_component < _ndisp; ++coupled_component)
-    if (j == _disp_var[coupled_component])
+    if (jvar == _disp_var[coupled_component])
     {
-      return _penalty * surface_norm(_component, 0) * surface_norm(_coupled_component, 0);
+      return _penalty * surface_norm(_component, 0) * surface_norm(coupled_component, 0);
     }
 
   return 0;

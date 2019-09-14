@@ -18,6 +18,7 @@ protected:
 
   const VariableValue & _youngs_modulus;
   const VariableValue & _poissons_ratio;
+  // I should do something here eventually to incorporate all the other elastic moduli
 };
 
 #endif // VARIABLEELASTICMODULUS_H
