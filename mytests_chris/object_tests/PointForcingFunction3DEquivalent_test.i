@@ -1,8 +1,3 @@
-# Case 1: Cladding only length of 10 pellets (128.8-mm)
-# Tests Case 1 - Static axial loading using a 3D annular mesh
-
-# Material properties are of unirradiated, in-tact Zr-4 cladding.
-
 [GlobalParams]
   displacements = 'disp_x disp_y disp_z'
 []
@@ -21,6 +16,10 @@
 []
 
 [AuxVariables]
+  [./nodal_area]
+    order = FIRST
+    family = LAGRANGE
+  [../]
   [./section_area]
     order = FIRST
     family = LAGRANGE
@@ -32,30 +31,67 @@
     type = Gravity
     variable = disp_y
     value = -9810
-    enable = true # gravity=true
+    enable = false # gravity=true
   [../]
 []
 
 [NodalKernels]
-  [./force_y]
+  [./point_force_y]
+    type = PointForcingFunction3DEquivalent
+    variable = disp_y
+    function = point_load
+    boundary = midsection
+    nodal_area = nodal_area
+    total_area = section_area
+    enable = false # apply point force=true
+  [../]
+  [./distributed_force_y]
     type = UserForcingFunctionNodalKernel
     variable = disp_y
-    function = load
+    function = distributed_load
     boundary = midsection
-    enable = false # apply_force=true
+    enable = true # apply distributed force=true
+  [../]
+[]
+
+[AuxKernels]
+  [./section_area]
+    type = FunctionAux
+    function = section_area
+    variable = section_area
+    execute_on = 'INITIAL LINEAR'
   [../]
 []
 
 [Functions]
-  [./load]
+  [./point_load]
+    type = ConstantFunction
+    value = -2500
+  [../]
+  [./distributed_load]
     type = ConstantFunction
     value = -19.5313 # total_load/no_nodes=2500N/128node=19.5313N/node
+  [../]
+  [./section_area]
+    type = ParsedFunction
+    vals = 'midsection_area'
+    vars = 'A'
+    value = A
   [../]
 []
 
 [NodalNormals]
   boundary = 'left right'
   order = FIRST
+[]
+
+[UserObjects]
+  [./nodal_area]
+    type = NodalArea
+    variable = nodal_area
+    boundary = midsection
+    execute_on = 'INITIAL LINEAR'
+  [../]
 []
 
 [BCs]
@@ -141,14 +177,16 @@
     variable = disp_y
     boundary = midsection
   [../]
-  [./force_y]
-    type = FunctionValuePostprocessor
-    function = load
+  [./midsection_area]
+    type = NodalSum
+    variable = nodal_area
+    boundary = midsection
+    use_displaced_mesh = true
+    execute_on = 'INITIAL LINEAR'
   [../]
 []
 
 [Outputs]
   exodus = true
   perf_graph = true
-  csv = true
 []

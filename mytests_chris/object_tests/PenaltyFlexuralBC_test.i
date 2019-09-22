@@ -3,59 +3,11 @@
 []
 
 [Mesh]
-  type = AnnularMesh
-  nt = 32
-  rmax = 5.36
-  rmin = 4.76
-  growth_r = 1
-  nr = 3
+  type = FileMesh
+  file = fuel_cladding.e
+  allow_renumbering = false
   partitioner = parmetis
-[]
-
-[MeshModifiers]
-  [./make3D]
-    type = MeshExtruder
-    extrusion_vector = '0 0 128.8'
-    num_layers = 30
-    bottom_sideset = 'left'
-    top_sideset = 'right'
-    existing_subdomains = '0'
-    layers = '14 15'
-    new_ids = '15 16'
-  [../]
-  [./mid_point]
-    type = SideSetsBetweenSubdomains
-    master_block = 15
-    paired_block = 16
-    new_boundary = mid_point
-    depends_on = make3D
-  [../]
-  [./fix_nodes_left]
-    type = BoundingBoxNodeSet
-    new_boundary = 'left_center'
-    top_right = '5.36 0.01 0'
-    bottom_left = '-5.36 0 0'
-    depends_on = make3D
-  [../]
-  [./fix_nodes_right]
-    type = BoundingBoxNodeSet
-    new_boundary = 'right_center'
-    top_right = '5.36 0.01 128.8'
-    bottom_left = '-5.36 0 128.8'
-    depends_on = make3D
-  [../]
-  [./rotate1]
-    type = Transform
-    transform = ROTATE
-    vector_value = '0 90 0'
-    depends_on = make3D
-  [../]
-  [./rotate2]
-    type = Transform
-    transform = ROTATE
-    vector_value = '90 0 0'
-    depends_on = rotate1
-  [../]
+  construct_node_list_from_side_list = false
 []
 
 [Modules/TensorMechanics/Master]
@@ -78,7 +30,7 @@
     type = UserForcingFunctionNodalKernel
     variable = disp_y
     function = load
-    boundary = mid_point
+    boundary = midsection
     enable = true # apply_force=true
   [../]
 []
@@ -91,7 +43,7 @@
 []
 
 [BCs]
-  [./fixx]
+  [./pinx]
     type = PenaltyFlexuralBC
     variable = disp_x
     axis_origin = '0 0 0'
@@ -101,7 +53,7 @@
     penalty = 1.0e+08
     boundary = 'left right'
   [../]
-  [./fixy]
+  [./piny]
     type = PenaltyFlexuralBC
     variable = disp_y
     axis_origin = '0 0 0'
@@ -111,12 +63,18 @@
     penalty = 1.0e+08
     boundary = 'left right'
   [../]
+  [./fixz]
+    type = PresetBC
+    variable = disp_z
+    boundary = 'left right'
+    value = 0.0
+  [../]
 []
 
 [Materials]
   [./elasticity_tensor]
     type = ComputeIsotropicElasticityTensor
-    youngs_modulus = 9.93E4
+    youngs_modulus = 9.93e04
     poissons_ratio = 0.37
   [../]
   [./stress]
@@ -134,16 +92,22 @@
 [Preconditioning]
   [./smp]
     type = SMP
-  [../]
+    full = true
+  []
 []
 
 [Executioner]
   type = Transient
   solve_type = NEWTON
+  nl_rel_tol = 1e-04
+  nl_abs_tol = 1e-06
+  l_tol = 1e-08
+  l_max_its = 250
   num_steps = 1
-  petsc_options = '-ksp_snes_ew'
-  petsc_options_iname = '-ksp_gmres_restart -pc_type -pc_hypre_type'
-  petsc_options_value = ' 201                hypre    boomeramg'
+  timestep_tolerance = 1e-06
+  petsc_options = '-ksp_snes_ew -snes_monitor -snes_linesearch_monitor -snes_converged_reason'
+  petsc_options_iname = '-ksp_gmres_restart -pc_type -pc_hypre_type -pc_hypre_boomeramg_max_iter'
+  petsc_options_value = ' 201                hypre    boomeramg      4'
 []
 
 [Outputs]

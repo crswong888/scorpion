@@ -14,7 +14,7 @@ validParams<PenaltyFlexuralBC>()
       "Direction of the neutral axis");
   params.addRequiredParam<RealVectorValue>("transverse_direction",
       "Direction of the transverse direction");
-      // directions must be unit vectors
+      // warning: directions must be unit vectors
   params.addRequiredParam<unsigned int>("component",
       "An integer corresponding to the direction (0 for x, 1 for y, 2 for z)");
   params.addRequiredCoupledVar("displacements",
@@ -54,10 +54,9 @@ PenaltyFlexuralBC::computeConstraintSurfaceNormal() {
   // I should somehow be writing print statements or something to see what
   // these variables coming out to. MOOSE debugging options?
   // Can I just put a print statement right here in this code?
-  Point p(*_current_node);
 
   // this is wrong, I need to take a closer look at formulation
-  Real y = _transverse_direction * (p - _y_bar),
+  Real y = _transverse_direction * ((*_current_node) - _y_bar),
        theta = std::acos((*_disp[0])[_qp] / y),
        tan_0 = -y * std::cos(theta),
        tan_1 = y * std::sin(theta);

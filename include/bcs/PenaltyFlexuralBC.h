@@ -1,5 +1,4 @@
-#ifndef PENALTYFLEXURALBC_H
-#define PENALTYFLEXURALBC_H
+#pragma once
 
 #include "NodalBC.h"
 
@@ -14,9 +13,8 @@ InputParameters validParams<PenaltyFlexuralBC>();
 /**
  * Penalty Enforcement constraining a boundary to rotate about a defined
  * neutral axis as a rigid surface. This BC can be used to model simple
- * beam supports on 3D meshes
+ * beam supports on 3D meshes.
  */
-
 class PenaltyFlexuralBC : public NodalBC
 {
 public:
@@ -44,5 +42,3 @@ protected:
 private:
   Real _penalty;
 };
-
-#endif //PENALTYFLEXURALBC_H

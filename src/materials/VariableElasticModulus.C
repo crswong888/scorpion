@@ -10,10 +10,13 @@ validParams<VariableElasticModulus>()
   params.addClassDescription(
       "Couples the Young's modulus and Poisson's ratio to a field variable "
       "and computes an isotropic elasticity tensor at those quadature points.");
-  params.addCoupledVar("youngs_modulus",
+  params.addRequiredCoupledVar("youngs_modulus",
       "The field variable to be coupled to Young's modulus");
-  params.addCoupledVar("poissons_ratio",
+  params.addRequiredCoupledVar("poissons_ratio",
       "The field variable to be coupled to Poisson's ratio");
+  params.addClassDescription(
+    "Couples the Young's modulus and Poisson's ratio to a field variable "
+    "and computes an isotropic elasticity tensor at those quadature points.");
   return params;
 }
 
