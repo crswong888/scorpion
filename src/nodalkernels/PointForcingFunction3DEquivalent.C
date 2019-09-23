@@ -12,8 +12,9 @@ validParams<PointForcingFunction3DEquivalent>()
   params.addRequiredParam<FunctionName>("function", "The forcing function");
   params.addRequiredCoupledVar("nodal_area",
       "AuxVariable containing the nodal area");
-  params.addRequiredCoupledVar("total_area",
-      "AuxVariable containing the total area");
+  params.addRequiredParam<UserObjectName>("total_area_userobject",
+      "The name of the UserObject that is going to be computing the "
+      "total area of the section.");
   params.addClassDescription(
       "This object distributes a specified magnitude of a single force "
       "over a 2D cross-section of 3D mesh to all nodes on the boundary and "
@@ -26,15 +27,15 @@ PointForcingFunction3DEquivalent::PointForcingFunction3DEquivalent(const InputPa
   : NodalKernel(parameters),
   _func(getFunction("function")),
   _nodal_area(coupledValue("nodal_area")),
-  _total_area(coupledValue("total_area"))
+  _total_area(getUserObject<NodalSumUserObject>("total_sum_userobject"))
 {
 }
 
 Real
 PointForcingFunction3DEquivalent::computeQpResidual()
 {
-  std::cout << "total_area is " << _total_area[_qp] << "\n";
+  std::cout << "total_area is " << _total_area.nodalSum(*_current_node) << "\n";
 
   // will this be applied at nodes or quad points? Because I need it to be applied at nodes
-  return -_func.value(_t, (*_current_node)) * _nodal_area[_qp] / _total_area[_qp];
+  return -_func.value(_t, (*_current_node)) * _nodal_area[_qp] / _total_area.nodalSum(*_current_node);
 }

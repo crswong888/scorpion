@@ -1,7 +1,10 @@
 #pragma once
 
+// MOOSE includes
 #include "NodalKernel.h"
+#include "NodalSumUserObject.h"
 
+// Forward Declarations
 class PointForcingFunction3DEquivalent;
 
 template <>
@@ -23,5 +26,5 @@ protected:
 
   const Function & _func;
   const VariableValue & _nodal_area;
-  const VariableValue & _total_area;
+  const NodalSumUserObject & _total_area;
 };
