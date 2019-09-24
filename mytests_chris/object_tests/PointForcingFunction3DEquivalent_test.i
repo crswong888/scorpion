@@ -20,10 +20,6 @@
     order = FIRST
     family = LAGRANGE
   [../]
-  [./section_area]
-    order = FIRST
-    family = LAGRANGE
-  [../]
 []
 
 [Kernels]
@@ -42,7 +38,7 @@
     function = point_load
     boundary = midsection
     nodal_area = nodal_area
-    total_area = section_area
+    total_area_userobject = total_area
     enable = false # apply point force=true
   [../]
   [./distributed_force_y]
@@ -72,12 +68,6 @@
     type = ConstantFunction
     value = -19.5313 # total_load/no_nodes=2500N/128node=19.5313N/node
   [../]
-  [./section_area]
-    type = ParsedFunction
-    vals = 'midsection_area'
-    vars = 'A'
-    value = A
-  [../]
 []
 
 [NodalNormals]
@@ -89,6 +79,12 @@
   [./nodal_area]
     type = NodalArea
     variable = nodal_area
+    boundary = midsection
+    execute_on = 'INITIAL LINEAR'
+  [../]
+  [./total_area]
+    type = NodalSumUserObject
+    sum_from_variable = nodal_area
     boundary = midsection
     execute_on = 'INITIAL LINEAR'
   [../]
@@ -176,13 +172,6 @@
     type = AverageNodalVariableValue
     variable = disp_y
     boundary = midsection
-  [../]
-  [./midsection_area]
-    type = NodalSum
-    variable = nodal_area
-    boundary = midsection
-    use_displaced_mesh = true
-    execute_on = 'INITIAL LINEAR'
   [../]
 []
 
