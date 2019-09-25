@@ -39,23 +39,14 @@
     boundary = midsection
     nodal_area = nodal_area
     total_area_userobject = total_area
-    enable = false # apply point force=true
+    enable = true # apply point force=true
   [../]
   [./distributed_force_y]
     type = UserForcingFunctionNodalKernel
     variable = disp_y
     function = distributed_load
     boundary = midsection
-    enable = true # apply distributed force=true
-  [../]
-[]
-
-[AuxKernels]
-  [./section_area]
-    type = FunctionAux
-    function = section_area
-    variable = section_area
-    execute_on = 'INITIAL LINEAR'
+    enable = false # apply distributed force=true
   [../]
 []
 
@@ -168,8 +159,14 @@
 []
 
 [Postprocessors]
-  [./disp_y]
+  [./avg_disp_y]
     type = AverageNodalVariableValue
+    variable = disp_y
+    boundary = midsection
+  [../]
+  [./max_disp_y]
+    type = NodalExtremeValue
+    value_type = min
     variable = disp_y
     boundary = midsection
   [../]

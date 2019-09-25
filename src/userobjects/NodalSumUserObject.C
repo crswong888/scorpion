@@ -1,6 +1,6 @@
 #include "NodalSumUserObject.h"
 
-#include "Assembly.h"
+//#include "Assembly.h"
 
 registerMooseObject("scorpionApp", NodalSumUserObject);
 
@@ -29,12 +29,17 @@ NodalSumUserObject::NodalSumUserObject(const InputParameters & parameters)
 void
 NodalSumUserObject::threadJoin(const UserObject & y)
 {
+  // need to make sure processors communicate
+
+  //const NodalSumUserObject & pps = static_cast<const NodalSumUserObject &>(y);
+  //_sum += pps._sum;
 }
 
 void
 NodalSumUserObject::initialize()
 {
   //_sum.clear();
+  _sum = 0.0;
 }
 
 void
@@ -63,6 +68,8 @@ NodalSumUserObject::execute()
 void
 NodalSumUserObject::finalize()
 {
+  // idk if I need this function
+
 /*  const std::map<const Node *, Real>::iterator it_end = _sum.end();
   for (std::map<const Node *, Real>::iterator it = _sum.begin(); it != it_end; ++it)*/
 }
@@ -77,8 +84,6 @@ NodalSumUserObject::nodalSum(const Node & node) const
     retVal = it->second;
   }
   return retVal;*/
-
-  std::cout << "Total area is " << _sum << "\n";
 
   return _sum;
 }

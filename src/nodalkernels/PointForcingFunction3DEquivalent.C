@@ -27,14 +27,15 @@ PointForcingFunction3DEquivalent::PointForcingFunction3DEquivalent(const InputPa
   : NodalKernel(parameters),
   _func(getFunction("function")),
   _nodal_area(coupledValue("nodal_area")),
-  _total_area(getUserObject<NodalSumUserObject>("total_sum_userobject"))
+  _total_area(getUserObject<NodalSumUserObject>("total_area_userobject"))
 {
 }
 
 Real
 PointForcingFunction3DEquivalent::computeQpResidual()
 {
-  std::cout << "total_area is " << _total_area.nodalSum(*_current_node) << "\n";
+  //std::cout << "the nodal area is " << _nodal_area[_qp] << "\n";
+  //std::cout << "the total area is " << _total_area.nodalSum(*_current_node) << "\n";
 
   // will this be applied at nodes or quad points? Because I need it to be applied at nodes
   return -_func.value(_t, (*_current_node)) * _nodal_area[_qp] / _total_area.nodalSum(*_current_node);
