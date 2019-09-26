@@ -1,0 +1,81 @@
+## this is a column model of the psuedo-soil
+
+################################################
+
+# clear the model space
+reset  
+
+####################
+# ESTABLISH INPUT VARIABLES #
+####################
+
+# soil domain dimensions
+{x_dim = 0.4}
+{y_dim = 0.4}
+{z_dim = 28}
+
+# approximate element dimensions for soil domain
+{soil_dim = 0.4}
+
+##############
+# CREATE VOLUMES #
+#############
+
+# create the soil column volume
+brick x {x_dim} y {y_dim} z {z_dim}
+
+######################
+# ESTABLISH MESHING GEOMETRY #
+######################
+
+# develop the soil grid
+volume 1 size {soil_dim}
+
+##############
+# CREATE THE MESH #
+##############
+
+# mesh the soil domain
+mesh volume 1
+
+####################
+# Assign Block and Sideset IDs #
+####################
+
+# create blocks
+block 1 volume 1
+
+# name blocks
+block 1 name 'soil'
+
+# create soil sidesets
+sideset 1 surface 2
+sideset 2 surface 1
+sideset 3 surface 3
+sideset 4 surface 5
+sideset 5 surface 4
+sideset 6 surface 6
+
+# name soil sidesets
+sideset 1 name 'bottom'
+sideset 2 name 'top'
+sideset 3 name 'front'
+sideset 4 name 'back'
+sideset 5 name 'left'
+sideset 6 name 'right'
+
+#################
+# DEFINE ELEMENT TYPES #
+#################
+
+block all element type HEX8
+
+##############
+# EXPORT MESH FILE #
+##############
+
+# export to project path in ExodusII format
+export mesh '~/projects/mastodon/efe/psuedo_models/psuedo_soil_column/psuedo_soil_column.e' overwrite
+
+
+

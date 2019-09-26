@@ -1,0 +1,122 @@
+## this is a model of the psuedo-soil that is 2x the width of the psuedo-reactor
+
+################################################
+
+# clear the model space
+reset  
+
+####################
+# ESTABLISH INPUT VARIABLES #
+####################
+
+# reactor dimensions
+{h_reactor = 9.6} 
+{r_outer = 3.6}
+{r_inner = 3.2}
+{cover = 0.8}
+
+##############
+# CREATE VOLUMES #
+#############
+
+# create the reactor volume
+create cylinder height {h_reactor} radius {r_outer}
+create cylinder height {h_reactor} radius {r_inner}
+create cylinder height {cover} radius {r_inner}
+create cylinder height {cover} radius {r_inner}
+
+# offset and hollow the reactor
+subtract volume 2 from volume 1
+move volume 3 z {(cover-h_reactor)/2}
+move volume 4 z {(h_reactor-cover)/2}
+
+# merge volumes
+imprint all
+merge all
+
+######################
+# ESTABLISH MESHING GEOMETRY #
+######################
+
+# develop the reactor grid
+curve 1 2 5 8 interval 56
+surface 7 10 interval 2
+surface 16 interval 20
+surface 1 interval 24
+surface 14 15 scheme hole rad_intervals 2
+surface 8 9 11 12 scheme circle interval 6
+
+##############
+# CREATE THE MESH #
+##############
+
+# mesh the reactor
+mesh volume 1 3 4
+
+####################
+# Assign Block and Sideset IDs #
+####################
+
+# create blocks
+block 1 volume 1 3 4
+
+# name blocks
+block 1 name 'reactor'
+
+# create reactor sidesets
+sideset 1 surface 8 14
+sideset 2 surface 12 15
+sideset 3 surface 16
+sideset 4 surface 1
+
+# name reactor sidesets
+sideset 1 name 'reactor_bottom'
+sideset 2 name 'reactor_top'
+sideset 3 name 'reactor_inner'
+sideset 4 name 'reactor_outter'
+
+# create reactor nodesets
+nodeset 1 surface 8 14
+nodeset 2 surface 12 15
+nodeset 3 surface 16
+nodeset 4 surface 1
+
+# name reactor nodeset
+nodeset 1 name 'reactor_bottom'
+nodeset 2 name 'reactor_top'
+nodeset 3 name 'reactor_inner'
+nodeset 4 name 'reactor_outter'
+
+#################
+# DEFINE ELEMENT TYPES #
+#################
+
+block all element type HEX8
+
+##############
+# EXPORT MESH FILE #
+##############
+
+# export to project path in ExodusII format
+export mesh '~/projects/mastodon/efe/psuedo_models/psuedo_reactor/psuedo_reactor.e' overwrite
+
+##########
+# SENSITIVITY #
+##########
+
+{num_split = 2}
+
+# export to project path in ExodusII format
+export mesh '~/projects/mastodon/efe/psuedo_models/psuedo_reactor/sensitivity/default.e' overwrite
+
+#export to project path in ABAQUS format
+export abaqus "/home/wongcj/projects/mastodon/efe/psuedo_models/psuedo_reactor/sensitivity/default.inp" overwrite
+
+refine volume all numsplit {num_split} bias 1 smooth
+
+# export to project path in ExodusII format
+export mesh '~/projects/mastodon/efe/psuedo_models/psuedo_reactor/sensitivity/split{num_split}.e' overwrite
+
+#export to project path in ABAQUS format
+export abaqus "/home/wongcj/projects/mastodon/efe/psuedo_models/psuedo_reactor/sensitivity/split{num_split}.inp" overwrite
+

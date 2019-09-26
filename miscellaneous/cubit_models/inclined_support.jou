@@ -1,0 +1,72 @@
+reset
+
+
+## create support vertices and enclose the plane
+## ============================
+
+create vertex 0 0 0
+create vertex 30 20 0
+create vertex 0 20 0
+
+create surface vertex 1 2 3
+create vertex on curve 1 2 3 segment 7
+
+
+## develop the mesh
+## ============================
+
+create curve vertex 15 4 
+create curve vertex 14 5
+create curve vertex 13 6
+create curve vertex 12 7 
+create curve vertex 11 8 
+create curve vertex 10 9
+
+create curve vertex 16 9
+create curve vertex 17 8 
+create curve vertex 18 7 
+create curve vertex 19 6 
+create curve vertex 20 5 
+create curve vertex 21 4 
+
+create curve vertex 21 10
+create curve vertex 20 11
+create curve vertex 19 12
+create curve vertex 18 13
+create curve vertex 17 14
+create curve vertex 16 15
+
+project curve all onto surface 1 imprint
+
+delete curve 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21
+
+merge all
+
+
+## generate the mesh
+## ============================
+
+curve all interval 1
+
+surface all scheme TRI
+
+mesh surface all
+
+
+## create blocks, sidesets, and nodesets
+## ============================
+
+block 1 surface all
+
+sideset 1 edge 58 60 63 65 67 75 82
+sideset 1 name 'wall'
+
+nodeset 1 node 36
+nodeset 1 name 'roller'
+
+
+## export mesh
+## ============================
+
+export mesh '/home/crswong888/projects/scorpion/mytests_chris/pinned_support_3d/inclined_support.e' overwrite
+

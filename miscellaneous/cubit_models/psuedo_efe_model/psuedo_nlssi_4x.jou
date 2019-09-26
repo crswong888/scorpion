@@ -1,0 +1,130 @@
+## this is a model of the psuedo-soil that is 4x the width of the psuedo-reactor
+
+## this mesh is to model contact, the structure and the soil are not connected
+
+################################################
+
+# clear the model space
+reset  
+
+####################
+# ESTABLISH INPUT VARIABLES #
+####################
+
+# soil domain dimensions
+{x_dim = 28.8}
+{y_dim = 28.8}
+{z_dim = 28}
+
+# approximate element dimensions for soil domain
+{soil_dim = 0.4}
+
+# reactor dimensions
+{h_reactor = 9.6} 
+{r_outer = 3.6}
+{r_inner = 3.2}
+{cover = 0.8}
+
+# reactor embeddment depth
+{d_embed = 0}
+
+##############
+# CREATE VOLUMES #
+#############
+
+# create the soil volume
+brick x {x_dim} y {y_dim} z {z_dim}
+
+# create the reactor volume
+create cylinder height {h_reactor} radius {r_outer}
+create cylinder height {h_reactor} radius {r_inner}
+create cylinder height {cover} radius {r_inner}
+create cylinder height {cover} radius {r_inner}
+
+# offset and hollow the reactor
+subtract volume 3 from volume 2
+move volume 4 z {(cover-h_reactor)/2}
+move volume 5 z {(h_reactor-cover)/2}
+move volume 2 4 5 z {(z_dim + h_reactor)/2 - d_embed}
+
+# merge volumes
+imprint volume 2 4 5
+merge all volume 2 4 5
+
+######################
+# ESTABLISH MESHING GEOMETRY #
+######################
+
+# develop the soil grid
+volume 1 size {soil_dim}
+
+# develop the reactor grid
+curve 13 14 17 20 interval 56
+surface 13 16 interval 2
+surface 22 interval 20
+surface 7 interval 24
+surface 20 21 scheme hole rad_intervals 2
+surface 14 15 17 18 scheme circle interval 6
+
+##############
+# CREATE THE MESH #
+##############
+
+# mesh the soil domain
+mesh volume 1
+
+# mesh the reactor
+mesh volume 2 4 5
+
+####################
+# Assign Block and Sideset IDs #
+####################
+
+# create blocks
+block 1 volume 1
+block 2 volume 2 4 5
+
+# name blocks
+block 1 name 'soil'
+block 2 name 'reactor'
+
+# create soil sidesets
+sideset 1 surface 2
+sideset 2 surface 1
+sideset 3 surface 3
+sideset 4 surface 5
+sideset 5 surface 4
+sideset 6 surface 6
+
+# name soil sidesets
+sideset 1 name 'bottom'
+sideset 2 name 'top'
+sideset 3 name 'front'
+sideset 4 name 'back'
+sideset 5 name 'left'
+sideset 6 name 'right'
+
+# create reactor sidesets
+sideset 7 surface 14 20
+sideset 8 surface 18 21
+sideset 9 surface 22
+sideset 10 surface 7
+
+# name reactor sidesets
+sideset 7 name 'reactor_bottom'
+sideset 8 name 'reactor_top'
+sideset 9 name 'reactor_inner'
+sideset 10 name 'reactor_outter'
+
+#################
+# DEFINE ELEMENT TYPES #
+#################
+
+block all element type HEX8
+
+##############
+# EXPORT MESH FILE #
+##############
+
+# export to project path in ExodusII format
+export mesh '~/projects/mastodon/efe/psuedo_models/psuedo_nlssi_4x/psuedo_nlssi_4x.e' overwrite

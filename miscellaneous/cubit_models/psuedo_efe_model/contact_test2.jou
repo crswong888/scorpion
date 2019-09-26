@@ -1,0 +1,42 @@
+reset
+
+brick x 2.7 y 2.7 z 2.4
+
+create brick x 0.9 y 0.9 z 1.2
+
+move volume 2 z {1.2+0.6}
+
+volume 1 size 0.3
+volume 2 size 0.15
+
+mesh volume all
+
+block 1 volume 1
+block 1 name 'soil'
+
+block 2 volume 2
+block 2 name 'reactor'
+
+sideset 1 surface 2
+sideset 2 surface 1
+sideset 3 surface 3
+sideset 4 surface 5
+sideset 5 surface 4
+sideset 6 surface 6
+
+sideset 1 name 'bottom'
+sideset 2 name 'top'
+sideset 3 name 'front'
+sideset 4 name 'back'
+sideset 5 name 'left'
+sideset 6 name 'right'
+
+sideset 7 surface 8
+sideset 8 surface 7
+
+sideset 7 name 'reactor_bottom'
+sideset 8 name 'reactor_top'
+
+block all element type HEX8
+
+export mesh '~/projects/mastodon/efe/psuedo_models/contact_test2/contact_test2.e' overwrite

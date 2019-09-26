@@ -1,0 +1,81 @@
+reset
+
+brick x 2.7 y 2.7 z 2.4
+brick x 0.9 y 0.9 z 2.4
+subtract volume 2 from volume 1 keep
+
+delete volume 1
+
+webcut volume all with plane zplane offset {1.2-0.3} noimprint nomerge
+
+delete volume 2
+
+webcut volume 4 5 with plane zplane offset {1.2-0.6} noimprint nomerge
+
+imprint all
+merge all
+
+create brick x 0.9 y 0.9 z 1.2
+webcut volume 8 with zplane offset -0.2
+
+move volume 8 9 z {1.2+0.6-0.3}
+
+imprint volume 8 9
+merge volume 8 9
+
+volume 3 4 5 6 7 size 0.3
+volume 8 9 size 0.15
+
+mesh volume all
+
+block 1 volume 3 4 5 6 7
+block 1 name 'soil'
+
+block 2 volume 8 9
+block 2 name 'reactor'
+
+sideset 1 surface 8 18
+sideset 2 surface 17
+sideset 3 surface 40 65 76
+sideset 4 surface 36 69 73
+sideset 5 surface 37 64 78
+sideset 6 surface 41 67 74
+
+sideset 1 name 'bottom'
+sideset 2 name 'top'
+sideset 3 name 'front'
+sideset 4 name 'back'
+sideset 5 name 'left'
+sideset 6 name 'right'
+
+sideset 7 surface 80
+sideset 8 surface 79
+
+sideset 7 name 'reactor_bottom'
+sideset 8 name 'reactor_top'
+
+sideset 9 surface 28
+sideset 10 surface 38
+sideset 11 surface 34
+sideset 12 surface 39
+sideset 13 surface 35
+
+sideset 9 name 'soil_contact_bottom'
+sideset 10 name 'soil_contact_front'
+sideset 11 name 'soil_contact_back'
+sideset 12 name 'soil_contact_left'
+sideset 13 name 'soil_contact_right'
+
+sideset 14 surface 92
+sideset 15 surface 94
+sideset 16 surface 93
+sideset 17 surface 91
+
+sideset 14 name 'reactor_contact_front'
+sideset 15 name 'reactor_contact_back'
+sideset 16 name 'reactor_contact_left'
+sideset 17 name 'reactor_contact_right'
+
+block all element type HEX8
+
+export mesh '~/projects/mastodon/efe/psuedo_models/contact_test2/contact_embed_test2.e' overwrite

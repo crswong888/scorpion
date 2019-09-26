@@ -1,0 +1,149 @@
+## this is a model of the psuedo-soil that is 6x the width of the psuedo-reactor
+
+################################################
+
+# clear the model space
+reset  
+
+####################
+# ESTABLISH INPUT VARIABLES #
+####################
+
+# soil domain dimensions
+{x_dim = 43.2}
+{y_dim = 43.2}
+{z_dim = 28}
+
+# approximate element dimensions for soil domain
+{soil_dim = 0.4}
+
+# reactor dimensions
+{h_reactor = 9.6} 
+{r_outer = 3.6}
+{r_inner = 3.2}
+{cover = 0.8}
+
+# reactor embeddment depth
+{d_embed = 0}
+
+##############
+# CREATE VOLUMES #
+#############
+
+# create the soil volume
+brick x {x_dim} y {y_dim} z {z_dim}
+brick x {24/9*r_outer} y {24/9*r_outer} z {z_dim}
+subtract volume 2 from volume 1 keep
+create cylinder height {z_dim} radius {r_outer}
+subtract volume 4 from volume 2 keep
+
+# don't need this anymore
+delete volume 1
+delete volume 2
+
+# create a surface to be conformed to the reactor mesh
+webcut volume all with plane zplane offset {14 - d_embed} noimprint nomerge
+
+# create the reactor volume
+create cylinder height {h_reactor} radius {r_outer}
+create cylinder height {h_reactor} radius {r_inner}
+create cylinder height {cover} radius {r_inner}
+create cylinder height {cover} radius {r_inner}
+
+# offset and hollow the reactor
+subtract volume 7 from volume 6
+move volume 8 z {(cover-h_reactor)/2}
+move volume 9 z {(h_reactor-cover)/2}
+move volume 6 8 9 z {(z_dim + h_reactor)/2 - d_embed}
+
+# create hole for reactor
+create cylinder height {d_embed} radius {r_outer}
+move volume 10 z {(z_dim-d_embed)/2}
+subtract volume 10 from volume 4
+
+# merge volumes
+imprint all
+merge all
+
+######################
+# ESTABLISH MESHING GEOMETRY #
+######################
+
+# develop the soil grid
+curve 50 69 interval 56
+surface 40 scheme circle interval 6
+curve 26 30 33 35 interval 24
+surface 27 sizing function super
+surface 27 scheme pave 
+volume 3 4 5 size {soil_dim}
+
+# develop the reactor grid
+curve 66 72 interval 56
+surface 42 39 interval 2
+surface 50 interval 20
+surface 33 interval 24
+surface 46 47 scheme hole rad_intervals 2
+surface 41 43 44 scheme circle interval 6
+
+##############
+# CREATE THE MESH #
+##############
+
+# mesh the soil domain
+mesh volume 3 4 5
+
+# mesh the reactor
+mesh volume 6 8 9
+
+####################
+# Assign Block and Sideset IDs #
+####################
+
+# create blocks
+block 1 volume 3 4 5
+block 2 volume 6 8 9 
+
+# name blocks
+block 1 name 'soil'
+block 2 name 'reactor'
+
+# create soil sidesets
+sideset 1 surface 18 24 28
+sideset 2 surface 17 27 40 46
+sideset 3 surface 19
+sideset 4 surface 21
+sideset 5 surface 20
+sideset 6 surface 22
+
+# name soil sidesets
+sideset 1 name 'bottom'
+sideset 2 name 'top'
+sideset 3 name 'front'
+sideset 4 name 'back'
+sideset 5 name 'left'
+sideset 6 name 'right'
+
+# create reactor sidesets
+sideset 7 surface 40 46
+sideset 8 surface 44 47
+sideset 9 surface 50
+sideset 10 surface 33
+
+# name reactor sidesets
+sideset 7 name 'reactor_bottom'
+sideset 8 name 'reactor_top'
+sideset 9 name 'reactor_inner'
+sideset 10 name 'reactor_outter'
+
+#################
+# DEFINE ELEMENT TYPES #
+#################
+
+block all element type HEX8
+
+##############
+# EXPORT MESH FILE #
+##############
+
+# export to project path in ExodusII format
+export mesh '~/projects/mastodon/efe/psuedo_models/psuedo_ssi_6x/psuedo_ssi_6x.e' overwrite
