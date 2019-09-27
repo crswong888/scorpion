@@ -1,6 +1,6 @@
 #pragma once
 
-#include "NodalBC.h"
+#include "IntegratedBC.h"
 
 // MOOSE includes
 #include "ColumnMajorMatrix.h"
@@ -15,13 +15,13 @@ InputParameters validParams<PenaltyFlexuralBC>();
  * neutral axis as a rigid surface. This BC can be used to model simple
  * beam supports on 3D meshes.
  */
-class PenaltyFlexuralBC : public NodalBC
+class PenaltyFlexuralBC : public IntegratedBC
 {
 public:
   PenaltyFlexuralBC(const InputParameters & parameters);
 
 protected:
-  virtual void computeConstraintSurfaceNormal();
+  //virtual void computeConstraintSurfaceNormal();
 
   virtual Real computeQpResidual() override;
   virtual Real computeQpJacobian() override;

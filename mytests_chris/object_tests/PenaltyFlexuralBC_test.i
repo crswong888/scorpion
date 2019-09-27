@@ -3,6 +3,7 @@
 []
 
 [Mesh]
+  # r_outer = 5.36 , r_inner = 4.76
   type = FileMesh
   file = fuel_cladding.e
   allow_renumbering = false

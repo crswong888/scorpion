@@ -6,7 +6,7 @@ template <>
 InputParameters
 validParams<PenaltyFlexuralBC>()
 {
-  InputParameters params = validParams<NodalBC>();
+  InputParameters params = validParams<IntegratedBC>();
   params.addRequiredParam<RealVectorValue>("axis_origin",
       "Origin of the neutral axis");
       // axis origin can be any coordinates
@@ -29,7 +29,7 @@ validParams<PenaltyFlexuralBC>()
 }
 
 PenaltyFlexuralBC::PenaltyFlexuralBC(const InputParameters & parameters)
-  : NodalBC(parameters),
+  : IntegratedBC(parameters),
     _y_bar(getParam<RealVectorValue>("axis_origin")),
     //_axis_direction(getParam<RealVectorValue>("axis_direction"))
     // I'll eventually use this parameter
@@ -49,12 +49,63 @@ PenaltyFlexuralBC::PenaltyFlexuralBC(const InputParameters & parameters)
   // warning, transverse_direction same as axis_direction or axial_direction
 }
 
-void
-PenaltyFlexuralBC::computeConstraintSurfaceNormal() {
-  // I should somehow be writing print statements or something to see what
-  // these variables coming out to. MOOSE debugging options?
-  // Can I just put a print statement right here in this code?
+Real
+PenaltyFlexuralBC::computeQpResidual()
+{
+  // okay this works but idk if I need it
+  Real y = _transverse_direction * (_q_point[_qp] - _y_bar) ;
+  //std::cout << "y is " << y << "\n";
 
+  std::vector<Real> r(_ndisp), val(_ndisp);
+  Real v1(0), v2(0), sq_mag(0);
+
+  std::cout << "disp[0] = " << (*_disp[0])[_qp];
+  std::cout << ", disp[1] = " << (*_disp[1])[_qp];
+  std::cout << ", & disp[2] = " << (*_disp[2])[_qp] << "\n\n";
+
+  for (unsigned i(0); i < _ndisp; ++i)
+  {
+    r[i] = _transverse_direction(i) * (_q_point[_qp])(i) - _y_bar(i);
+    //std::cout << "r[" << i << "] is " << r[i] << ",   ";
+    v1 += r[i] * (r[i] + (*_disp[i])[_qp]);
+    std::cout << "(i = " << i << "): v1 is " << v1 << ", ";
+    v2 += _transverse_direction(i) * ((*_disp[i])[_qp] + r[i]);
+    std::cout << "v2 = " << v2 << ", & ";
+    sq_mag += (*_disp[i])[_qp] * (*_disp[i])[_qp];
+    std::cout << "sq_mag = " << sq_mag << " || ";
+  }
+
+  Real res = _normals[_qp](_component) * (v1 + std::sqrt(sq_mag) * v2);
+
+  std::cout << "\n\nthe residual of component " << _component << " is " << res;
+  std::cout << "\n\nthe normal of component " << _component << " is " << _normals[_qp](_component);
+  std::cout << "\n\n-------------------------------------------\n\n";
+
+  return _penalty * _test[_i][_qp] * res;
+}
+
+Real
+PenaltyFlexuralBC::computeQpJacobian()
+{
+  return _penalty * _phi[_j][_qp] * _normals[_qp](_component) * _normals[_qp](_component) *
+         _test[_i][_qp];
+}
+
+Real
+PenaltyFlexuralBC::computeQpOffDiagJacobian(unsigned int jvar)
+{
+  for (unsigned int coupled_component = 0; coupled_component < _ndisp; ++coupled_component)
+    if (jvar == _disp_var[coupled_component])
+    {
+      return _penalty * _phi[_j][_qp] * _normals[_qp](coupled_component) *
+             _normals[_qp](_component) * _test[_i][_qp];
+    }
+
+  return 0.0;
+}
+
+/*void
+PenaltyFlexuralBC::computeConstraintSurfaceNormal() {
   // this is wrong, I need to take a closer look at formulation
   Real y = _transverse_direction * ((*_current_node) - _y_bar),
        theta = std::acos((*_disp[0])[_qp] / y),
@@ -67,7 +118,7 @@ PenaltyFlexuralBC::computeConstraintSurfaceNormal() {
   surface_norm(0, 0) = tan_0 / std::sqrt(tan_0 * tan_0 + tan_1 * tan_1);
   surface_norm(1, 0) = tan_1 / std::sqrt(tan_0 * tan_0 + tan_1 * tan_1);
   surface_norm(2, 0) = 0;
-}
+}*/
 
 // in this penalty formulation, its similar to the multi-point constraint
 // in traditional finite element, i.e.,
@@ -75,7 +126,7 @@ PenaltyFlexuralBC::computeConstraintSurfaceNormal() {
 // here, beta_0 is gonna have to be zero for u \dot normal = 0
 // except here, beta_0 = 0 = residual
 
-Real
+/*Real
 PenaltyFlexuralBC::computeQpResidual()
 {
   Real u_dot_n = 0;
@@ -86,9 +137,9 @@ PenaltyFlexuralBC::computeQpResidual()
   // I should sum up displacements times normal x or y here to get dot product
   // then I should enforce the bc by returning the individual components
   // of u \dot normal
-}
+}*/
 
-Real
+/*Real
 PenaltyFlexuralBC::computeQpJacobian()
 {
   //this is beta_i for K_ii
@@ -108,4 +159,4 @@ PenaltyFlexuralBC::computeQpOffDiagJacobian(unsigned int jvar)
     }
 
   return 0;
-}
+}*/
