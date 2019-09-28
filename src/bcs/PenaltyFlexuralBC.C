@@ -61,29 +61,40 @@ PenaltyFlexuralBC::computeQpResidual()
   std::cout << ", disp[1] = " << (*_disp[1])[_qp];
   std::cout << ", & disp[2] = " << (*_disp[2])[_qp] << "\n";
 
-  std::vector<Real> r(_ndisp), val(_ndisp);
-  Real v1(0), v2(0), sq_mag(0);
+  std::vector<Real> r(_ndisp);
+  Real sq_mag(0);
   for (unsigned i(0); i < _ndisp; i++)
   {
     r[i] = _transverse_direction(i) * ((_q_point[_qp])(i) - _y_bar(i));
     std::cout << "(i = " << i << "): r[" << i << "] = " << r[i] << ", ";
 
-    v1 += r[i] * (r[i] + (*_disp[i])[_qp]);
-    std::cout << "v1 = " << v1 << ", ";
-
-    if (r[i] >= 0)
-      v2 += _transverse_direction(i) * ((*_disp[i])[_qp] + r[i]);
-    else
-      v2 += -_transverse_direction(i) * ((*_disp[i])[_qp] + r[i]);
-    std::cout << "v2 = " << v2 << ", & ";
-
     sq_mag += r[i] * r[i];
     std::cout << "sq_mag = " << sq_mag << " || ";
   }
 
-  Real res = v1 - std::sqrt(sq_mag) * v2;
+  std::cout << "\n";
 
-  std::cout << "\nthe normal of component " << _component << " is " << _normals[_qp](_component);
+  std::vector<Real> r_prime(_ndisp);
+  Real r_mag = std::sqrt(sq_mag), u_dot_r_prime(0), r_dot_r_prime(0);
+
+  for (unsigned i(0); i < _ndisp; i++)
+  {
+    if (r[i] >= 0)
+      r_prime[i] = r[i] + r_mag * _transverse_direction(i);
+    else
+      r_prime[i] = r[i] - r_mag * _transverse_direction(i);
+    std::cout << "(i = " << i << "): r_prime[" << i << "] = " << r_prime[i] << ", ";
+
+    if (i != _component)
+      u_dot_r_prime += (*_disp[i])[_qp] * r_prime[i];
+    std::cout << "u_dot_r_prime = " << u_dot_r_prime << ", ";
+
+    r_dot_r_prime += r[i] * r_prime[i];
+    std::cout << "r_dot_r_prime = " << r_dot_r_prime << " || ";
+  }
+
+  Real res = -(r_dot_r_prime + u_dot_r_prime) / r_prime[_component];
+
   std::cout << "\nthe residual of component " << _component << " is " << res;
   std::cout << "\n------------------------------------------------------------";
   std::cout << "------------------------------------------------------------\n";
