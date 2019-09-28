@@ -56,5 +56,6 @@ nodeset 5 name 'right_center'
 
 block all element type HEX8
 
-export mesh '~/projects/scorpion/mytests_chris/PenaltyFlexuralBC/fuel_cladding.e' overwrite
+export mesh '~/projects/scorpion/mytests_chris/object_tests/fuel_cladding.e' overwrite
+
 

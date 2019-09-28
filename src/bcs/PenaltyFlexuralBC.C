@@ -7,11 +7,11 @@ InputParameters
 validParams<PenaltyFlexuralBC>()
 {
   InputParameters params = validParams<IntegratedBC>();
-  params.addRequiredParam<RealVectorValue>("axis_origin",
+  params.addRequiredParam<RealVectorValue>("neutral_axis_origin",
       "Origin of the neutral axis");
       // axis origin can be any coordinates
-  params.addRequiredParam<RealVectorValue>("axis_direction",
-      "Direction of the neutral axis");
+  //params.addRequiredParam<RealVectorValue>("axis_direction",
+  //    "Direction of the neutral axis");
   params.addRequiredParam<RealVectorValue>("transverse_direction",
       "Direction of the transverse direction");
       // warning: directions must be unit vectors
@@ -30,7 +30,7 @@ validParams<PenaltyFlexuralBC>()
 
 PenaltyFlexuralBC::PenaltyFlexuralBC(const InputParameters & parameters)
   : IntegratedBC(parameters),
-    _y_bar(getParam<RealVectorValue>("axis_origin")),
+    _y_bar(getParam<RealVectorValue>("neutral_axis_origin")),
     //_axis_direction(getParam<RealVectorValue>("axis_direction"))
     // I'll eventually use this parameter
     _transverse_direction(getParam<RealVectorValue>("transverse_direction")),
@@ -40,46 +40,53 @@ PenaltyFlexuralBC::PenaltyFlexuralBC(const InputParameters & parameters)
     _disp_var(_ndisp),
     _penalty(getParam<Real>("penalty"))
 {
-  for (unsigned int i = 0; i < _ndisp; ++i)
+  for (unsigned int i = 0; i < _ndisp; i++)
   {
     _disp[i] = &coupledValue("displacements", i);
     _disp_var[i] = coupled("displacements", i);
   }
 
   // warning, transverse_direction same as axis_direction or axial_direction
+  // transverse_direction should be a unit vector from 0 to 1
+  // also transverse axis should point in positive direction
 }
 
 Real
 PenaltyFlexuralBC::computeQpResidual()
 {
-  // okay this works but idk if I need it
-  Real y = _transverse_direction * (_q_point[_qp] - _y_bar) ;
-  //std::cout << "y is " << y << "\n";
-
-  std::vector<Real> r(_ndisp), val(_ndisp);
-  Real v1(0), v2(0), sq_mag(0);
+  std::cout<< "FOR QUADRATURE POINT (" << (_q_point[_qp])(0) << ", ";
+  std::cout<< (_q_point[_qp])(1) << ", " << (_q_point[_qp])(2) << ")\n\n";
 
   std::cout << "disp[0] = " << (*_disp[0])[_qp];
   std::cout << ", disp[1] = " << (*_disp[1])[_qp];
-  std::cout << ", & disp[2] = " << (*_disp[2])[_qp] << "\n\n";
+  std::cout << ", & disp[2] = " << (*_disp[2])[_qp] << "\n";
 
-  for (unsigned i(0); i < _ndisp; ++i)
+  std::vector<Real> r(_ndisp), val(_ndisp);
+  Real v1(0), v2(0), sq_mag(0);
+  for (unsigned i(0); i < _ndisp; i++)
   {
-    r[i] = _transverse_direction(i) * (_q_point[_qp])(i) - _y_bar(i);
-    //std::cout << "r[" << i << "] is " << r[i] << ",   ";
+    r[i] = _transverse_direction(i) * ((_q_point[_qp])(i) - _y_bar(i));
+    std::cout << "(i = " << i << "): r[" << i << "] = " << r[i] << ", ";
+
     v1 += r[i] * (r[i] + (*_disp[i])[_qp]);
-    std::cout << "(i = " << i << "): v1 is " << v1 << ", ";
-    v2 += _transverse_direction(i) * ((*_disp[i])[_qp] + r[i]);
+    std::cout << "v1 = " << v1 << ", ";
+
+    if (r[i] >= 0)
+      v2 += _transverse_direction(i) * ((*_disp[i])[_qp] + r[i]);
+    else
+      v2 += -_transverse_direction(i) * ((*_disp[i])[_qp] + r[i]);
     std::cout << "v2 = " << v2 << ", & ";
-    sq_mag += (*_disp[i])[_qp] * (*_disp[i])[_qp];
+
+    sq_mag += r[i] * r[i];
     std::cout << "sq_mag = " << sq_mag << " || ";
   }
 
-  Real res = _normals[_qp](_component) * (v1 + std::sqrt(sq_mag) * v2);
+  Real res = v1 - std::sqrt(sq_mag) * v2;
 
-  std::cout << "\n\nthe residual of component " << _component << " is " << res;
-  std::cout << "\n\nthe normal of component " << _component << " is " << _normals[_qp](_component);
-  std::cout << "\n\n-------------------------------------------\n\n";
+  std::cout << "\nthe normal of component " << _component << " is " << _normals[_qp](_component);
+  std::cout << "\nthe residual of component " << _component << " is " << res;
+  std::cout << "\n------------------------------------------------------------";
+  std::cout << "------------------------------------------------------------\n";
 
   return _penalty * _test[_i][_qp] * res;
 }
@@ -94,7 +101,7 @@ PenaltyFlexuralBC::computeQpJacobian()
 Real
 PenaltyFlexuralBC::computeQpOffDiagJacobian(unsigned int jvar)
 {
-  for (unsigned int coupled_component = 0; coupled_component < _ndisp; ++coupled_component)
+  for (unsigned int coupled_component = 0; coupled_component < _ndisp; coupled_component++)
     if (jvar == _disp_var[coupled_component])
     {
       return _penalty * _phi[_j][_qp] * _normals[_qp](coupled_component) *

@@ -37,7 +37,7 @@ protected:
   unsigned int _ndisp;
   std::vector<unsigned int> _disp_var;
 
-  ColumnMajorMatrix surface_norm;
+  //ColumnMajorMatrix surface_norm;
 
 private:
   Real _penalty;
