@@ -26,5 +26,6 @@ protected:
 
   const Function & _func;
   const VariableValue & _nodal_area;
-  const NodalSumUserObject & _total_area;
+  const PostprocessorValue & _total_area;
+  //const NodalSumUserObject & _total_area;
 };

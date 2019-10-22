@@ -38,7 +38,8 @@
     function = point_load
     boundary = midsection
     nodal_area = nodal_area
-    total_area_userobject = total_area
+    total_area_postprocessor = midsection_area
+    #total_area_userobject = total_area
     enable = true # apply point force=true
   [../]
   [./distributed_force_y]
@@ -71,13 +72,13 @@
     type = NodalArea
     variable = nodal_area
     boundary = midsection
-    execute_on = 'INITIAL LINEAR'
+    execute_on = 'INITIAL TIMESTEP_BEGIN'
   [../]
   [./total_area]
     type = NodalSumUserObject
     sum_from_variable = nodal_area
     boundary = midsection
-    execute_on = 'INITIAL LINEAR'
+    execute_on = 'INITIAL TIMESTEP_BEGIN'
   [../]
 []
 
@@ -169,6 +170,11 @@
     value_type = min
     variable = disp_y
     boundary = midsection
+  [../]
+  [./midsection_area]
+    type = NodalSum
+    variable = nodal_area
+    execute_on = 'INITIAL TIMESTEP_BEGIN'
   [../]
 []
 
