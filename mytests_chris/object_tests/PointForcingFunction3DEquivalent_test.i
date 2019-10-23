@@ -11,7 +11,7 @@
 
 [Modules/TensorMechanics/Master]
   [./all]
-    add_variables = True
+    add_variables = true
   [../]
 []
 
@@ -39,7 +39,6 @@
     boundary = midsection
     nodal_area = nodal_area
     total_area_postprocessor = midsection_area
-    #total_area_userobject = total_area
     enable = true # apply point force=true
   [../]
   [./distributed_force_y]
@@ -74,12 +73,6 @@
     boundary = midsection
     execute_on = 'INITIAL TIMESTEP_BEGIN'
   [../]
-  [./total_area]
-    type = NodalSumUserObject
-    sum_from_variable = nodal_area
-    boundary = midsection
-    execute_on = 'INITIAL TIMESTEP_BEGIN'
-  [../]
 []
 
 [BCs]
@@ -88,14 +81,12 @@
     variable = disp_x
     boundary = 'left_center right_center'
     value = 0.0
-    enable = true
   [../]
   [./fixy_center]
     type = PresetBC
     variable = disp_y
     boundary = 'left_center right_center'
     value = 0.0
-    enable = true
   [../]
 
   [./fixx]
@@ -103,14 +94,14 @@
     variable = disp_x
     boundary = 'left right'
     value = 0.0
-    enable = false # pin=false, fix=true
+    enable = false # "pin"=false, fix=true
   [../]
   [./fixy]
     type = PresetBC
     variable = disp_y
     boundary = 'left right'
     value = 0.0
-    enable = false # pin=false, fix=true
+    enable = false # "pin"=false, fix=true
   [../]
   [./fixz]
     type = PresetBC
@@ -124,12 +115,10 @@
   [./elasticity_tensor]
     type = ComputeIsotropicElasticityTensor
     youngs_modulus = 9.93e04
-    poissons_ratio = 1e-9 # not considering poisson's effect in this model
+    poissons_ratio = 1e-09 # not considering poisson's effect in this model
   [../]
   [./stress]
     type = ComputeLinearElasticStress
-    #outputs = exodus
-    #output_properties = stress
   [../]
   [./density]
     type = GenericConstantMaterial
@@ -167,14 +156,15 @@
   [../]
   [./max_disp_y]
     type = NodalExtremeValue
-    value_type = min
+    value_type = min # min since displacement is in negative direction
     variable = disp_y
     boundary = midsection
   [../]
   [./midsection_area]
-    type = NodalSum
-    variable = nodal_area
+    type = AreaPostprocessor
+    boundary = midsection
     execute_on = 'INITIAL TIMESTEP_BEGIN'
+    outputs = none
   [../]
 []
 

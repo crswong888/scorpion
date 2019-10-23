@@ -7,16 +7,16 @@ InputParameters
 validParams<VariableElasticModulus>()
 {
   InputParameters params = validParams<ComputeElasticityTensorBase>();
-  params.addClassDescription(
-      "Couples the Young's modulus and Poisson's ratio to a field variable "
-      "and computes an isotropic elasticity tensor at those quadature points.");
   params.addRequiredCoupledVar("youngs_modulus",
       "The field variable to be coupled to Young's modulus");
   params.addRequiredCoupledVar("poissons_ratio",
       "The field variable to be coupled to Poisson's ratio");
   params.addClassDescription(
-    "Couples the Young's modulus and Poisson's ratio to a field variable "
-    "and computes an isotropic elasticity tensor at those quadature points.");
+      "Couples the Young's modulus and Poisson's ratio to a field variable "
+      "and computes an isotropic elasticity tensor at those quadature points.");
+  params.addClassDescription(
+      "Couples the Young's modulus and Poisson's ratio to a field variable "
+      "and computes an isotropic elasticity tensor at those quadature points.");
   return params;
 }
 
