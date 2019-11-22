@@ -4,7 +4,7 @@
 
 [Mesh]
   type = FileMesh
-  file = PenaltyFlexuralBC_test_mesh.e
+  file = ../single_brick_beam.e
   allow_renumbering = false
   construct_node_list_from_side_list = false
 []

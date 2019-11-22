@@ -61,11 +61,6 @@
   [../]
 []
 
-[NodalNormals]
-  boundary = 'left right'
-  order = FIRST
-[]
-
 [UserObjects]
   [./nodal_area]
     type = NodalArea
