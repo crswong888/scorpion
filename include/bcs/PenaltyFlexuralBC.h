@@ -21,23 +21,18 @@ public:
   PenaltyFlexuralBC(const InputParameters & parameters);
 
 protected:
-  //virtual void computeConstraintSurfaceNormal();
-
   virtual Real computeQpResidual() override;
   virtual Real computeQpJacobian() override;
   virtual Real computeQpOffDiagJacobian(unsigned int jvar) override;
 
   const Point _y_bar;
-  //Point _axis_direction;
-  Point _transverse_direction;
+  Point _axis_direction;
   const unsigned int _component;
 
   // Coupled displacement variables
   std::vector<const VariableValue *> _disp;
   unsigned int _ndisp;
   std::vector<unsigned int> _disp_var;
-
-  //ColumnMajorMatrix surface_norm;
 
 private:
   Real _penalty;

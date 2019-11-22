@@ -4,7 +4,7 @@
 
 [Mesh]
   type = FileMesh
-  file = ../single_brick_beam.e
+  file = ../quadruple_brick_beam.e
   allow_renumbering = false
   construct_node_list_from_side_list = false
 []
@@ -22,15 +22,6 @@
   [../]
 []
 
-[Kernels]
-  [./gravity]
-    type = Gravity
-    variable = disp_y
-    value = -9810
-    enable = false # gravity=true
-  [../]
-[]
-
 [NodalKernels]
   [./point_force_y]
     type = PointForcingFunction3DEquivalent
@@ -38,7 +29,7 @@
     function = point_load
     boundary = midsection
     nodal_area = nodal_area
-    total_area_userobject = total_area
+    total_area_postprocessor = midsection_area
     enable = true # apply point force=true
   [../]
 []
@@ -55,44 +46,53 @@
     type = NodalArea
     variable = nodal_area
     boundary = midsection
-    execute_on = 'INITIAL LINEAR'
-  [../]
-  [./total_area]
-    type = NodalSumUserObject
-    sum_from_variable = nodal_area
-    boundary = midsection
-    execute_on = 'INITIAL LINEAR'
+    execute_on = 'INITIAL TIMESTEP_BEGIN'
   [../]
 []
 
 [BCs]
-  [./pinx]
+  [./flexx]
     type = PenaltyFlexuralBC
     variable = disp_x
-    neutral_axis_origin = '0.75 0 0'
-    transverse_direction = '0 1 0'
     component = 0
-    penalty = 1.0e+08
+    neutral_axis_origin = '0.75 0 0'
+    axis_direction = '0 0 1'
+    penalty = 1.0e+12
     boundary = 'right'
+    use_displaced_mesh = true
   [../]
-  [./piny]
+  [./flexy]
     type = PenaltyFlexuralBC
     variable = disp_y
-    neutral_axis_origin = '0.75 0 0'
-    transverse_direction = '0 1 0'
     component = 1
-    penalty = 1.0e+08
+    neutral_axis_origin = '0.75 0 0'
+    axis_direction = '0 0 1'
+    penalty = 1.0e+12
     boundary = 'right'
+    use_displaced_mesh = true
   [../]
+  [./pinx]
+    type = PresetBC
+    variable = disp_x
+    boundary = 'middle_right'
+    value = 0.0
+  [../]
+  [./piny]
+    type = PresetBC
+    variable = disp_y
+    boundary = 'middle_right'
+    value = 0.0
+  [../]
+
   [./fixx]
     type = PresetBC
-    variable = disp_z
+    variable = disp_x
     boundary = 'left'
     value = 0.0
   [../]
   [./fixy]
     type = PresetBC
-    variable = disp_z
+    variable = disp_y
     boundary = 'left'
     value = 0.0
   [../]
@@ -131,14 +131,14 @@
 
 [Executioner]
   type = Transient
-  solve_type = NEWTON
+  solve_type = PJFNK
   nl_rel_tol = 1e-04
   nl_abs_tol = 1e-06
   l_tol = 1e-08
   l_max_its = 250
   num_steps = 1
   timestep_tolerance = 1e-06
-  petsc_options = '-ksp_snes_ew'
+  petsc_options = '-snes_ksp_ew'
   petsc_options_iname = '-ksp_gmres_restart -pc_type -pc_hypre_type -pc_hypre_boomeramg_max_iter'
   petsc_options_value = ' 201                hypre    boomeramg      4'
 []
@@ -151,9 +151,15 @@
   [../]
   [./max_disp_y]
     type = NodalExtremeValue
-    value_type = min
+    value_type = min # min since displacement is in negative direction
     variable = disp_y
     boundary = midsection
+  [../]
+  [./midsection_area]
+    type = AreaPostprocessor
+    boundary = midsection
+    execute_on = 'INITIAL TIMESTEP_BEGIN'
+    outputs = none
   [../]
 []
 

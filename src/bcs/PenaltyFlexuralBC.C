@@ -9,18 +9,15 @@ validParams<PenaltyFlexuralBC>()
   InputParameters params = validParams<IntegratedBC>();
   params.addRequiredParam<RealVectorValue>("neutral_axis_origin",
       "Origin of the neutral axis");
-      // axis origin can be any coordinates
-  //params.addRequiredParam<RealVectorValue>("axis_direction",
-  //    "Direction of the neutral axis");
-  params.addRequiredParam<RealVectorValue>("transverse_direction",
-      "Direction of the transverse direction");
-      // warning: directions must be unit vectors
+      // axis origin can be any coordinates on neutral axis
+  params.addRequiredParam<RealVectorValue>("axis_direction",
+      "Direction of the neutral axis");
   params.addRequiredParam<unsigned int>("component",
       "An integer corresponding to the direction (0 for x, 1 for y, 2 for z)");
   params.addRequiredCoupledVar("displacements",
       "The vector of displacement variables");
   params.addRequiredParam<Real>("penalty",
-      "Penalty parameter");
+      "The penalty stiffness coefficient");
   params.addClassDescription(
       "Penalty Enforcement constraining a boundary to rotate about a defined "
       "neutral axis as a rigid surface. This BC can be used to model simple "
@@ -31,9 +28,7 @@ validParams<PenaltyFlexuralBC>()
 PenaltyFlexuralBC::PenaltyFlexuralBC(const InputParameters & parameters)
   : IntegratedBC(parameters),
     _y_bar(getParam<RealVectorValue>("neutral_axis_origin")),
-    //_axis_direction(getParam<RealVectorValue>("axis_direction"))
-    // I'll eventually use this parameter
-    _transverse_direction(getParam<RealVectorValue>("transverse_direction")),
+    _axis_direction(getParam<RealVectorValue>("axis_direction")),
     _component(getParam<unsigned int>("component")),
     _disp(3),
     _ndisp(coupledComponents("displacements")),
@@ -46,12 +41,85 @@ PenaltyFlexuralBC::PenaltyFlexuralBC(const InputParameters & parameters)
     _disp_var[i] = coupled("displacements", i);
   }
 
-  // warning, transverse_direction same as axis_direction or axial_direction
-  // transverse_direction should be a unit vector from 0 to 1
-  // also transverse axis should point in positive direction
+  // warning: axis_direction must be unit vector from 0 to 1
 }
 
 Real
+PenaltyFlexuralBC::computeQpResidual()
+{
+  std::cout<< "\n\nFOR QUADRATURE POINT (" << (_q_point[_qp])(0) << ", ";
+  std::cout<< (_q_point[_qp])(1) << ", " << (_q_point[_qp])(2) << ")\n\n";
+
+  std::cout << "disp[0] = " << (*_disp[0])[_qp];
+  std::cout << ", disp[1] = " << (*_disp[1])[_qp];
+  std::cout << ", & disp[2] = " << (*_disp[2])[_qp] << "\n";
+
+  // normalize all points relative to p
+  std::vector<Real> p0(3);
+  std::vector<Real> r0(3);
+  //Real p_dot_p(0);
+  //Real r_SqMag(0);
+  for (unsigned i(0); i < 3; i++)
+  {
+    // normalize all points relative to the neutral axis
+    p0[i] = (_q_point[_qp])(i) - (_q_point[_qp])(i) * _axis_direction(i);
+    r0[i] = _y_bar(i) - p0[i];
+
+    std::cout << "r0[" << i << "] = " << r0[i] << ", ";
+
+    // compute the dot product of p with itself
+    //p_dot_p += p0[i] * p0[i];
+    //std::cout << "p_dot_p = " << p_dot_p << ", ";
+
+    // compute the square magnitude of the initial centroidal arm
+    //r_SqMag += (p0[i] - _y_bar(i)) * (p0[i] - _y_bar(i));
+    //std::cout << "r_SqMag = " << r_SqMag << " || ";
+  }
+
+  // compute the displacement component of the residual
+  Real v(0) ;
+  for (unsigned i(0); i < _ndisp; i++)
+  {
+    v += 2. * r0[i] * (*_disp[i])[_qp] + (*_disp[i])[_qp] * (*_disp[i])[_qp];
+  }
+
+  std::cout << " || " << "v = " << v << " || ";
+
+  return _penalty * _test[_i][_qp] * v;
+}
+
+Real
+PenaltyFlexuralBC::computeQpJacobian()
+{
+  Real p0 = (_q_point[_qp])(_component)
+            - (_q_point[_qp])(_component) * _axis_direction(_component);
+  Real r0 = _y_bar(_component) - p0;
+
+  std::cout << "r0[" << _component << "] = " << p0 << " || ";
+
+  return 2. * _penalty * _test[_i][_qp] * (r0 + (*_disp[_component])[_qp])
+         * _phi[_j][_qp];
+}
+
+Real
+PenaltyFlexuralBC::computeQpOffDiagJacobian(unsigned int jvar)
+{
+  for (unsigned coupled_component(0); coupled_component < _ndisp; coupled_component++)
+    if (jvar == _disp_var[coupled_component])
+    {
+      Real p0 = (_q_point[_qp])(coupled_component)
+                - (_q_point[_qp])(coupled_component)
+                * _axis_direction(coupled_component);
+      Real r0 = _y_bar(coupled_component) - p0;
+
+      return 2. * _penalty * _test[_i][_qp]
+             * (r0 + (*_disp[coupled_component])[_qp]) * _phi[_j][_qp];
+    }
+
+  return 0.0;
+}
+
+/*Real
 PenaltyFlexuralBC::computeQpResidual()
 {
   std::cout<< "FOR QUADRATURE POINT (" << (_q_point[_qp])(0) << ", ";
@@ -120,61 +188,4 @@ PenaltyFlexuralBC::computeQpOffDiagJacobian(unsigned int jvar)
     }
 
   return 0.0;
-}
-
-/*void
-PenaltyFlexuralBC::computeConstraintSurfaceNormal() {
-  // this is wrong, I need to take a closer look at formulation
-  Real y = _transverse_direction * ((*_current_node) - _y_bar),
-       theta = std::acos((*_disp[0])[_qp] / y),
-       tan_0 = -y * std::cos(theta),
-       tan_1 = y * std::sin(theta);
-
-  // these unit normals are totally going to depend on which displacement
-  // component is being used for each
-  ColumnMajorMatrix surface_norm(3, 1);
-  surface_norm(0, 0) = tan_0 / std::sqrt(tan_0 * tan_0 + tan_1 * tan_1);
-  surface_norm(1, 0) = tan_1 / std::sqrt(tan_0 * tan_0 + tan_1 * tan_1);
-  surface_norm(2, 0) = 0;
-}*/
-
-// in this penalty formulation, its similar to the multi-point constraint
-// in traditional finite element, i.e.,
-// beta_i*u_i + beta_i*u_j ... = b_0
-// here, beta_0 is gonna have to be zero for u \dot normal = 0
-// except here, beta_0 = 0 = residual
-
-/*Real
-PenaltyFlexuralBC::computeQpResidual()
-{
-  Real u_dot_n = 0;
-  for (unsigned int i = 0; i < _ndisp; ++i) // just assume z is 0 for now
-    u_dot_n += (*_disp[i])[_qp] * surface_norm(i, 0);
-
-  return _penalty * u_dot_n * surface_norm(_component, 0);
-  // I should sum up displacements times normal x or y here to get dot product
-  // then I should enforce the bc by returning the individual components
-  // of u \dot normal
-}*/
-
-/*Real
-PenaltyFlexuralBC::computeQpJacobian()
-{
-  //this is beta_i for K_ii
-  //or beta_j for K_jj
-  return _penalty * surface_norm(_component, 0) * surface_norm(_component);
-}
-
-Real
-PenaltyFlexuralBC::computeQpOffDiagJacobian(unsigned int jvar)
-{
-  //this is beta_i * beta_j for K_ij and K_ji
-  //beta_i or j being the constraint, i.e., the normal of the circle
-  for (unsigned int coupled_component = 0; coupled_component < _ndisp; ++coupled_component)
-    if (jvar == _disp_var[coupled_component])
-    {
-      return _penalty * surface_norm(_component, 0) * surface_norm(coupled_component, 0);
-    }
-
-  return 0;
 }*/
