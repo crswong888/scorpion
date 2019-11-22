@@ -1,0 +1,68 @@
+reset 
+
+brick x 0.75 y 0.03 z 0.03
+brick x 0.75 y 0.03 z 0.03
+
+move volume 1 x -0.375
+move volume 2 x  0.375
+
+webcut volume all with plane yplane offset 0
+webcut volume all with plane zplane offset 0
+
+imprint all
+merge all
+
+volume all size 0.015
+
+mesh volume all
+
+block 1 volume all
+
+sideset 1 surface 37 39 55 61
+sideset 2 surface 35 42 57 59
+sideset 3 surface 45 52 67 69
+
+sideset 1 name 'left'
+sideset 2 name 'midsection'
+sideset 3 name 'right'
+
+sideset 4 surface 55 61
+sideset 5 surface 37 39
+sideset 6 surface 67 69
+sideset 7 surface 45 52
+
+sideset 4 name 'top_left'
+sideset 5 name 'bottom_left'
+sideset 6 name 'top_right'
+sideset 7 name 'bottom_right
+
+nodeset 1 surface 37 39 55 61
+nodeset 2 surface 35 42 57 59
+nodeset 3 surface 45 52 67 69
+
+nodeset 1 name 'left'
+nodeset 2 name 'midsection'
+nodeset 3 name 'right'
+
+nodeset 4 curve 93 104
+nodeset 5 curve 64 69
+nodeset 6 curve 62 70
+nodeset 7 curve 110 118
+nodeset 8 curve 79 87
+nodeset 9 curve 77 88
+
+nodeset 4 name 'top_left'
+nodeset 5 name 'middle_left'
+nodeset 6 name 'bottom_left'
+nodeset 7 name 'top_right'
+nodeset 8 name 'middle_right'
+nodeset 9 name 'bottom_right
+
+block all element type HEX8
+
+export mesh '~/projects/scorpion/mytests_chris/object_tests/quadruple_brick_beam.e' overwrite
+
+
+
+
+
