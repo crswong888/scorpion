@@ -9,18 +9,34 @@
   construct_node_list_from_side_list = false
 []
 
+[AuxVariables]
+  [./nodal_area]
+    order = FIRST
+    family = LAGRANGE
+  [../]
+  [./stress_xx]
+    order = FIRST
+    family = LAGRANGE
+  [../]
+[]
+
 [Modules/TensorMechanics/Master]
   [./all]
     add_variables = True
   [../]
 []
 
-[AuxVariables]
-  [./nodal_area]
-    order = FIRST
-    family = LAGRANGE
+[AuxKernels]
+  [./stress_xx]
+    type = RankTwoAux
+    rank_two_tensor = stress
+    variable = stress_xx
+    index_i = 0
+    index_j = 0
+    execute_on = 'LINEAR NONLINEAR'
   [../]
 []
+
 
 [NodalKernels]
   [./point_force_y]
@@ -37,7 +53,7 @@
 [Functions]
   [./point_load]
     type = ConstantFunction
-    value = -5500
+    value = -1e+04
   [../]
 []
 
@@ -51,50 +67,63 @@
 []
 
 [BCs]
+  #
   [./flexx]
+    # circular displacement constraint
     type = PenaltyFlexuralBC
     variable = disp_x
     component = 0
+    internal_ref_point = '0 0 0'
     neutral_axis_origin = '0.75 0 0'
     axis_direction = '0 0 1'
-    penalty = 1.0e+12
+    normal_stress = stress_xx
+    penalty = 1e+08
     boundary = 'right'
-    use_displaced_mesh = true
+    enable = true
+    use_displaced_mesh = false
   [../]
   [./flexy]
     type = PenaltyFlexuralBC
     variable = disp_y
     component = 1
+    internal_ref_point = '0 0 0'
     neutral_axis_origin = '0.75 0 0'
     axis_direction = '0 0 1'
-    penalty = 1.0e+12
+    normal_stress = stress_xx
+    penalty = 1e+08
     boundary = 'right'
-    use_displaced_mesh = true
+    enable = true
+    use_displaced_mesh = false
   [../]
+
+  # centerline simple pins
   [./pinx]
     type = PresetBC
     variable = disp_x
-    boundary = 'middle_right'
+    boundary = 'middle_left middle_right'
     value = 0.0
   [../]
   [./piny]
     type = PresetBC
     variable = disp_y
-    boundary = 'middle_right'
+    boundary = 'middle_left middle_right'
     value = 0.0
   [../]
 
+  # fixed translations
   [./fixx]
     type = PresetBC
     variable = disp_x
     boundary = 'left'
     value = 0.0
+    enable = true
   [../]
   [./fixy]
     type = PresetBC
     variable = disp_y
     boundary = 'left'
     value = 0.0
+    enable = true
   [../]
   [./fixz]
     type = PresetBC
@@ -131,14 +160,14 @@
 
 [Executioner]
   type = Transient
-  solve_type = PJFNK
+  solve_type = NEWTON
   nl_rel_tol = 1e-04
   nl_abs_tol = 1e-06
   l_tol = 1e-08
   l_max_its = 250
   num_steps = 1
   timestep_tolerance = 1e-06
-  petsc_options = '-snes_ksp_ew'
+  petsc_options = '-ksp_snes_ew'
   petsc_options_iname = '-ksp_gmres_restart -pc_type -pc_hypre_type -pc_hypre_boomeramg_max_iter'
   petsc_options_value = ' 201                hypre    boomeramg      4'
 []

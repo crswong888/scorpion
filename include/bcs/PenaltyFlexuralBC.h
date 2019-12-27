@@ -25,6 +25,7 @@ protected:
   virtual Real computeQpJacobian() override;
   virtual Real computeQpOffDiagJacobian(unsigned int jvar) override;
 
+  const Point _p_ref;
   const Point _y_bar;
   Point _axis_direction;
   const unsigned int _component;
@@ -33,6 +34,8 @@ protected:
   std::vector<const VariableValue *> _disp;
   unsigned int _ndisp;
   std::vector<unsigned int> _disp_var;
+
+  const VariableValue & _sigma_xx;
 
 private:
   Real _penalty;
