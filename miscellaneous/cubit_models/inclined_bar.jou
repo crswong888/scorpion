@@ -1,0 +1,57 @@
+reset 
+
+brick x 1.5 y 0.25 z 0.25
+brick x 1.5 y 0.25 z 0.25
+
+move volume 1 x -0.75
+move volume 2 x  0.75
+
+rotate volume all angle -30 about Z
+
+imprint all
+merge all
+
+volume all size 0.125
+
+mesh volume all
+
+block 1 volume all
+
+sideset 1 surface 4
+sideset 2 surface 12
+sideset 3 surface 2 8
+sideset 4 surface 6
+sideset 5 surface 1 7
+sideset 6 surface 3 9
+sideset 7 surface 5 11
+
+sideset 1 name 'left'
+sideset 2 name 'right'
+sideset 3 name 'back'
+sideset 4 name 'midsection'
+sideset 5 name 'front'
+sideset 6 name 'bottom'
+sideset 7 name 'top'
+
+nodeset 1 surface 4
+nodeset 2 surface 12
+nodeset 3 surface 2 8
+nodeset 4 surface 6
+nodeset 5 surface 1 7
+nodeset 6 surface 3 9
+nodeset 7 surface 5 11
+
+nodeset 1 name 'left'
+nodeset 2 name 'right'
+nodeset 3 name 'back'
+nodeset 4 name 'midsection'
+nodeset 5 name 'front'
+nodeset 6 name 'bottom'
+nodeset 7 name 'top'
+
+block all element type HEX8
+
+export mesh '~/projects/scorpion/inputs/object_tests/inclined_bar.e' overwrite
+
+
+

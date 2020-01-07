@@ -1,0 +1,26 @@
+reset
+
+create vertex 0 0 0  ## left node
+create vertex 10 0 0 ## right node
+
+create curve vertex 1 2
+
+merge all
+
+curve 1 size 0.5
+
+mesh curve all
+
+block 1 curve all
+
+nodeset 1 node 1
+nodeset 2 node 12
+nodeset 3 node 2
+
+nodeset 1 name 'left'
+nodeset 2 name 'mid'
+nodeset 3 name 'right'
+
+block all element type beam 2
+
+export mesh '/home/crswong888/projects/scorpion/inputs/beams/simple_beam_10m.e' overwrite

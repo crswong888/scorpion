@@ -12,13 +12,14 @@
 [Mesh]
   type = FileMesh
   file = case2_line.e
-  partitioner = linear
+  partitioner = parmetis
   allow_renumbering = false
 []
 
 [Modules/TensorMechanics/LineElementMaster]
   [./fuel_rod]
     add_variables = true
+    block = fuel_rod
     velocities = 'vel_x vel_y vel_z'
     accelerations = 'accel_x accel_y accel_z'
     rotational_velocities = 'rot_vel_x rot_vel_y rot_vel_z'
@@ -37,49 +38,58 @@
     gamma = 0.5
     eta = 19.2355
     zeta = 2.3287e-5
-
-    block = fuel_rod
-  [../]
-  [./springs]
-    add_variables = true
-    velocities = 'vel_x vel_y vel_z'
-    accelerations = 'accel_x accel_y accel_z'
-    rotational_velocities = 'rot_vel_x rot_vel_y rot_vel_z'
-    rotational_accelerations = 'rot_accel_x rot_accel_y rot_accel_z'
-
-    # Geometry parameters
-    area = 1.0e10
-    Iy = 12.0
-    Iz = 12.0
-    y_orientation = '0.0 1.0 0.0'
-
-    # dynamic simulation using consistent mass/inertia matrix
-    dynamic_consistent_inertia = true
-    density = density
-    beta = 0.25
-    gamma = 0.5
-
-    block = springs
   [../]
 []
 
 [Kernels]
-  [./gravity]
-    type = Gravity
+  [./spring_disp_x]
+    type = StressDivergenceSpring
+    block = springs
+    component = 0
+    variable = disp_x
+  [../]
+  [./spring_disp_y]
+    type = StressDivergenceSpring
+    block = springs
+    component = 1
+    variable = disp_y
+  [../]
+  [./spring_disp_z]
+    type = StressDivergenceSpring
+    block = springs
+    component = 2
     variable = disp_z
-    value = -9810
-    enable = false # gravity? ... I don't think it works well with LineElementMaster
-    # possibly need to implement a way to use gravity with beams and include
-    # a static_initialization parameter in stressdivergencebeam
+  [../]
+  [./spring_rot_x]
+    type = StressDivergenceSpring
+    block = springs
+    component = 3
+    variable = rot_x
+  [../]
+  [./spring_rot_y]
+    type = StressDivergenceSpring
+    block = springs
+    component = 4
+    variable = rot_y
+  [../]
+  [./spring_rot_z]
+    type = StressDivergenceSpring
+    block = springs
+    component = 5
+    variable = rot_z
   [../]
 []
 
+#[Kernels]
+#  [./gravity]
+#    type = Gravity
+#    variable = disp_z
+#    value = -9810
+#    enable = false # gravity not yet implemented for line elements
+#  [../]
+#[]
+
 [Functions]
-  [./ground_displacement]
-    type = PiecewiseLinear
-    data_file = 'displacement.csv' #if(0.0001<t<0.1, 5.1*sin(40*pi*t), 0*t)
-    format = columns
-  [../]
   [./ground_acceleration]
     type = PiecewiseLinear
     data_file = 'acceleration.csv' #if(0.0001<t<0.1, -5.1*(290*pi)^2*sin(290*pi*t), 0*t)
@@ -99,17 +109,11 @@
     shear_coefficient = 0.5397
     block = fuel_rod
   [../]
-  [./springs_elasticity]
-    type = ComputeElasticityBeam
-    youngs_modulus = 1.0e5
-    poissons_ratio = 0.5
-    shear_coefficient = 1.0
-    block = springs
-  [../]
   [./stress]
     type = ComputeBeamResultants
     outputs = exodus
     output_properties = 'forces moments'
+    block = fuel_rod
   [../]
   [./rod_density]
     type = GenericConstantMaterial
@@ -117,21 +121,28 @@
     prop_values = 8.94e-9
     block = fuel_rod
   [../]
-  [./spring_density]
-    type = GenericConstantMaterial
-    prop_names = density
-    prop_values = 9.0e-7 # really big to make its frequency really low
+  [./spring_stiffness]
+    type = LinearSpring
     block = springs
+    y_orientation = '0.0 1.0 0.0'
+    displacements = 'disp_x disp_y disp_z'
+    rotations = 'rot_x rot_y rot_z'
+    kx = 1e+09
+    ky = 1e+09
+    kz = 1e+09
+    krx = 1e+09
+    kry = 1e+09
+    krz = 2.90e+05
   [../]
 []
 
-
 [ICs]
+  #probably need an accel IC foo im guessing?
   [./initial_vel]
     type = FunctionIC
     variable = vel_y
     function = initial_vel
-    boundary = 'spring_a spring_b spring_c spring_d'
+    boundary = 'support_a support_b support_c support_d'
   [../]
 []
 
@@ -139,33 +150,33 @@
   [./fixx]
     type = PresetBC
     variable = disp_x
-    boundary = 'spring_a spring_b spring_c spring_d'
+    boundary = 'support_a support_b support_c support_d'
     value = 0.0
   [../]
   [./fixz]
     type = PresetBC
     variable = disp_z
-    boundary = 'spring_a spring_b spring_c spring_d'
+    boundary = 'support_a support_b support_c support_d'
     value = 0.0
   [../]
   [./fixrx]
     type = PresetBC
     variable = rot_x
-    boundary = 'spring_a spring_b spring_c spring_d'
+    boundary = 'support_a support_b support_c support_d'
     value = 0.0
   [../]
   [./fixry]
     type = PresetBC
     variable = rot_y
-    boundary = 'spring_a spring_b spring_c spring_d'
+    boundary = 'support_a support_b support_c support_d'
     value = 0.0
   [../]
   [./fixrz]
     type = PresetBC
     variable = rot_z
-    boundary = 'spring_a spring_b spring_c spring_d'
+    boundary = 'spring_node_a spring_node_b spring_node_c spring_node_d'
+    #boundary = 'support_a support_b support_c support_d'
     value = 0.0
-    enable = true #fixed support = true
   [../]
 
   [./induce_acceleration]
@@ -173,16 +184,15 @@
     variable = disp_y
     velocity = vel_y
     acceleration = accel_y
-    boundary = 'spring_a spring_b spring_c spring_d'
+    boundary = 'support_a support_b support_c support_d'
     function = ground_acceleration
     beta = 0.25
-    enable = true
   [../]
 
   [./fixy]
     type = PresetBC
     variable = disp_y
-    boundary = 'spring_a spring_b spring_c spring_d'
+    boundary = 'support_a support_b support_c support_d'
     value = 0.0
   [../]
 []
@@ -210,7 +220,7 @@
   solve_type = NEWTON
   scheme = explicit-euler
   nl_rel_tol = 1e-6
-  nl_abs_tol = 1e-6
+  nl_abs_tol = 1e-8
   start_time = 0.0
   end_time = 0.4
   dt = 1.0E-4

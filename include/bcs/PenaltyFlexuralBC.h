@@ -2,9 +2,6 @@
 
 #include "IntegratedBC.h"
 
-// MOOSE includes
-#include "ColumnMajorMatrix.h"
-
 class PenaltyFlexuralBC;
 
 template<>

@@ -22,7 +22,11 @@
 
 [Modules/TensorMechanics/Master]
   [./all]
-    add_variables = True
+    add_variables = true
+    strain = FINITE
+    incremental = true
+    use_displaced_mesh = true
+    use_finite_deform_jacobian = true
   [../]
 []
 
@@ -140,14 +144,9 @@
     poissons_ratio = 1e-09 # not considering poisson's effect in this model
   [../]
   [./stress]
-    type = ComputeLinearElasticStress
+    type = ComputeFiniteStrainElasticStress
     #outputs = exodus
     #output_properties = stress
-  [../]
-  [./density]
-    type = GenericConstantMaterial
-    prop_names = 'density'
-    prop_values = 8000 # Approximate density of steel
   [../]
 []
 
@@ -160,14 +159,14 @@
 
 [Executioner]
   type = Transient
-  solve_type = NEWTON
+  solve_type = PJFNK
   nl_rel_tol = 1e-04
   nl_abs_tol = 1e-06
   l_tol = 1e-08
   l_max_its = 250
   num_steps = 1
   timestep_tolerance = 1e-06
-  petsc_options = '-ksp_snes_ew'
+  petsc_options = '-snes_ksp_ew'
   petsc_options_iname = '-ksp_gmres_restart -pc_type -pc_hypre_type -pc_hypre_boomeramg_max_iter'
   petsc_options_value = ' 201                hypre    boomeramg      4'
 []
