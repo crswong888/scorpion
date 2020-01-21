@@ -2,84 +2,57 @@ reset
 
 # create Support A
 create vertex 0 0 0
-create vertex 0 0 -1
-
-create curve vertex 1 2
 
 # create Support B
 create vertex 522 0 0
-create vertex 522 0 -1
-
-create curve vertex 3 4
 
 # create Support C
 create vertex {2*522} 0 0
-create vertex {2*522} 0 -1
-
-create curve vertex 5 6
 
 # create Support D
 create vertex {2*522+632} 0 0
-create vertex {2*522+632} 0 -1
-
-create curve vertex 7 8
 
 # create the fuel rod
-create curve vertex 1 3
-create curve vertex 3 5
-create curve vertex 5 7
+create curve vertex 1 2
+create curve vertex 2 3
+create curve vertex 3 4
 
 merge all
 
 # create the mesh
-curve 1 2 3 4 interval 1
-curve 5 interval 50
-curve 6 interval 50
-curve 7 interval 50
+curve 1 2 3 interval 50
 
 mesh curve all
 
 # create blocks and nodesets
-block 1 curve 5 6 7
-block 2 curve 1 2 3 4
+block 1 curve 1 2 3
 
 block 1 name 'fuel_rod'
-block 2 name 'springs'
 
 # support nodes
-nodeset 1 node 1 2
-nodeset 2 node 3 4
-nodeset 3 node 5 6
-nodeset 4 node 7 8
+nodeset 1 node 1
+nodeset 2 node 2
+nodeset 3 node 52
+nodeset 4 node 102
 
 nodeset 1 name 'support_a'
 nodeset 2 name 'support_b'
 nodeset 3 name 'support_c'
 nodeset 4 name 'support_d'
 
-# spring nodes
-nodeset 5 node 2
-nodeset 6 node 4
-nodeset 7 node 6
-nodeset 8 node 8
-
-nodeset 5 name 'spring_node_a'
-nodeset 6 name 'spring_node_b'
-nodeset 7 name 'spring_node_c'
-nodeset 8 name 'spring_node_d'
-
 # accelerometer nodes
-nodeset 9 node 33
-nodeset 10 node 82
-nodeset 11 node 131
+nodeset 5 node 27
+nodeset 6 node 77
+nodeset 7 node 127
 
-nodeset 9 name 'accelerometer_a'
-nodeset 10 name 'accelerometer_b'
-nodeset 11 name 'accelerometer_c'
+nodeset 5 name 'accelerometer_a'
+nodeset 6 name 'accelerometer_b'
+nodeset 7 name 'accelerometer_c'
 
 # set the element type
 block all element type beam2
 
 # export mesh
 export mesh '/home/crswong888/projects/scorpion/inputs/fuel_rods/case_2/case2_line.e' overwrite
+
 

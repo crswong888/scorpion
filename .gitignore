@@ -1,5 +1,3 @@
-*.ods
-
 .libs
 *.la
 *.lo
@@ -11,7 +9,7 @@
 *-oprof
 *-prof
 *-devel
-*.e
+*_out.e
 *.csv
 *.nav
 *.log
@@ -22,7 +20,6 @@
 *.so
 *.so.*
 *.vrb
-*.jou
 *.pyc
 *.mod
 *.e.*

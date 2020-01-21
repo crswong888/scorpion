@@ -11,7 +11,7 @@
 
 [Mesh]
   type = FileMesh
-  file = case2_line.e
+  file = case2_line_spring.e
   partitioner = parmetis
   allow_renumbering = false
 []
@@ -38,6 +38,45 @@
     gamma = 0.5
     eta = 19.2355
     zeta = 2.3287e-5
+  [../]
+[]
+
+[Kernels]
+  [./spring_disp_x]
+    type = StressDivergenceSpring
+    block = springs
+    component = 0
+    variable = disp_x
+  [../]
+  [./spring_disp_y]
+    type = StressDivergenceSpring
+    block = springs
+    component = 1
+    variable = disp_y
+  [../]
+  [./spring_disp_z]
+    type = StressDivergenceSpring
+    block = springs
+    component = 2
+    variable = disp_z
+  [../]
+  [./spring_rot_x]
+    type = StressDivergenceSpring
+    block = springs
+    component = 3
+    variable = rot_x
+  [../]
+  [./spring_rot_y]
+    type = StressDivergenceSpring
+    block = springs
+    component = 4
+    variable = rot_y
+  [../]
+  [./spring_rot_z]
+    type = StressDivergenceSpring
+    block = springs
+    component = 5
+    variable = rot_z
   [../]
 []
 
@@ -82,6 +121,19 @@
     prop_values = 8.94e-9
     block = fuel_rod
   [../]
+  [./spring_stiffness]
+    type = LinearSpring
+    block = springs
+    y_orientation = '0.0 1.0 0.0'
+    displacements = 'disp_x disp_y disp_z'
+    rotations = 'rot_x rot_y rot_z'
+    kx = 1e+09
+    ky = 1e+09
+    kz = 1e+09
+    krx = 1e+09
+    kry = 1e+09
+    krz = 2.90e+05
+  [../]
 []
 
 [ICs]
@@ -117,6 +169,13 @@
     type = PresetBC
     variable = rot_y
     boundary = 'support_a support_b support_c support_d'
+    value = 0.0
+  [../]
+  [./fixrz]
+    type = PresetBC
+    variable = rot_z
+    boundary = 'spring_node_a spring_node_b spring_node_c spring_node_d'
+    #boundary = 'support_a support_b support_c support_d'
     value = 0.0
   [../]
 
