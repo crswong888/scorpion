@@ -42,10 +42,14 @@
 []
 
 [Functions]
-  [./ground_velocity]
+  [./ground_displacement]
     type = PiecewiseLinear
-    data_file = 'vel_20hz.csv'
+    data_file = 'disp_20hz.csv'
     format = columns
+  [../]
+  [./initial_vel]
+    type = ConstantFunction
+    value = -640.8849
   [../]
 []
 
@@ -68,6 +72,17 @@
     prop_names = density
     prop_values = 8.94e-9
     block = fuel_rod
+  [../]
+[]
+
+[ICs]
+  #probably need an accel IC foo im guessing?
+  [./initial_vel]
+    type = FunctionIC
+    variable = vel_y
+    function = initial_vel
+    boundary = 'support_a support_b support_c support_d'
+    enable = false
   [../]
 []
 
@@ -97,11 +112,31 @@
     value = 0.0
   [../]
 
-  [./induce_velocity]
-    type = PresetVelocity
+  [./induce_displacement]
+    type = PresetDisplacement
+    variable = disp_y
+    velocity = vel_y
+    acceleration = accel_y
+    boundary = 'support_a support_b support_c support_d'
+    function = ground_displacement
+    beta = 0.25
+  [../]
+
+  [./fixy]
+    type = PresetBC
     variable = disp_y
     boundary = 'support_a support_b support_c support_d'
-    function = ground_velocity
+    value = 0.0
+    enable = false
+  [../]
+[]
+
+[Controls]
+  [./stop_displacement]
+    type = TimePeriod
+    enable_objects = '*/fixy'
+    start_time = 0.1
+    end_time = 0.4
   [../]
 []
 
@@ -212,9 +247,9 @@
     boundary = support_a
   [../]
 
-  [./ground_velocity]
+  [./ground_displacement]
     type = FunctionValuePostprocessor
-    function = ground_velocity
+    function = ground_displacement
   [../]
 
 []

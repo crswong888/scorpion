@@ -47,10 +47,6 @@
     data_file = './preset_displacement/disp_20hz.csv'
     format = columns
   [../]
-  [./initial_vel]
-    type = ConstantFunction
-    value = -640.8849
-  [../]
 []
 
 [Materials]
@@ -72,17 +68,6 @@
     prop_names = density
     prop_values = 8.94e-9
     block = fuel_rod
-  [../]
-[]
-
-[ICs]
-  #probably need an accel IC foo im guessing?
-  [./initial_vel]
-    type = FunctionIC
-    variable = vel_y
-    function = initial_vel
-    boundary = 'support_a support_b support_c support_d'
-    enable = false
   [../]
 []
 
@@ -117,23 +102,6 @@
     variable = disp_y
     boundary = 'support_a support_b support_c support_d'
     function = ground_displacement
-  [../]
-
-  [./fixy]
-    type = PresetBC
-    variable = disp_y
-    boundary = 'support_a support_b support_c support_d'
-    value = 0.0
-    enable = false
-  [../]
-[]
-
-[Controls]
-  [./stop_displacement]
-    type = TimePeriod
-    enable_objects = '*/fixy'
-    start_time = 0.1
-    end_time = 0.4
   [../]
 []
 
