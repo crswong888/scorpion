@@ -3,7 +3,7 @@
 // MOOSE includes
 #include "VectorPostprocessorInterface.h"
 
-registerMooseObject("scorpionApp", NodalSumUserObject);
+registerMooseObject("scorpionApp", LeastSquaresBaselineCorrection);
 
 template <>
 InputParameters
@@ -38,8 +38,8 @@ LeastSquaresBaselineCorrection::LeastSquaresBaselineCorrection(const InputParame
     _time_start(getParam<Real>("start_time")),
     _time_end(getParam<Real>("end_time")),
     _reg_dt(getParam<Real>("regularize_dt")), // mastodon jargon
-    _beta(getParam<Real>("beta")),
     _gamma(getParam<Real>("gamma")),
+    _beta(getParam<Real>("beta")),
     _unadj_vel(declareVector("unadjusted_velocity")),
     _unadj_disp(declareVector("unadjusted_displacement")),
     _adj_accel(declareVector("adjusted_acceleration")),
@@ -54,39 +54,47 @@ LeastSquaresBaselineCorrection::LeastSquaresBaselineCorrection(const InputParame
 }
 
 
-void
+std::vector<Real>
 LeastSquaresBaselineCorrection::newmarkGammaIntegrate(const Real & num_steps,
-                                                      const std::vector<Real> & u_double_dot
-                                                      const std::vector<Real> & u_dot
+                                                      const std::vector<Real> & u_double_dot,
                                                       const Real & gamma,
                                                       const Real & reg_dt)
 {
-  Real u_dot_new;
+  std::vector<Real> u_dot(num_steps); u_dot[0] = 0; // initialize
   for (unsigned int i = 0; i < num_steps; ++i)
   {
-    u_dot_new = 0.0;
-    u_dot_new = u_dot[i] + (1 - gamma) * reg_dt * u_double_dot[i]
+    u_dot[i+1] = u_dot[i] + (1 - gamma) * reg_dt * u_double_dot[i]
                 + gamma * reg_dt * u_double_dot[i+1];
-    u_dot.push_back(u_dot_new);
   }
+  return u_dot;
 }
 
 void
 LeastSquaresBaselineCorrection::initialize()
 {
-  _unadj_vel->clear();
-  _unadj_disp->clear();
-  _adj_accel->clear();
-  _adj_vel->clear();
-  _adj_disp->clear();
-  _time->clear();
+  _unadj_vel.clear();
+  _unadj_disp.clear();
+  _adj_accel.clear();
+  _adj_vel.clear();
+  _adj_disp.clear();
+  _time.clear();
 }
 
 void
 LeastSquaresBaselineCorrection::execute()
 {
+  // create a copy of the acceleration data so it can be passed to functions
+  std::vector<Real> unadj_accel(_unadj_accel.begin(), _unadj_accel.end());
+
+  std::cout << "NUM_STEPS = " << unadj_accel.size();
+
   // Compute the unadjusted velocity and displacment time histories
-  // need to set initial condition?
+  //std::vector<Real> unadj_vel = newmarkGammaIntegrate(
+  //    unadj_accel.size(), unadj_accel, _gamma, _reg_dt);
 
   // note: pass gamma = 0.5 to newmarkGammaIntegrate for trapezoidal
+
+
+  // assign computed values in the dummy arrays to the output variables
+  //_unadj_vel = unadj_vel;
 }
