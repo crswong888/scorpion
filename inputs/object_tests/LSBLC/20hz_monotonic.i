@@ -41,6 +41,16 @@
   [../]
 []
 
+[Functions]
+  [./adjusted_acceleration]
+    type = VectorPostprocessorFunction
+    argument_column = time
+    component = 1
+    value_column = adjusted_acceleration
+    vectorpostprocessor_name = BL_adjustments
+  [../]
+[]
+
 [Materials]
   [./fuel_rod_elasticity]
     type = ComputeElasticityBeam
@@ -88,6 +98,16 @@
     boundary = 'support_a support_b support_c support_d'
     value = 0.0
   [../]
+
+  [./induce_acceleration]
+    type = PresetAcceleration
+    variable = disp_y
+    velocity = vel_y
+    acceleration = accel_y
+    boundary = 'support_a support_b support_c support_d'
+    function = adjusted_acceleration
+    beta = 0.25
+  [../]
 []
 
 [Preconditioning]
@@ -102,12 +122,12 @@
 [Executioner]
   type = Transient
   solve_type = NEWTON
-  nl_rel_tol = 1e-6
-  nl_abs_tol = 1e-8
+  nl_rel_tol = 1e-06
+  nl_abs_tol = 1e-08
   start_time = 0.0
-  end_time = 1.0e-04
-  dt = 1.0e-04
-  timestep_tolerance = 1e-6
+  end_time = 0.4
+  dt = 1.0e-03
+  timestep_tolerance = 1e-06
   line_search = none
   petsc_options = '-ksp_snes_ew'
   petsc_options_iname = '-ksp_gmres_restart -pc_type -pc_hypre_type -pc_hypre_boomeramg_max_iter'
@@ -146,7 +166,7 @@
     time_name = time
     start_time = 0.0
     end_time = 0.4
-    order = 2
+    order = 3
     gamma = 0.5
     beta = 0.25
     execute_on = INITIAL
@@ -164,7 +184,7 @@
   [./BL_adjustments]
     type = CSV
     file_base = 20hz
-    #show = BL_adjustments
+    show = BL_adjustments
     time_column = false
     execute_on = INITIAL
     execute_postprocessors_on = NONE

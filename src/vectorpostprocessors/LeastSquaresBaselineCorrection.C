@@ -80,7 +80,7 @@ LeastSquaresBaselineCorrection::execute()
   // Compute the unadjusted velocity and displacment time histories
   Real dt;
   std::vector<Real> unadj_vel, unadj_disp;
-  unadj_vel.push_back(0); unadj_disp.push_back(0); // initialize
+  unadj_vel.push_back(0); unadj_disp.push_back(0); /* initialize */
   for (unsigned int i = 0; i < index_end; ++i)
   {
     dt = t_var[i+1] - t_var[i];
@@ -91,46 +91,39 @@ LeastSquaresBaselineCorrection::execute()
       accel_var[i], accel_var[i+1], unadj_vel[i], unadj_disp[i], _beta, dt));
   }
 
-  // compute normal equation matrix and right-hand side for velocity fit
-  unsigned int num_rows = _order + 1; // no. of eqns to solve for coefficients
+  // compute velocity p-fit coefficients from system of linear normal eqns
+  DenseVector<Real> coeffs = computeVelocityFitCoeffs(
+    _order, accel_var, unadj_vel, t_var, _time_end, index_end, _beta);
 
-  std::vector<Real> rhs(num_rows);
-  Real u_ddot_old, u_ddot, u_dot_old;
-  dt = 0; // clear time step size
-  for (unsigned int i = 0; i < index_end; ++i)
+  // compute the adjusted time histories from the velocity fit
+  Real p_ddot, p_dot, p;
+  std::vector<Real> adj_accel, adj_vel, adj_disp;
+  for (unsigned int i = 0; i <= index_end; ++i)
   {
-    dt = t_var[i+1] - t_var[i];
-    for (unsigned int row = 0; row < num_rows; ++row)
-      {
-        u_dot_old = pow(t_var[i], row + 1) * unadj_vel[i];
-        u_ddot_old = pow(t_var[i], row + 1) * accel_var[i] +
-                     (row + 1) * pow(t_var[i], row) * unadj_vel[i];
-        u_ddot = pow(t_var[i+1], row + 1) * accel_var[i+1] +
-                 (row + 1) * pow(t_var[i+1], row) * unadj_vel[i+1];
+    p_ddot = 0; p_dot = 0; p = 0; /* clear old values */
 
-        rhs[row] += newmarkBetaIntegrate(
-        	u_ddot_old, u_ddot, u_dot_old, 0.0, _beta, dt);
-    }
-  }
-
-  std::vector<Real> mat(num_rows * num_rows);
-  unsigned int index;
-  for (unsigned int row = 0; row < num_rows; ++row) {
-    for (unsigned int col = 0; col < num_rows; ++col)
+    for (unsigned int k = 0; k < _order + 1; ++k) /* compute polynomials */
     {
-      index = row * num_rows + col;
-      mat[index] = pow(_time_end, row + col + 3) * (col + 2) / (row + col + 3);
+      p_ddot += (k * k + 3 * k + 2) * coeffs(k) * pow(t_var[i], k);
+      p_dot += (k + 2) * coeffs(k) * pow(t_var[i], k + 1);
+      p += coeffs(k) * pow(t_var[i], k + 2);
     }
+
+    adj_accel.push_back(accel_var[i] - p_ddot);
+    adj_vel.push_back(unadj_vel[i] - p_dot);
+    adj_disp.push_back(unadj_disp[i] - p);
   }
 
   // note: pass gamma = 0.5 to newmarkGammaIntegrate for trapezoidal
-
 
   // assign computed values in the dummy arrays to the output variables
   _time = t_var;
   _unadj_accel = accel_var;
   _unadj_vel = unadj_vel;
   _unadj_disp = unadj_disp;
+  _adj_accel = adj_accel;
+  _adj_vel = adj_vel;
+  _adj_disp = adj_disp;
 }
 
 Real
@@ -153,4 +146,49 @@ LeastSquaresBaselineCorrection::newmarkBetaIntegrate(const Real & u_ddot_old,
 {
   return u_old + dt * u_dot_old + (0.5 - beta) * dt * dt * u_ddot_old +
          beta * dt * dt * u_ddot;
+}
+
+DenseVector<Real>
+LeastSquaresBaselineCorrection::computeVelocityFitCoeffs(unsigned int order,
+                                                         const std::vector<Real> & accel,
+                                                         const std::vector<Real> & vel,
+                                                         const std::vector<Real> & t,
+                                                         const Real & t_end,
+                                                         const unsigned int & num_steps,
+                                                         const Real & beta)
+{
+  unsigned int num_rows = order + 1; /* no. of eqns to solve for coefficients */
+  DenseMatrix<Real> mat(num_rows, num_rows);
+  DenseVector<Real> rhs(num_rows);
+  DenseVector<Real> coeffs(num_rows);
+
+  // compute the matrix of the linear normal equation
+  for (unsigned int row = 0; row < num_rows; ++row) {
+    for (unsigned int col = 0; col < num_rows; ++col)
+    {
+      mat(row, col) = pow(t_end, row + col + 3) * (col + 2) / (row + col + 3);
+    }
+  }
+
+  // compute vector of integrals on right-hand side of linear normal equation
+  Real dt, u_ddot_old, u_ddot, u_dot_old;
+  for (unsigned int i = 0; i < num_steps; ++i)
+  {
+    dt = t[i+1] - t[i];
+    for (unsigned int row = 0; row < num_rows; ++row)
+      {
+        u_dot_old = pow(t[i], row + 1) * vel[i];
+        u_ddot_old = pow(t[i], row + 1) * accel[i] +
+                     (row + 1) * pow(t[i], row) * vel[i];
+        u_ddot = pow(t[i+1], row + 1) * accel[i+1] +
+                 (row + 1) * pow(t[i+1], row) * vel[i+1];
+
+        rhs(row) += newmarkBetaIntegrate(
+        	u_ddot_old, u_ddot, u_dot_old, 0.0, beta, dt);
+    }
+  }
+
+  // solve the system using libMesh lu factorization
+  mat.lu_solve(rhs, coeffs);
+  return coeffs;
 }

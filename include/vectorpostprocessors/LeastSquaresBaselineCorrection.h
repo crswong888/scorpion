@@ -33,6 +33,14 @@ protected:
                             const Real & beta,
                             const Real & dt);
 
+  DenseVector<Real> computeVelocityFitCoeffs(unsigned int order,
+                                             const std::vector<Real> & accel,
+                                             const std::vector<Real> & vel,
+                                             const std::vector<Real> & t,
+                                             const Real & t_end,
+                                             const unsigned int & num_steps,
+                                             const Real & beta);
+
   VectorPostprocessorName _vpp_name;
   const std::string _accel_name;
   const std::string _time_name;
