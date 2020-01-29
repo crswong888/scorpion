@@ -10,7 +10,7 @@
 *-prof
 *-devel
 *_out.e
-*_out.csv
+*.csv
 *.nav
 *.log
 *.aux

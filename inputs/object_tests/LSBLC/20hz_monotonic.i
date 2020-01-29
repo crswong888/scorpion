@@ -105,8 +105,8 @@
   nl_rel_tol = 1e-6
   nl_abs_tol = 1e-8
   start_time = 0.0
-  end_time = 0.3
-  dt = 1.0E-4
+  end_time = 1.0e-04
+  dt = 1.0e-04
   timestep_tolerance = 1e-6
   line_search = none
   petsc_options = '-ksp_snes_ew'
@@ -137,15 +137,16 @@
     type = CSVReader
     csv_file = 'accel_20hz.csv'
     contains_complete_history = true
-    execute_on = INITIAL
+    header = true
   [../]
   [./BL_adjustments]
     type = LeastSquaresBaselineCorrection
     vectorpostprocessor = accel_data
-    order = 3
+    accel_name = accel_20hz
+    order = 2
     start_time = 0.0
     end_time = 0.4
-    regularize_dt = 1e-04
+    regularize_dt = 1e-03
     gamma = 0.5
     beta = 0.25
     execute_on = INITIAL
@@ -158,7 +159,6 @@
   perf_graph = true
   [./postprocs]
     type = CSV
-    csv = true
     execute_vector_postprocessors_on = NONE
   [../]
   [./BL_adjustments]

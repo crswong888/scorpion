@@ -20,12 +20,23 @@ public:
   virtual void execute() override;
 
 protected:
-  std::vector<Real> newmarkGammaIntegrate(const Real & num_steps,
-                                          const std::vector<Real> & u_double_dot,
-                                          const Real & gamma,
-                                          const Real & reg_dt);
+  Real newmarkGammaIntegrate(const Real & u_ddot_old,
+                             const Real & u_ddot,
+                             const Real & u_dot_old,
+                             const Real & gamma,
+                             const Real & dt);
 
-  VectorPostprocessorName _unadj_accel;
+  Real newmarkBetaIntegrate(const Real & u_ddot_old,
+                            const Real & u_ddot,
+                            const Real & u_dot_old,
+                            const Real & u_old,
+                            const Real & beta,
+                            const Real & dt);
+
+  VectorPostprocessorName _vpp_name;
+  const std::string _accel_name;
+  const VectorPostprocessorValue & _unadj_accel;
+
   const unsigned int _order;
   const Real & _time_start;
   const Real & _time_end;

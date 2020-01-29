@@ -1,30 +1,42 @@
 clear all
 format longeng
 
-% dt = 1e-03 ;
-% T = 0.4 ;
-% t = 0:dt:T ;
-% NT = length(t) ;
-% N = 7 ; % approximation order = N - 1
-% 
-% d2u = zeros(1,NT) ;
-% for i = 1:NT
-%     d2u(i) = 5.1 * (40 * pi)^2 * sin(40 * pi * t(i)) ;
-% end
-
-folder = 'CoyoteLake' ;
-data = 'RSN154_COYOTELK_SJB213' ;
-[d2u,dt,NT] = readPEER(folder,cat(2,data,'.AT2')) ;
-d2u = d2u * 981 ; % convert from gs to cm/s^2
-realV = readPEER(folder,cat(2,data,'.VT2')) ;
-realD = readPEER(folder,cat(2,data,'.DT2')) ;
-
-d2u = cat(2,0,transpose(d2u)) ; NT = NT + 1 ;
-realV = cat(2,0,transpose(realV)) ;
-realD = cat(2,0,transpose(realD)) ;
-T = dt * (NT - 1) ;
+dt = 1e-03 ;
+T = 0.4 ;
 t = 0:dt:T ;
+NT = length(t) ;
 N = 3 ; % approximation order = N - 1
+
+d2u = zeros(1,NT) ;
+for i = 1:NT
+    d2u(i) = 5.1 * (40 * pi)^2 * sin(40 * pi * t(i)) ;
+end
+
+% folder = 'ChiChi' ;
+% data = 'RSN1204_CHICHI_CHY039-E' ;
+% [d2u,dt,NT] = readPEER(folder,cat(2,data,'.AT2')) ;
+% d2u = d2u * 981 ; % convert from gs to cm/s^2
+% realV = readPEER(folder,cat(2,data,'.VT2')) ;
+% realD = readPEER(folder,cat(2,data,'.DT2')) ;
+% 
+% d2u = cat(2,0,transpose(d2u)) ; NT = NT + 1 ;
+% realV = cat(2,0,transpose(realV)) ;
+% realD = cat(2,0,transpose(realD)) ;
+% T = dt * (NT - 1) ;
+% t = 0:dt:T ;
+% N = 4 ; % approximation order = N - 1
+% 
+% %%%%%%%%%%%%%
+% T = 76.17 ;
+% t0 = 26 ;
+% 
+% istart = t0 / dt + 1;
+% iend = T / dt + 1 ;
+% NT = iend - istart + 1 ;
+% 
+% d2u = d2u(istart:iend);
+% t = 0:dt:T-t0;
+% %%%%%%%%%%%%%
 
 beta = 1 / 4 ;
 gamma = 1 / 2 ;
