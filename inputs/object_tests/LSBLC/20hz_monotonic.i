@@ -143,10 +143,10 @@
     type = LeastSquaresBaselineCorrection
     vectorpostprocessor = accel_data
     accel_name = accel_20hz
-    order = 2
+    time_name = time
     start_time = 0.0
     end_time = 0.4
-    regularize_dt = 1e-03
+    order = 2
     gamma = 0.5
     beta = 0.25
     execute_on = INITIAL
