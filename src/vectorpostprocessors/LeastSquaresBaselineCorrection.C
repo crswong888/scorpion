@@ -85,35 +85,36 @@ LeastSquaresBaselineCorrection::execute()
     dt = t_var[i+1] - t_var[i];
 
     unadj_vel.push_back(newmarkGammaIntegrate(
-      accel_var[i], accel_var[i+1], unadj_vel[i], _gamma, dt));
+        accel_var[i], accel_var[i+1], unadj_vel[i], _gamma, dt));
     unadj_disp.push_back(newmarkBetaIntegrate(
-      accel_var[i], accel_var[i+1], unadj_vel[i], unadj_disp[i], _beta, dt));
+        accel_var[i], accel_var[i+1], unadj_vel[i], unadj_disp[i], _beta, dt));
   }
 
-  // compute velocity p-fit coefficients from system of linear normal eqns
-  DenseVector<Real> coeffs = computeVelocityFitCoeffs(
-    _order, accel_var, unadj_vel, t_var, _time_end, index_end, _beta);
+// compute the adjusted time histories from the velocity fit
+  DenseVector<Real> coeffs = getVelocityFitCoeffs(
+      _order, accel_var, unadj_vel, t_var, _time_end, index_end, _beta);
 
-  // compute the adjusted time histories from the velocity fit
-  Real p_ddot, p_dot, p;
-  std::vector<Real> adj_accel, adj_vel, adj_disp;
+  std::vector<Real> p_fit, adj_accel, adj_vel, adj_disp;
   for (unsigned int i = 0; i <= index_end; ++i)
   {
-    p_ddot = 0; p_dot = 0; p = 0; /* clear old values */
+    p_fit = computePolynomials(_order, coeffs, t_var[i]);
 
-    for (unsigned int k = 0; k < _order + 1; ++k) /* compute polynomials */
-    {
-      p_ddot += (k * k + 3 * k + 2) * coeffs(k) * pow(t_var[i], k);
-      p_dot += (k + 2) * coeffs(k) * pow(t_var[i], k + 1);
-      p += coeffs(k) * pow(t_var[i], k + 2);
-    }
-
-    adj_accel.push_back(accel_var[i] - p_ddot);
-    adj_vel.push_back(unadj_vel[i] - p_dot);
-    adj_disp.push_back(unadj_disp[i] - p);
+    adj_accel.push_back(accel_var[i] - p_fit[1]);
+    adj_vel.push_back(unadj_vel[i] - p_fit[2]);
+    adj_disp.push_back(unadj_disp[i] - p_fit[3]);
   }
 
-  // note: pass gamma = 0.5 to newmarkGammaIntegrate for trapezoidal
+  // compute the adjusted time histories from the displacement fit
+  coeffs = getDisplacementFitCoeffs(_order, adj_disp, t_var, _time_end, index_end);
+
+  for (unsigned int i = 0; i < _order + 1; ++i)
+  {
+    p_fit = computePolynomials(_order, coeffs, t_var[i]);
+
+    adj_accel[i] -= p_fit[1];
+    adj_vel[i] -= p_fit[2];
+    adj_disp[i] -= p_fit[3];
+  }
 
   // assign computed values in the dummy arrays to the output variables
   _time = t_var;
@@ -148,20 +149,20 @@ LeastSquaresBaselineCorrection::newmarkBetaIntegrate(const Real & u_ddot_old,
 }
 
 DenseVector<Real>
-LeastSquaresBaselineCorrection::computeVelocityFitCoeffs(unsigned int order,
-                                                         const std::vector<Real> & accel,
-                                                         const std::vector<Real> & vel,
-                                                         const std::vector<Real> & t,
-                                                         const Real & t_end,
-                                                         const unsigned int & num_steps,
-                                                         const Real & beta)
+LeastSquaresBaselineCorrection::getVelocityFitCoeffs(unsigned int order,
+                                                     const std::vector<Real> & accel,
+                                                     const std::vector<Real> & vel,
+                                                     const std::vector<Real> & t,
+                                                     const Real & t_end,
+                                                     const unsigned int & num_steps,
+                                                     const Real & beta)
 {
   unsigned int num_rows = order + 1; /* no. of eqns to solve for coefficients */
   DenseMatrix<Real> mat(num_rows, num_rows);
   DenseVector<Real> rhs(num_rows);
   DenseVector<Real> coeffs(num_rows);
 
-  // compute the matrix of the linear normal equation
+  // compute matrix of linear normal equation
   for (unsigned int row = 0; row < num_rows; ++row) {
     for (unsigned int col = 0; col < num_rows; ++col)
     {
@@ -182,12 +183,67 @@ LeastSquaresBaselineCorrection::computeVelocityFitCoeffs(unsigned int order,
         u_ddot = pow(t[i+1], row + 1) * accel[i+1] +
                  (row + 1) * pow(t[i+1], row) * vel[i+1];
 
-        rhs(row) += newmarkBetaIntegrate(
-        	u_ddot_old, u_ddot, u_dot_old, 0.0, beta, dt);
+        rhs(row) += newmarkBetaIntegrate(u_ddot_old, u_ddot, u_dot_old, 0.0, beta, dt);
     }
   }
 
   // solve the system using libMesh lu factorization
   mat.lu_solve(rhs, coeffs);
   return coeffs;
+}
+
+DenseVector<Real>
+LeastSquaresBaselineCorrection::getDisplacementFitCoeffs(unsigned int order,
+                                                         const std::vector<Real> & disp,
+                                                         const std::vector<Real> & t,
+                                                         const Real & t_end,
+                                                         const unsigned int & num_steps)
+{
+  unsigned int num_rows = order + 1;
+  DenseMatrix<Real> mat(num_rows, num_rows);
+  DenseVector<Real> rhs(num_rows);
+  DenseVector<Real> coeffs(num_rows);
+
+  // computer matrix of linear normal equation
+  for (unsigned int row = 0; row < num_rows; ++row) {
+    for (unsigned int col = 0; col < num_rows; ++col)
+    {
+      mat(row, col) = pow(t_end, row + col + 5) / (row + col + 5);
+    }
+  }
+
+  // compute vector of integrals on right-hand side of linear normal equation
+  Real dt, u_old, u;
+  for (unsigned int i = 0; i < num_steps; ++i)
+  {
+    dt = t[i+1] - t[i];
+    for (unsigned int row = 0; row < num_rows; ++row)
+      {
+        u_old = pow(t[i], row + 2) * disp[i];
+        u = pow(t[i+1], row + 2) * disp[i+1];
+
+        // newmarkGamma w/ gamma = 0.5 is trapezoidal rule
+        rhs(row) += newmarkGammaIntegrate(u_old, u, 0.0, 0.5, dt);
+    }
+  }
+
+  // solve the system using libMesh lu factorization
+  mat.lu_solve(rhs, coeffs);
+  return coeffs;
+}
+
+std::vector<Real>
+LeastSquaresBaselineCorrection::computePolynomials(unsigned int order,
+                                                   const DenseVector<Real> & coeffs,
+                                                   const Real & t)
+{
+  std::vector<Real> p_fit(3); // poly fit and its derivatives
+  for (unsigned int k = 0; k < order + 1; ++k) /* compute polynomials */
+  {
+    p_fit[1] += (k * k + 3 * k + 2) * coeffs(k) * pow(t, k);
+    p_fit[2] += (k + 2) * coeffs(k) * pow(t, k + 1);
+    p_fit[3] += coeffs(k) * pow(t, k + 2);
+  }
+
+  return p_fit;
 }

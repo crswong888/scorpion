@@ -48,11 +48,6 @@
     argument_column = time
     value_column = adjusted_acceleration
   [../]
-  # a very crude way to get the initial accel:
-  [./initial_acceleration]
-    type = ConstantFunction
-    value = -20766.833873515
-  [../]
 []
 
 [Materials]
@@ -81,10 +76,9 @@
   #probably need an accel IC foo im guessing?
   [./initial_accel]
     type = ConstantIC
-    value = -20766.833873515
+    value = 0
     variable = accel_y
     boundary = 'support_a support_b support_c support_d'
-    enable = true
   [../]
 []
 
@@ -140,7 +134,7 @@
   nl_rel_tol = 1e-06
   nl_abs_tol = 1e-08
   start_time = 0.0
-  end_time = 0.4
+  end_time = 1.0e-03
   dt = 1.0e-03
   timestep_tolerance = 1e-06
   line_search = none
@@ -184,7 +178,7 @@
     time_name = time
     start_time = 0.0
     end_time = 0.4
-    order = 3
+    order = 7
     gamma = 0.5
     beta = 0.25
     execute_on = INITIAL

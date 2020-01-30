@@ -33,13 +33,23 @@ protected:
                             const Real & beta,
                             const Real & dt);
 
-  DenseVector<Real> computeVelocityFitCoeffs(unsigned int order,
-                                             const std::vector<Real> & accel,
-                                             const std::vector<Real> & vel,
+  DenseVector<Real> getVelocityFitCoeffs(unsigned int order,
+                                         const std::vector<Real> & accel,
+                                         const std::vector<Real> & vel,
+                                         const std::vector<Real> & t,
+                                         const Real & t_end,
+                                         const unsigned int & num_steps,
+                                         const Real & beta);
+
+  DenseVector<Real> getDisplacementFitCoeffs(unsigned int order,
+                                             const std::vector<Real> & disp,
                                              const std::vector<Real> & t,
                                              const Real & t_end,
-                                             const unsigned int & num_steps,
-                                             const Real & beta);
+                                             const unsigned int & num_steps);
+
+  std::vector<Real> computePolynomials(unsigned int order,
+                                       const DenseVector<Real> & coeffs,
+                                       const Real & t);
 
   const VectorPostprocessorValue & _accel;
   const VectorPostprocessorValue & _t;
