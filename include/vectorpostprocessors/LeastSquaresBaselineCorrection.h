@@ -41,9 +41,6 @@ protected:
                                              const unsigned int & num_steps,
                                              const Real & beta);
 
-  VectorPostprocessorName _vpp_name;
-  const std::string _accel_name;
-  const std::string _time_name;
   const VectorPostprocessorValue & _accel;
   const VectorPostprocessorValue & _t;
 

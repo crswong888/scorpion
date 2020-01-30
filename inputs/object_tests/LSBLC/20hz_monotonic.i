@@ -43,11 +43,15 @@
 
 [Functions]
   [./adjusted_acceleration]
-    type = VectorPostprocessorFunction
+    type = PiecewiseLinearVPP
+    vectorpostprocessor = BL_adjustments
     argument_column = time
-    component = 1
     value_column = adjusted_acceleration
-    vectorpostprocessor_name = BL_adjustments
+  [../]
+  # a very crude way to get the initial accel:
+  [./initial_acceleration]
+    type = ConstantFunction
+    value = -20766.833873515
   [../]
 []
 
@@ -70,6 +74,17 @@
     prop_names = density
     prop_values = 8.94e-9
     block = fuel_rod
+  [../]
+[]
+
+[ICs]
+  #probably need an accel IC foo im guessing?
+  [./initial_accel]
+    type = ConstantIC
+    value = -20766.833873515
+    variable = accel_y
+    boundary = 'support_a support_b support_c support_d'
+    enable = true
   [../]
 []
 
@@ -139,16 +154,19 @@
     type = NodalMaxValue
     variable = disp_y
     boundary = support_a
+    execute_on = 'INITIAL TIMESTEP_END'
   [../]
   [./vel_support]
     type = NodalMaxValue
     variable = vel_y
     boundary = support_a
+    execute_on = 'INITIAL TIMESTEP_END'
   [../]
   [./accel_support]
     type = NodalMaxValue
     variable = accel_y
     boundary = support_a
+    execute_on = 'INITIAL TIMESTEP_END'
   [../]
 []
 

@@ -32,11 +32,10 @@ validParams<LeastSquaresBaselineCorrection>()
 
 LeastSquaresBaselineCorrection::LeastSquaresBaselineCorrection(const InputParameters & parameters)
   : GeneralVectorPostprocessor(parameters),
-    _vpp_name(getParam<VectorPostprocessorName>("vectorpostprocessor")),
-    _accel_name(getParam<std::string>("accel_name")),
-    _time_name(getParam<std::string>("time_name")),
-    _accel(getVectorPostprocessorValue("vectorpostprocessor", _accel_name)),
-    _t(getVectorPostprocessorValue("vectorpostprocessor", _time_name)),
+    _accel(getVectorPostprocessorValue("vectorpostprocessor",
+                                       getParam<std::string>("accel_name"))),
+    _t(getVectorPostprocessorValue("vectorpostprocessor",
+                                   getParam<std::string>("time_name"))),
     _time_start(getParam<Real>("start_time")),
     _time_end(getParam<Real>("end_time")),
     _order(parameters.get<unsigned int>("order")),
