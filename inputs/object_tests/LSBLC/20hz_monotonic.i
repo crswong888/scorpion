@@ -76,7 +76,7 @@
   #probably need an accel IC foo im guessing?
   [./initial_accel]
     type = ConstantIC
-    value = 0
+    value = -128539.47489102 # init accel for 10th order correction
     variable = accel_y
     boundary = 'support_a support_b support_c support_d'
   [../]
@@ -134,7 +134,7 @@
   nl_rel_tol = 1e-06
   nl_abs_tol = 1e-08
   start_time = 0.0
-  end_time = 1.0e-03
+  end_time = 0.4
   dt = 1.0e-03
   timestep_tolerance = 1e-06
   line_search = none
@@ -178,7 +178,7 @@
     time_name = time
     start_time = 0.0
     end_time = 0.4
-    order = 7
+    order = 9 # becomes unstable after
     gamma = 0.5
     beta = 0.25
     execute_on = INITIAL

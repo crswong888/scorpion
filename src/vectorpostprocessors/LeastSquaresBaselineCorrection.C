@@ -99,21 +99,21 @@ LeastSquaresBaselineCorrection::execute()
   {
     p_fit = computePolynomials(_order, coeffs, t_var[i]);
 
-    adj_accel.push_back(accel_var[i] - p_fit[1]);
-    adj_vel.push_back(unadj_vel[i] - p_fit[2]);
-    adj_disp.push_back(unadj_disp[i] - p_fit[3]);
+    adj_accel.push_back(accel_var[i] - p_fit[0]);
+    adj_vel.push_back(unadj_vel[i] - p_fit[1]);
+    adj_disp.push_back(unadj_disp[i] - p_fit[2]);
   }
 
   // compute the adjusted time histories from the displacement fit
   coeffs = getDisplacementFitCoeffs(_order, adj_disp, t_var, _time_end, index_end);
 
-  for (unsigned int i = 0; i < _order + 1; ++i)
+  for (unsigned int i = 0; i <= index_end; ++i)
   {
     p_fit = computePolynomials(_order, coeffs, t_var[i]);
 
-    adj_accel[i] -= p_fit[1];
-    adj_vel[i] -= p_fit[2];
-    adj_disp[i] -= p_fit[3];
+    adj_accel[i] -= p_fit[0];
+    adj_vel[i] -= p_fit[1];
+    adj_disp[i] -= p_fit[2];
   }
 
   // assign computed values in the dummy arrays to the output variables
@@ -240,9 +240,9 @@ LeastSquaresBaselineCorrection::computePolynomials(unsigned int order,
   std::vector<Real> p_fit(3); // poly fit and its derivatives
   for (unsigned int k = 0; k < order + 1; ++k) /* compute polynomials */
   {
-    p_fit[1] += (k * k + 3 * k + 2) * coeffs(k) * pow(t, k);
-    p_fit[2] += (k + 2) * coeffs(k) * pow(t, k + 1);
-    p_fit[3] += coeffs(k) * pow(t, k + 2);
+    p_fit[0] += (k * k + 3 * k + 2) * coeffs(k) * pow(t, k);
+    p_fit[1] += (k + 2) * coeffs(k) * pow(t, k + 1);
+    p_fit[2] += coeffs(k) * pow(t, k + 2);
   }
 
   return p_fit;
