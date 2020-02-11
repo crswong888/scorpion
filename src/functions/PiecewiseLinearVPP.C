@@ -32,7 +32,7 @@ PiecewiseLinearVPP::PiecewiseLinearVPP(const InputParameters & parameters)
 }
 
 Real
-PiecewiseLinearVPP::value(Real t, const Point & p) const
+PiecewiseLinearVPP::value(Real t, const Point &) const
 {
   _linear_interp->setData(_args, _vals);
   return _linear_interp->sample(t);

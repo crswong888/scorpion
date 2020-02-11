@@ -5,18 +5,18 @@
 #include "VectorPostprocessorInterface.h"
 
 // Forward Declarations
-class PiecewiseLinearVPP;
+class PostprocessorValueFunction;
 
 template <>
-InputParameters validParams<PiecewiseLinearVPP>();
+InputParameters validParams<PostprocessorValueFunction>();
 
 /**
  * Add class decription here
  */
-class PiecewiseLinearVPP : public Function, public VectorPostprocessorInterface
+class PostprocessorValueFunction : public Function, public VectorPostprocessorInterface
 {
 public:
-  PiecewiseLinearVPP(const InputParameters & parameters);
+  PostprocessorValueFunction(const InputParameters & parameters);
 
   virtual Real value(Real t, const Point &) const override;
 
@@ -24,5 +24,6 @@ protected:
   std::unique_ptr<LinearInterpolation> _linear_interp;
 
   const VectorPostprocessorValue & _args;
-  const VectorPostprocessorValue & _vals;
+  const VectorPostprocessorValue & _vpp_values;
+  const unsigned int & _vpp_index;
 };

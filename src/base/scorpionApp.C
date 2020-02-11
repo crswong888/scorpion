@@ -1,6 +1,7 @@
 #include "scorpionApp.h"
 #include "AppFactory.h"
 #include "ModulesApp.h"
+#include "MooseSyntax.h"
 
 template <>
 InputParameters
@@ -44,4 +45,7 @@ scorpionApp::registerAll(Factory & factory, ActionFactory & action_factory, Synt
   Registry::registerActionsTo(action_factory, {"scorpionApp"});
 
   ModulesApp::registerAll(factory, action_factory, syntax);
+
+  syntax.registerActionSyntax("EmptyAction", "BCs/PresetLSBLCAcceleration");
+  syntax.registerActionSyntax("PresetLSBLCAccelerationAction", "BCs/PresetLSBLCAcceleration/*");
 }
