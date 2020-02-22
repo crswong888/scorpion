@@ -1,9 +1,3 @@
-# THIS MODEL IS CURRENTLY UNDER CONSTRUCTION
-
-# This is an input file for a 1D line mesh model of a half-length surrogate Cu nuclear fuel rod with torsional spring supports
-
-# The ExplicitEuler TimeIntegration scheme is slightly faster than ImplicitEuler (default)
-
 [GlobalParams]
   displacements = 'disp_x disp_y disp_z'
   rotations = 'rot_x rot_y rot_z'
@@ -172,6 +166,7 @@
     vectorpostprocessor = BL_adjustments
     vector_name = adjusted_acceleration
     execute_on = INITIAL
+    force_preic = true
   [../]
 []
 

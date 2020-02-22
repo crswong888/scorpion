@@ -9,7 +9,7 @@ dt = 1e-03 ;
 T = 0.4 ;
 t = 0:dt:T ;
 NT = length(t) ;
-N = 10 ; % approximation order = N - 1
+N = 4 ; % approximation order = N - 1 (SHOULD BE <= 10)
 
 d2u = zeros(1,NT) ;
 for i = 1:NT

@@ -20,6 +20,6 @@ PostprocessorFunction::PostprocessorFunction(const InputParameters & parameters)
 Real
 PostprocessorFunction::value(Real /*t*/, const Point & /*p*/) const
 {
-  std::cout << _pp << "\n"
+  std::cout << _pp << "\n";
   return _pp;
 }

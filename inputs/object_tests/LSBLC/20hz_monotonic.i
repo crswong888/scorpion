@@ -1,9 +1,3 @@
-# THIS MODEL IS CURRENTLY UNDER CONSTRUCTION
-
-# This is an input file for a 1D line mesh model of a half-length surrogate Cu nuclear fuel rod with torsional spring supports
-
-# The ExplicitEuler TimeIntegration scheme is slightly faster than ImplicitEuler (default)
-
 [GlobalParams]
   displacements = 'disp_x disp_y disp_z'
   rotations = 'rot_x rot_y rot_z'
@@ -73,11 +67,10 @@
 []
 
 [ICs]
-  #probably need an accel IC foo im guessing?
   [./initial_accel]
-    type = ConstantIC
-    value = -128539.47489102 # init accel for 10th order correction
+    type = PostprocessorIC
     variable = accel_y
+    postprocessor = initial_accel_value
     boundary = 'support_a support_b support_c support_d'
   [../]
 []
@@ -162,14 +155,23 @@
     boundary = support_a
     execute_on = 'INITIAL TIMESTEP_END'
   [../]
+
+  [./initial_accel_value]
+    type = VectorPostprocessorComponent
+    index = 0
+    vectorpostprocessor = BL_adjustments
+    vector_name = adjusted_acceleration
+    execute_on = INITIAL
+    force_preic = true
+  [../]
 []
 
 [VectorPostprocessors]
   [./accel_data]
     type = CSVReader
     csv_file = 'accel_20hz.csv'
-    contains_complete_history = true
     header = true
+    force_preic = true
   [../]
   [./BL_adjustments]
     type = LeastSquaresBaselineCorrection
@@ -183,6 +185,7 @@
     beta = 0.25
     execute_on = INITIAL
     outputs = BL_adjustments
+    force_preic = true
   [../]
 []
 
