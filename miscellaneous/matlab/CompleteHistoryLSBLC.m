@@ -9,16 +9,16 @@ dt = 1e-03 ;
 T = 0.4 ;
 t = 0:dt:T ;
 NT = length(t) ;
-N = 9 ; % approximation order = N - 1 (SHOULD BE <= 10)
+N = 10 ; % approximation order = N - 1 (SHOULD BE <= 10)
 
 beta = 1 / 4 ;
 gamma = 1 / 2 ;
 
 adjust_accel = true ;
-adjust_vel = false ;
-adjust_disp = false ;
+adjust_vel = true ;
+adjust_disp = true ;
 
-plot_unadjusted = true ;
+plot_unadjusted = false ;
 plot_adjusted = true ;
 
 

@@ -67,10 +67,16 @@
 []
 
 [ICs]
+  #[./initial_accel]
+  #  type = PostprocessorIC
+  #  variable = accel_y
+  #  postprocessor = initial_accel_value
+  #  boundary = 'support_a support_b support_c support_d'
+  #[../]
   [./initial_accel]
-    type = PostprocessorIC
+    type = ConstantIC
+    value = -128540.12529754 # init accel for 9th order correction
     variable = accel_y
-    postprocessor = initial_accel_value
     boundary = 'support_a support_b support_c support_d'
   [../]
 []
@@ -162,7 +168,8 @@
     vectorpostprocessor = BL_adjustments
     vector_name = adjusted_acceleration
     execute_on = INITIAL
-    force_preic = true
+    force_preic = false
+    outputs = none
   [../]
 []
 
@@ -171,21 +178,22 @@
     type = CSVReader
     csv_file = 'accel_20hz.csv'
     header = true
-    force_preic = true
+    outputs = none
+    force_preic = false
   [../]
   [./BL_adjustments]
     type = LeastSquaresBaselineCorrection
     vectorpostprocessor = accel_data
-    accel_name = accel_20hz
+    acceleration_name = accel_20hz
     time_name = time
-    start_time = 0.0
-    end_time = 0.4
-    order = 9 # becomes unstable after
+    order = 9
     gamma = 0.5
     beta = 0.25
+    fit_acceleration = true
+    fit_velocity = true
+    fit_displacement = true
     execute_on = INITIAL
-    outputs = BL_adjustments
-    force_preic = true
+    force_preic = false
   [../]
 []
 
@@ -199,8 +207,8 @@
   [./BL_adjustments]
     type = CSV
     file_base = 20hz
-    show = BL_adjustments
     time_column = false
+    show = BL_adjustments
     execute_on = INITIAL
     execute_postprocessors_on = NONE
   [../]

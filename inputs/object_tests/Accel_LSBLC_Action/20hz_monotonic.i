@@ -107,8 +107,6 @@
       csv_file = 'accel_20hz.csv'
       accel_name = accel_20hz
       time_name = time
-      start_time = 0.0
-      end_time = 0.4
       order = 9 # becomes unstable after
       gamma = 0.5
       beta = 0.25
