@@ -165,6 +165,7 @@
     vector_name = adjusted_acceleration
     execute_on = INITIAL
     force_preic = true
+    outputs = none
   [../]
 []
 
@@ -178,8 +179,8 @@
   [./BL_adjustments]
     type = CSV
     file_base = 20hz
-    show = BL_adjustments
     time_column = false
+    show = BL_adjustments
     execute_on = INITIAL
     execute_postprocessors_on = NONE
   [../]

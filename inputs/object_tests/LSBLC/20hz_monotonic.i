@@ -67,18 +67,18 @@
 []
 
 [ICs]
-  #[./initial_accel]
-  #  type = PostprocessorIC
-  #  variable = accel_y
-  #  postprocessor = initial_accel_value
-  #  boundary = 'support_a support_b support_c support_d'
-  #[../]
   [./initial_accel]
-    type = ConstantIC
-    value = -128540.12529754 # init accel for 9th order correction
+    type = PostprocessorIC
     variable = accel_y
+    postprocessor = initial_accel_value
     boundary = 'support_a support_b support_c support_d'
   [../]
+  #[./initial_accel]
+  #  type = ConstantIC
+  #  value = -128540.12529754 # init accel for 9th order correction
+  #  variable = accel_y
+  #  boundary = 'support_a support_b support_c support_d'
+  #[../]
 []
 
 [BCs]
@@ -168,7 +168,7 @@
     vectorpostprocessor = BL_adjustments
     vector_name = adjusted_acceleration
     execute_on = INITIAL
-    force_preic = false
+    force_preic = true
     outputs = none
   [../]
 []
@@ -179,7 +179,7 @@
     csv_file = 'accel_20hz.csv'
     header = true
     outputs = none
-    force_preic = false
+    force_preic = true
   [../]
   [./BL_adjustments]
     type = LeastSquaresBaselineCorrection
@@ -193,7 +193,7 @@
     fit_velocity = true
     fit_displacement = true
     execute_on = INITIAL
-    force_preic = false
+    force_preic = true
   [../]
 []
 
