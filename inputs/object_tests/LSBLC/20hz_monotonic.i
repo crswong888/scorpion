@@ -83,25 +83,25 @@
 
 [BCs]
   [./fixx]
-    type = PresetBC
+    type = DirichletBC
     variable = disp_x
     boundary = 'support_a support_b support_c support_d'
     value = 0.0
   [../]
   [./fixz]
-    type = PresetBC
+    type = DirichletBC
     variable = disp_z
     boundary = 'support_a support_b support_c support_d'
     value = 0.0
   [../]
   [./fixrx]
-    type = PresetBC
+    type = DirichletBC
     variable = rot_x
     boundary = 'support_a support_b support_c support_d'
     value = 0.0
   [../]
   [./fixry]
-    type = PresetBC
+    type = DirichletBC
     variable = rot_y
     boundary = 'support_a support_b support_c support_d'
     value = 0.0

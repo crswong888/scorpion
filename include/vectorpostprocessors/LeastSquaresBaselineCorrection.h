@@ -22,40 +22,6 @@ public:
   virtual void execute() override;
 
 protected:
-  Real newmarkGammaIntegrate(const Real & u_ddot_old,
-                             const Real & u_ddot,
-                             const Real & u_dot_old,
-                             const Real & gamma,
-                             const Real & dt);
-
-  Real newmarkBetaIntegrate(const Real & u_ddot_old,
-                            const Real & u_ddot,
-                            const Real & u_dot_old,
-                            const Real & u_old,
-                            const Real & beta,
-                            const Real & dt);
-
-  DenseVector<Real> getAccelerationFitCoeffs(unsigned int order,
-                                             const std::vector<Real> & accel,
-                                             const std::vector<Real> & t,
-                                             const unsigned int & num_steps,
-                                             const Real & gamma);
-
-  DenseVector<Real> getVelocityFitCoeffs(unsigned int order,
-                                         const std::vector<Real> & accel,
-                                         const std::vector<Real> & vel,
-                                         const std::vector<Real> & t,
-                                         const unsigned int & num_steps,
-                                         const Real & beta);
-
-  DenseVector<Real> getDisplacementFitCoeffs(unsigned int order,
-                                             const std::vector<Real> & disp,
-                                             const std::vector<Real> & t,
-                                             const unsigned int & num_steps);
-
-  std::vector<Real> computePolynomials(unsigned int order,
-                                       const DenseVector<Real> & coeffs,
-                                       const Real & t);
   // acceleration time history variables from specified vectorpostprocessor
   const VectorPostprocessorValue & _accel;
   const VectorPostprocessorValue & _t;
