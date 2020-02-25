@@ -23,6 +23,5 @@ PostprocessorIC::PostprocessorIC(const InputParameters & parameters)
 Real
 PostprocessorIC::value(const Point & /*p*/)
 {
-  std::cout << _pp_value << "\n";
   return _pp_value;
 }
