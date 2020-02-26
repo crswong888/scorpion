@@ -57,15 +57,6 @@
   [../]
 []
 
-[ICs]
-  [./initial_accel]
-    type = PostprocessorIC
-    variable = accel_y
-    postprocessor = initial_accel_value
-    boundary = 'support_a support_b support_c support_d'
-  [../]
-[]
-
 [BCs]
   [./fixx]
     type = DirichletBC
@@ -92,24 +83,20 @@
     value = 0.0
   [../]
 
-  [./induce_acceleration]
-    type = PresetAcceleration
-    variable = disp_y
-    velocity = vel_y
-    acceleration = accel_y
-    boundary = 'support_a support_b support_c support_d'
-    function = adj_accel_func
-    beta = 0.25
-  [../]
-
   [./PresetLSBLCAcceleration]
     [./induce_LSBLC_acceleration]
+      variable = disp_y
+      velocity = vel_y
+      acceleration = accel_y
+      boundary = 'support_a support_b support_c support_d'
       csv_file = 'accel_20hz.csv'
-      accel_name = accel_20hz
+      acceleration_name = accel_20hz
       time_name = time
-      order = 9 # becomes unstable after
+      order = 9
       gamma = 0.5
       beta = 0.25
+      fit_velocity = true
+      fit_displacement = true
     [../]
   [../]
 []
@@ -129,7 +116,7 @@
   nl_rel_tol = 1e-06
   nl_abs_tol = 1e-08
   start_time = 0.0
-  end_time = 1e-03
+  end_time = 0.4
   dt = 1.0e-03
   timestep_tolerance = 1e-06
   line_search = none
@@ -156,16 +143,6 @@
     variable = accel_y
     boundary = support_a
     execute_on = 'INITIAL TIMESTEP_END'
-  [../]
-
-  [./initial_accel_value]
-    type = VectorPostprocessorComponent
-    index = 0
-    vectorpostprocessor = BL_adjustments
-    vector_name = adjusted_acceleration
-    execute_on = INITIAL
-    force_preic = true
-    outputs = none
   [../]
 []
 

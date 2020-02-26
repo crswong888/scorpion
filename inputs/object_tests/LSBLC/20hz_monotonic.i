@@ -73,12 +73,6 @@
     postprocessor = initial_accel_value
     boundary = 'support_a support_b support_c support_d'
   [../]
-  #[./initial_accel]
-  #  type = ConstantIC
-  #  value = -128540.12529754 # init accel for 9th order correction
-  #  variable = accel_y
-  #  boundary = 'support_a support_b support_c support_d'
-  #[../]
 []
 
 [BCs]

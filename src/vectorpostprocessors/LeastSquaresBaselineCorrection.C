@@ -16,11 +16,11 @@ validParams<LeastSquaresBaselineCorrection>()
   params.addRequiredParam<std::string>("time_name",
       "The name of the time variable in the vectorpostprocessor");
   params.addRequiredRangeCheckedParam<unsigned int>("order", "order < 10",
-      "the order of the polynomial fit(s) used to adjust the nominal time histories (coefficients "
+      "The order of the polynomial fit(s) used to adjust the nominal time histories (coefficients "
       "of higher order polynomials can be difficult to compute and the method generally becomes "
       "unstable when order >= 10)");
-  params.addRequiredParam<Real>("beta", "beta parameter for Newmark time integration");
-  params.addRequiredParam<Real>("gamma", "gamma parameter for Newmark time integration");
+  params.addRequiredParam<Real>("gamma", "The gamma parameter for Newmark time integration");
+  params.addRequiredParam<Real>("beta", "The beta parameter for Newmark time integration");
   params.addParam<bool>("fit_acceleration", true,
       "If set to \"true\", the acceleration time history will be adjusted using a polynomial fit "
       "of the acceleration data");
