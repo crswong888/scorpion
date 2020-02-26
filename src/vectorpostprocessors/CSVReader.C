@@ -47,16 +47,8 @@ CSVReader::validParams()
 CSVReader::CSVReader(const InputParameters & params)
   : GeneralVectorPostprocessor(params), _csv_reader(getParam<FileName>("csv_file"), &_communicator)
 {
-  _csv_reader.setIgnoreEmptyLines(getParam<bool>("ignore_empty_lines"));
-  if (isParamValid("header"))
-    _csv_reader.setHeaderFlag(getParam<bool>("header")
-                                  ? MooseUtils::DelimitedFileReader::HeaderFlag::ON
-                                  : MooseUtils::DelimitedFileReader::HeaderFlag::OFF);
-  if (isParamValid("delimiter"))
-    _csv_reader.setDelimiter(getParam<std::string>("delimiter"));
-
-  // declareVectors from headers
   _csv_reader.read();
+  // declare Vectors from data headers
   for (auto & name : _csv_reader.getNames())
     if (_column_data.find(name) == _column_data.end())
       _column_data[name] = &declareVector(name);
@@ -65,9 +57,9 @@ CSVReader::CSVReader(const InputParameters & params)
 void
 CSVReader::initialize()
 {
-  // declareVector() previously occured here
-  // initialize() is invoked twice when force_preic = true
-  // which causes DelimitedFileReader to read the header line
+  // declareVector() previously occured here...
+  // when initialize() was invoked twice it cause
+  // DelimitedFileReader to read the header line
   // as normal data on the second invocation
 }
 
