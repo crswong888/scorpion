@@ -35,6 +35,7 @@ CSVReader::validParams()
                                "omitted it will read comma or space separated files.");
   params.addParam<bool>(
       "ignore_empty_lines", true, "When true new empty lines in the file are ignored.");
+  params.suppressParameter<bool>("contains_complete_history");
   params.set<ExecFlagEnum>("execute_on", true) = EXEC_INITIAL;
 
   // The value from this VPP is naturally already on every processor
@@ -47,20 +48,37 @@ CSVReader::validParams()
 CSVReader::CSVReader(const InputParameters & params)
   : GeneralVectorPostprocessor(params), _csv_reader(getParam<FileName>("csv_file"), &_communicator)
 {
-  _csv_reader.read();
-  // declare Vectors from data headers
-  for (auto & name : _csv_reader.getNames())
-    if (_column_data.find(name) == _column_data.end())
-      _column_data[name] = &declareVector(name);
+  _csv_reader.setIgnoreEmptyLines(getParam<bool>("ignore_empty_lines"));
+  if (isParamValid("header"))
+    _csv_reader.setHeaderFlag(getParam<bool>("header")
+                                  ? MooseUtils::DelimitedFileReader::HeaderFlag::ON
+                                  : MooseUtils::DelimitedFileReader::HeaderFlag::OFF);
+  if (isParamValid("delimiter"))
+    _csv_reader.setDelimiter(getParam<std::string>("delimiter"));
+
+  // if executing in PREIC, ensure that csv data has been read for normal initialization
+  if (getParam<bool>("force_preic"))
+  {
+    _csv_reader.read();
+    if (ExecFlagType != {EXEC_INITIAL})
+      mooseWarning("Error in " + name() + ". CSVReader cannot execute more than once per solve.");
+  }
 }
 
 void
 CSVReader::initialize()
 {
-  // declareVector() previously occured here...
-  // when initialize() was invoked twice it cause
-  // DelimitedFileReader to read the header line
-  // as normal data on the second invocation
+  if (_column_data.empty())
+  {
+    if (!getParam<bool>("force_preic"))
+      _csv_reader.read();
+
+    // declare vectors from the csv datasets
+    for (auto & name : _csv_reader.getNames())
+        _column_data[name] = &declareVector(name);
+  } else if (!getParam<bool>("force_preic")) {
+    mooseError("Error in " + name() + ". CSVReader should not execute more than once per solve.");
+  }
 }
 
 void

@@ -26,7 +26,6 @@ protected:
   /// The MOOSE delimited file reader.
   MooseUtils::DelimitedFileReader _csv_reader;
 
-  /// Data vectors, which are stored in a map to allow for late declarations to occur, i.e., it
-  /// is possible for the file to change and add new vectors during the simulation.
-  std::map<std::string, VectorPostprocessorValue *> _column_data;
+  /// The vector variables storing the data read from the csv
+  std::vector<VectorPostprocessorValue &> _column_data;
 };
