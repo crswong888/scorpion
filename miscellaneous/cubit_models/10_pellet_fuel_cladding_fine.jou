@@ -1,0 +1,59 @@
+reset
+
+create cylinder height 64.4 radius 5.36
+create cylinder height 64.4 radius 4.76
+
+subtract volume 2 from volume 1
+
+create cylinder height 64.4 radius 5.36
+create cylinder height 64.4 radius 4.76
+
+subtract volume 4 from volume 3
+
+move volume 3 z 64.4
+
+rotate Volume 1 3 angle 90 about y
+
+move volume 1 3 x 32.2
+
+imprint all 
+merge all
+
+curve 1 2 5 6 8 12 interval 64
+surface 9 8 18 scheme hole rad_intervals 3
+surface 1 7 10 16 interval 128
+
+mesh volume all
+
+block 1 volume 1 3
+block 1 name 'fuel_rodlet'
+
+sideset 1 surface 8
+sideset 2 surface 9
+sideset 3 surface 18
+sideset 4 surface 1 10
+sideset 5 surface 7 16
+
+sideset 1 name 'left'
+sideset 2 name 'midsection'
+sideset 3 name 'right'
+sideset 4 name 'outer_clad'
+sideset 5 name 'inner_clad'
+
+nodeset 1 surface 8
+nodeset 2 surface 9
+nodeset 3 surface 18
+
+nodeset 1 name 'left'
+nodeset 2 name 'midsection'
+nodeset 3 name 'right'
+
+nodeset 4 node 1 33 65 97 129 130 193 194
+nodeset 5 node 33025 33057 41217 41249 65666 65668 65729 65730
+
+nodeset 4 name 'left_center'
+nodeset 5 name 'right_center'
+
+block all element type HEX8
+
+export mesh '~/projects/scorpion/inputs/fuel_rods/case_1/fuel_cladding_fine.e' overwrite

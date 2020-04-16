@@ -9,19 +9,20 @@
 
 [Mesh]
   type = FileMesh
-  file = fuel_cladding.e
-  allow_renumbering = false
+  #file = fuel_cladding.e
+  file = fuel_cladding_fine.e
   construct_node_list_from_side_list = false
 []
 
 [Modules/TensorMechanics/Master]
   [./all]
-    add_variables = True
+    add_variables = true
+    volumetric_locking_correction = true
   [../]
 []
 
 [AuxVariables]
-  [./section_area]
+  [./nodal_area]
     order = FIRST
     family = LAGRANGE
   [../]
@@ -32,30 +33,36 @@
     type = Gravity
     variable = disp_y
     value = -9810
-    enable = true # gravity=true
+    enable = false # gravity=true
   [../]
 []
 
 [NodalKernels]
-  [./force_y]
-    type = UserForcingFunctionNodalKernel
+  [./point_force_y]
+    type = PointForcingFunction3DEquivalent
     variable = disp_y
-    function = load
+    function = point_load
     boundary = midsection
-    enable = false # apply_force=true
+    nodal_area = nodal_area
+    total_area_postprocessor = midsection_area
+    enable = true # apply point force=true
   [../]
 []
 
 [Functions]
-  [./load]
+  [./point_load]
     type = ConstantFunction
-    value = -19.5313 # total_load/no_nodes=2500N/128node=19.5313N/node
+    value = -2500
   [../]
 []
 
-[NodalNormals]
-  boundary = 'left right'
-  order = FIRST
+[UserObjects]
+  [./nodal_area]
+    type = NodalArea
+    variable = nodal_area
+    boundary = midsection
+    execute_on = 'INITIAL TIMESTEP_BEGIN'
+  [../]
 []
 
 [BCs]
@@ -79,14 +86,14 @@
     variable = disp_x
     boundary = 'left right'
     value = 0.0
-    enable = false # pin=false, fix=true
+    enable = true # pin=false, fix=true
   [../]
   [./fixy]
     type = PresetBC
     variable = disp_y
     boundary = 'left right'
     value = 0.0
-    enable = false # pin=false, fix=true
+    enable = true # pin=false, fix=true
   [../]
   [./fixz]
     type = PresetBC
@@ -100,12 +107,10 @@
   [./elasticity_tensor]
     type = ComputeIsotropicElasticityTensor
     youngs_modulus = 9.93e04
-    poissons_ratio = 1e-9 # not considering poisson's effect in this model
+    poissons_ratio = 0.37 # not considering poisson's effect in this model
   [../]
   [./stress]
     type = ComputeLinearElasticStress
-    #outputs = exodus
-    #output_properties = stress
   [../]
   [./density]
     type = GenericConstantMaterial
@@ -136,14 +141,22 @@
 []
 
 [Postprocessors]
-  [./disp_y]
+  [./avg_disp_y]
     type = AverageNodalVariableValue
     variable = disp_y
     boundary = midsection
   [../]
-  [./force_y]
-    type = FunctionValuePostprocessor
-    function = load
+  [./max_disp_y]
+    type = NodalExtremeValue
+    value_type = min # min since displacement is in negative direction
+    variable = disp_y
+    boundary = midsection
+  [../]
+  [./midsection_area]
+    type = AreaPostprocessor
+    boundary = midsection
+    execute_on = 'INITIAL TIMESTEP_BEGIN'
+    outputs = none
   [../]
 []
 
