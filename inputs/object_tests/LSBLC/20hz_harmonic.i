@@ -186,6 +186,7 @@
     fit_acceleration = true
     fit_velocity = true
     fit_displacement = true
+    contains_complete_history = true
     execute_on = INITIAL
     force_preic = true
   [../]
