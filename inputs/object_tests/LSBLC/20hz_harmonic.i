@@ -37,8 +37,8 @@
 
 [Functions]
   [./adjusted_acceleration]
-    type = PiecewiseLinearVPP
-    vectorpostprocessor = BL_adjustments
+    type = VectorPostprocessorFunction
+    vectorpostprocessor_name = BL_adjustments
     argument_column = time
     value_column = adjusted_acceleration
   [../]

@@ -112,12 +112,12 @@ PresetLSBLCAccelerationAction::act()
 
   else if (_current_task == "add_function")
   {
-    InputParameters params = _factory.getValidParams("PiecewiseLinearVPP");
-    params.set<VectorPostprocessorName>("vectorpostprocessor") = {"BL_adjustments"};
+    InputParameters params = _factory.getValidParams("VectorPostprocessorFunction");
+    params.set<VectorPostprocessorName>("vectorpostprocessor_name") = {"BL_adjustments"};
     params.set<std::string>("argument_column") = {"time"};
     params.set<std::string>("value_column") = {"adjusted_acceleration"};
 
-    _problem->addFunction("PiecewiseLinearVPP", "adj_accel_func", params);
+    _problem->addFunction("VectorPostprocessorFunction", "adj_accel_func", params);
   }
 
   else if (_current_task == "add_bc")
