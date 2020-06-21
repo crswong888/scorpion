@@ -21,32 +21,38 @@ public:
   virtual Real value(Real t, const Point & /*P*/) const override;
 
 protected:
-  // Newmark integration parameters
+  /// Newmark integration parameters
   const Real & _gamma;
   const Real & _beta;
 
-  // order used for the least squares polynomial fit
-  const unsigned int _order;
-
-  // set which kinematic variables a polynomial fit will be applied to
+  /// set which kinematic variables a polynomial fit will be applied to
   const bool _fit_accel;
   const bool _fit_vel;
   const bool _fit_disp;
 
-  // acceleration time history variables from input
+  /// order used for the least squares polynomial fit
+  const unsigned int _order;
+
+  /// acceleration time history variables from input
   std::vector<Real> _time;
   std::vector<Real> _accel;
 
-  // adjusted (corrected) acceleration ordinates
+  /// adjusted (corrected) acceleration ordinates
   std::vector<Real> _adj_accel;
 
-  // object to output linearly interpolated corrected acceleration ordinates
+  /// object to output linearly interpolated corrected acceleration ordinates
   std::unique_ptr<LinearInterpolation> _linear_interp;
+
+  /// function value scale factor
+  const Real & _scale_factor;
 
 private:
   /// Applies baseline correction to raw acceleration time history
   void applyCorrection();
 
-  /// Reads data from supplied CSV file.
+  /// Reads and builds data from supplied CSV file
   void buildFromFile();
+
+  /// Builds data from pairs of `time_values` and `acceleration_values'
+  void buildFromXandY();
 };

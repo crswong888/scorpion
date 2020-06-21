@@ -5,18 +5,21 @@ format longeng
 % INPUT PARAMETERS
 % --------------------------------------------------------------------------------------------------
 
-dt = 1e-03 ;
-T = 0.4 ;
+dt = 1e-02 ;
+T = 0.08 * 2 ;
 t = 0:dt:T ;
 NT = length(t) ;
-N = 10 ; % approximation order = N - 1 (SHOULD BE <= 10)
+N = 3 ; % approximation order = N - 1 (SHOULD BE <= 10)
 
-beta = 1 / 4 ;
 gamma = 1 / 2 ;
+beta = 1 / 4 ;
 
 adjust_accel = true ;
-adjust_vel = true ;
-adjust_disp = true ;
+adjust_vel = false ;
+adjust_disp = false ;
+
+integrate_corrected_accel = true ;
+scale_factor = 2.5 ;
 
 plot_unadjusted = false ;
 plot_adjusted = true ;
@@ -27,7 +30,7 @@ plot_adjusted = true ;
 
 d2u = zeros(1,NT) ;
 for i = 1:NT
-    d2u(i) = 5.1 * (40 * pi)^2 * sin(40 * pi * t(i)) ;
+    d2u(i) = 150 * sin(pi * t(i) / 0.08) ;
 end
 
 
@@ -156,10 +159,23 @@ if (adjust_disp == true)
 end
 
 
+% INTEGRATE CORRECTED ACCEL AND APPLY SCALE FACTOR IF DESIRED
+% --------------------------------------------------------------------------------------------------
+
+if (integrate_corrected_accel)
+    d2uStar = scale_factor * d2uStar ;
+    
+    for i = 1:NT-1
+        duStar(i+1) = duStar(i) + (1 - gamma) * dt * d2uStar(i) + gamma * dt * d2uStar(i+1) ;
+        uStar(i+1) = uStar(i) + dt * duStar(i) + (1 / 2 - beta) * dt^2 * d2uStar(i) + beta * dt^2 * d2uStar(i+1) ;
+    end
+end
+
+
 % GENERATE PLOTS
 % --------------------------------------------------------------------------------------------------
 
-if (plot_unadjusted == true)
+if (plot_unadjusted)
     figure(1)
     plot(t,d2u)
     hold on
@@ -191,7 +207,7 @@ if (plot_unadjusted == true)
     grid minor
 end
 
-if (plot_adjusted == true)
+if (plot_adjusted)
     figure(4)
     plot(t,d2uStar,'color',[1 0 0])
     hold on

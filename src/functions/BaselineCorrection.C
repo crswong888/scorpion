@@ -20,24 +20,29 @@ BaselineCorrection::validParams()
   params.addParam<std::string>("acceleration_name",
       "The header name for the column which contains the accelration values. If not specified, "
       "they are assumed to be in the second column index.");
+  params.addParam<std::vector<Real>>("time_values", "The time abscissa values.");
+  params.addParam<std::vector<Real>>("acceleration_values", "The acceleration ordinate values.");
 
-  params.addRequiredParam<Real>("gamma", "The gamma parameter for Newmark time integration");
-  params.addRequiredParam<Real>("beta", "The beta parameter for Newmark time integration");
-
-  params.addRequiredRangeCheckedParam<unsigned int>("order", "(0 < order) & (order < 10)",
-      "The order of the polynomial fit(s) used to adjust the nominal time histories (coefficients "
-      "of higher order polynomials can be difficult to compute and the method generally becomes "
-      "unstable when order >= 10)");
+  params.addRequiredParam<Real>("gamma", "The gamma parameter for Newmark time integration.");
+  params.addRequiredParam<Real>("beta", "The beta parameter for Newmark time integration.");
 
   params.addParam<bool>("fit_acceleration", true,
       "If set to \"true\", the acceleration time history will be adjusted using a polynomial fit "
-      "of the acceleration data");
+      "of the acceleration data.");
   params.addParam<bool>("fit_velocity", false,
       "If set to \"true\", the acceleration time history will be adjusted using a polynomial fit "
-      "of the velocity data obtained by integration");
+      "of the velocity data obtained by integration.");
   params.addParam<bool>("fit_displacement", false,
       "If set to \"true\", the acceleration time history will be adjusted using a polynomial fit "
-      "of the displacement data obtained by double-integration");
+      "of the displacement data obtained by double-integration.");
+  params.addRequiredRangeCheckedParam<unsigned int>("order", "(0 < order) & (order < 10)",
+      "The order of the polynomial fit(s) used to adjust the nominal time histories (coefficients "
+      "of higher order polynomials can be difficult to compute and the method generally becomes "
+      "unstable when order >= 10).");
+
+  params.addParam<Real>("scale_factor", 1.0,
+      "A scale factor to be applied to the adjusted acceleration time history.");
+  params.declareControllable("scale_factor");
 
   return params;
 }
@@ -46,17 +51,26 @@ BaselineCorrection::BaselineCorrection(const InputParameters & parameters)
   : Function(parameters),
     _gamma(getParam<Real>("gamma")),
     _beta(getParam<Real>("beta")),
-    _order(parameters.get<unsigned int>("order")),
-    _fit_accel(parameters.get<bool>("fit_acceleration")),
-    _fit_vel(parameters.get<bool>("fit_velocity")),
-    _fit_disp(parameters.get<bool>("fit_displacement"))
+    _fit_accel(getParam<bool>("fit_acceleration")),
+    _fit_vel(getParam<bool>("fit_velocity")),
+    _fit_disp(getParam<bool>("fit_displacement")),
+    _order(getParam<unsigned int>("order")),
+    _scale_factor(getParam<Real>("scale_factor"))
 {
-  if (isParamValid("data_file"))
+  // determine data source and check parameter consistency
+  if (isParamValid("data_file") && !isParamValid("time_values") &&
+      !isParamValid("acceleration_values"))
     buildFromFile();
+  else if (!isParamValid("data_file") && isParamValid("time_values") &&
+           isParamValid("acceleration_values"))
+    buildFromXandY();
+  else
+    mooseError("In BaselineCorrection ",
+               _name,
+               ": Either `data_file` or `time_values` and `acceleration_values` must be specified "
+               "exclusively.");
 
-  // if not data file or xy pairs - error
-
-  // Size checks
+  // size checks
   if (_time.size() != _accel.size())
     mooseError("In BaselineCorrection ",
                _name,
@@ -65,6 +79,13 @@ BaselineCorrection::BaselineCorrection(const InputParameters & parameters)
     mooseError("In BaselineCorrection ",
                _name,
                ": The length of time and acceleration data must be > 0.");
+
+  // ensure that at least one best-fit will be created
+  if (!_fit_accel && !_fit_vel && !_fit_disp)
+    mooseWarning("Warning in " + name() +
+                 ". Computation of a polynomial fit is set to \"false\" for all three "
+                 "kinematic variables. No adjustments will occur and the output will be the "
+                 "raw acceleration time history.");
 
   // apply baseline correction to raw acceleration time history
   applyCorrection();
@@ -83,7 +104,7 @@ BaselineCorrection::BaselineCorrection(const InputParameters & parameters)
 Real
 BaselineCorrection::value(Real t, const Point & /*P*/) const
 {
-  return _linear_interp->sample(t);
+  return _scale_factor * _linear_interp->sample(t);
 }
 
 void
@@ -186,4 +207,11 @@ BaselineCorrection::buildFromFile()
     _time = reader.getData(0);
     _accel = reader.getData(1);
   }
+}
+
+void
+BaselineCorrection::buildFromXandY()
+{
+  _time = getParam<std::vector<Real>>("time_values");
+  _accel = getParam<std::vector<Real>>("acceleration_values");
 }

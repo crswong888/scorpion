@@ -41,10 +41,10 @@
     data_file = accel_20hz.csv
     gamma = 0.5
     beta = 0.25
-    order = 9
     fit_acceleration = true
     fit_velocity = true
     fit_displacement = true
+    order = 9
   []
 []
 
