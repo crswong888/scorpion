@@ -5,21 +5,26 @@ format longeng
 % INPUT PARAMETERS
 % --------------------------------------------------------------------------------------------------
 
-dt = 0.1 ;
-T = 1 ;
+frequency = 25 ; % hz
+
+dt = 1e-03 ; % A.K. Chopra rule floored to nearest one thousandth
+T = 16 / frequency ; % 8 cycles
 t = 0:dt:T ;
 NT = length(t) ;
-N = 2 ; % approximation order = N - 1 (SHOULD BE <= 10)
 
 gamma = 1 / 2 ;
 beta = 1 / 4 ;
 
 adjust_accel = true ;
-adjust_vel = false ;
+adjust_vel = true ;
 adjust_disp = false ;
 
+accel_fit_order = 10 ; % approximation order = N - 1 (SHOULD BE <= 10)
+vel_fit_order = 10 ;
+disp_fit_order = 10 ;
+
 integrate_corrected_accel = true ;
-scale_factor = 1 ;
+scale_factor = 1 ; % scale = desired / result
 
 plot_unadjusted = false ;
 plot_adjusted = true ;
@@ -30,7 +35,7 @@ plot_adjusted = true ;
 
 d2u = zeros(1,NT) ;
 for i = 1:NT
-    d2u(i) = pi * pi * sin(pi * t(i)) ;
+    d2u(i) = -250 * pi * pi * sin(2 * pi * frequency * t(i)) ;
 end
 
 
@@ -52,18 +57,18 @@ d2uStar = d2u ; duStar = du ; uStar = u ;
 % --------------------------------------------------------------------------------------------------
 
 if (adjust_accel == true)
-    K = zeros(N,N) ;
-    for k = 1:N
-        for j = 1:N
+    K = zeros(accel_fit_order,accel_fit_order) ;
+    for k = 1:accel_fit_order
+        for j = 1:accel_fit_order
             K(k,j) = (j * j + j) * T^(k + j - 1) / (k + j - 1) ;
         end
     end
 
     [L,U,perm] = lu(K) ; % LU factorization with row-reordering permuation matrix
 
-    I = zeros(N,1) ; i = 1 ;
+    I = zeros(accel_fit_order,1) ; i = 1 ;
     while i <= NT-1
-        for k = 1:N
+        for k = 1:accel_fit_order
             I(k) = I(k) + (1 - gamma) * dt * t(i)^(k - 1) * d2uStar(i) ...
                         + gamma * dt * t(i+1)^(k - 1) * d2uStar(i+1) ;
         end, i = i + 1 ;
@@ -73,7 +78,7 @@ if (adjust_accel == true)
     
     d2P = zeros(1,NT) ; dP = zeros(1,NT) ; P = zeros(1,NT) ;
     for i = 1:NT
-        for k = 1:N
+        for k = 1:accel_fit_order
             d2P(i) = d2P(i) + (k * k + k) * C(k) * t(i)^(k-1) ;
             dP(i) = dP(i) + (k + 1) * C(k) * t(i)^k ;
             P(i) = P(i) + C(k) * t(i)^(k+1) ;
@@ -89,18 +94,18 @@ end
 % --------------------------------------------------------------------------------------------------
 
 if (adjust_vel == true)
-    K = zeros(N,N) ;
-    for k = 1:N
-        for j = 1:N
+    K = zeros(vel_fit_order,vel_fit_order) ;
+    for k = 1:vel_fit_order
+        for j = 1:vel_fit_order
             K(k,j) = (j + 1) * T^(k + j + 1) / (k + j + 1) ;
         end
     end
 
     [L,U,perm] = lu(K) ;
 
-    I = zeros(N,1) ; i = 1 ;
+    I = zeros(vel_fit_order,1) ; i = 1 ;
     while i <= NT-1
-        for k = 1:N
+        for k = 1:vel_fit_order
             I(k) = I(k) + dt * t(i)^k * duStar(i) + (0.5 - beta) * dt * dt ...
                         * (t(i)^k * d2uStar(i) + k * t(i)^(k - 1) * duStar(i)) + beta * dt * dt ...
                         * (t(i+1)^k * d2uStar(i+1) + k * t(i+1)^(k - 1) * duStar(i+1)) ;
@@ -111,7 +116,7 @@ if (adjust_vel == true)
     
     d2P = zeros(1,NT) ; dP = zeros(1,NT) ; P = zeros(1,NT) ;
     for i = 1:NT
-        for k = 1:N
+        for k = 1:vel_fit_order
             d2P(i) = d2P(i) + (k * k + k) * C(k) * t(i)^(k-1) ;
             dP(i) = dP(i) + (k + 1) * C(k) * t(i)^k ;
             P(i) = P(i) + C(k) * t(i)^(k+1) ;
@@ -127,18 +132,18 @@ end
 % --------------------------------------------------------------------------------------------------
 
 if (adjust_disp == true)
-    K = zeros(N,N) ;
-    for k = 1:N
-        for j = 1:N
+    K = zeros(disp_fit_order,disp_fit_order) ;
+    for k = 1:disp_fit_order
+        for j = 1:disp_fit_order
             K(k,j) = T^(k + j + 3) / (k + j + 3) ;
         end
     end
 
     [L,U,perm] = lu(K) ;
 
-    I = zeros(N,1) ; i = 1 ;
+    I = zeros(disp_fit_order,1) ; i = 1 ;
     while i <= NT-1
-        for k = 1:N
+        for k = 1:disp_fit_order
             I(k) = I(k) + dt * (t(i+1)^(k+1) * uStar(i+1) + t(i)^(k+1) * uStar(i)) ;
         end, i = i + 1 ;
     end, I = I / 2 ;
@@ -147,7 +152,7 @@ if (adjust_disp == true)
     
     d2P = zeros(1,NT) ; dP = zeros(1,NT) ; P = zeros(1,NT) ;
     for i = 1:NT
-        for k = 1:N
+        for k = 1:disp_fit_order
             d2P(i) = d2P(i) + (k * k + k) * C(k) * t(i)^(k-1) ;
             dP(i) = dP(i) + (k + 1) * C(k) * t(i)^k ;
             P(i) = P(i) + C(k) * t(i)^(k+1) ;
@@ -170,6 +175,16 @@ if (integrate_corrected_accel)
         uStar(i+1) = uStar(i) + dt * duStar(i) + (1 / 2 - beta) * dt^2 * d2uStar(i) + beta * dt^2 * d2uStar(i+1) ;
     end
 end
+
+
+% COMPUTE AND REPORT AVERAGE VALUES
+% --------------------------------------------------------------------------------------------------
+
+fprintf("** Error Report **\n\n")
+fprintf("Average Acceleration: %g\n", mean(d2uStar))
+fprintf("Average Velocity: %g\n", mean(duStar))
+fprintf("Average Displacement: %g\n", mean(uStar))
+fprintf("\n")
 
 
 % GENERATE PLOTS

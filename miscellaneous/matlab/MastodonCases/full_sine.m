@@ -6,10 +6,10 @@ format longeng
 % --------------------------------------------------------------------------------------------------
 
 dt = 0.1 ;
-T = 1 ;
+T = 2 ;
 t = 0:dt:T ;
 NT = length(t) ;
-N = 2 ; % approximation order = N - 1 (SHOULD BE <= 10)
+N = 3 ; % approximation order = N - 1 (SHOULD BE <= 10)
 
 gamma = 1 / 2 ;
 beta = 1 / 4 ;
@@ -19,7 +19,7 @@ adjust_vel = false ;
 adjust_disp = false ;
 
 integrate_corrected_accel = true ;
-scale_factor = 1 ;
+scale_factor = 1 ; % scale = desired / result
 
 plot_unadjusted = false ;
 plot_adjusted = true ;

@@ -19,7 +19,7 @@ adjust_vel = false ;
 adjust_disp = false ;
 
 integrate_corrected_accel = true ;
-scale_factor = 1 ;
+scale_factor = 4.886 ; % scale = desired / result
 
 plot_unadjusted = false ;
 plot_adjusted = true ;

@@ -15,11 +15,11 @@ BaselineCorrection::validParams()
   params.addParam<FileName>("data_file",
       "The name of a CSV file containing raw acceleration time history data.");
   params.addParam<std::string>("time_name",
-      "The header name of the column which contains the time values. If not specified, they are "
-      "assumed to be in the first column index.");
+      "The header name of the column which contains the time values in the data file. If not "
+      "specified, they are assumed to be in the first column index.");
   params.addParam<std::string>("acceleration_name",
-      "The header name for the column which contains the accelration values. If not specified, "
-      "they are assumed to be in the second column index.");
+      "The header name for the column which contains the acceleration values in the data file. If "
+      "not specified, they are assumed to be in the second column index.");
   params.addParam<std::vector<Real>>("time_values", "The time abscissa values.");
   params.addParam<std::vector<Real>>("acceleration_values", "The acceleration ordinate values.");
 

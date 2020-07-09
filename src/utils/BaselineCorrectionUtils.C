@@ -1,6 +1,7 @@
 // This code was implemented in collaboration with Christopher J. Wong
 // (chris.wong@utah.edu) from the University of Utah.
 
+// SCORPION includes
 #include "BaselineCorrectionUtils.h"
 
 Real
@@ -32,7 +33,7 @@ BaselineCorrectionUtils::getAccelerationFitCoeffs(unsigned int order,
                                                   const unsigned int & num_steps,
                                                   const Real & gamma)
 {
-  unsigned int num_rows = order + 1; /* no. of eqns to solve for coefficients */
+  unsigned int num_rows = order + 1;
   DenseMatrix<Real> mat(num_rows, num_rows);
   DenseVector<Real> rhs(num_rows);
   DenseVector<Real> coeffs(num_rows);
@@ -73,7 +74,7 @@ BaselineCorrectionUtils::getVelocityFitCoeffs(unsigned int order,
                                               const unsigned int & num_steps,
                                               const Real & beta)
 {
-  unsigned int num_rows = order + 1; /* no. of eqns to solve for coefficients */
+  unsigned int num_rows = order + 1;
   DenseMatrix<Real> mat(num_rows, num_rows);
   DenseVector<Real> rhs(num_rows);
   DenseVector<Real> coeffs(num_rows);
@@ -150,8 +151,9 @@ BaselineCorrectionUtils::computePolynomials(unsigned int order,
                                             const DenseVector<Real> & coeffs,
                                             const Real & t)
 {
-  std::vector<Real> p_fit(3); /* accel polyfit and its derivatives */
-  for (unsigned int k = 0; k < order + 1; ++k) /* compute polynomials */
+  // Compute the best-fit polynomial of the acceleration and its derivatives
+  std::vector<Real> p_fit(3);
+  for (unsigned int k = 0; k < order + 1; ++k)
   {
     p_fit[0] += (k * k + 3 * k + 2) * coeffs(k) * pow(t, k);
     p_fit[1] += (k + 2) * coeffs(k) * pow(t, k + 1);
