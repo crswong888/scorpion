@@ -3,7 +3,7 @@ format longeng
 fprintf('\n') % Command Window output formatting
 
 addpath('../functions')
-addpath('../test1_files')
+addpath('test1_files')
 
 %%% INPUT PARAMETERS
 %%% ------------------------------------------------------------------------------------------------
