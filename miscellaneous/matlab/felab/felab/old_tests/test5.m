@@ -4,7 +4,7 @@ clear all
 format longeng
 fprintf('\n')
 
-addpath('functions')
+addpath('../functions')
 
 
 %%% INPUT PARAMETERS
