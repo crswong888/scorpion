@@ -14,7 +14,8 @@
 [Mesh]
   type = GeneratedMesh
   dim = 1
-  nx = 100 # this is a lot, but this is where it finally converges on the theoretical solution
+  nx = 1 #devel
+  #nx = 100 # this is a lot, but this is where it finally converges on the theoretical solution
   xmin = 0.0
   xmax = 5.0
 []
