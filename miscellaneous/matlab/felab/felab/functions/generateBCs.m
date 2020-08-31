@@ -1,5 +1,7 @@
 function [forces, supports] = generateBCs(nodes, force_data, support_data, tol)
     
+   %%% TODO: this should work for any arbitrary isActiveDOF array
+
     %// sort the nodal coordinate data in ascending x and y order
     nodes = table2array(nodes); % convert to normal array to increase search performance
     num_nodes = length(nodes(:,1));

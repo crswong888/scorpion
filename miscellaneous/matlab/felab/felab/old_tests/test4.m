@@ -10,9 +10,6 @@ addpath('../functions')
 %%% INPUT PARAMETERS
 %%% ------------------------------------------------------------------------------------------------
 
-% NOTE: csv files with mesh discretization or BC information must (and should) have column headers
-% but they need not match the ones shown here, leave first row blank if nothing else
-
 %// input boolean of active degrees of freedom, dof = ux, uy, uz, rx, ry, rz
 isActiveDof = logical([1, 1, 1, 0, 0, 0]);
 

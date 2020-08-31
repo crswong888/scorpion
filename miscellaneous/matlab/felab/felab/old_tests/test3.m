@@ -31,7 +31,7 @@ for i = 2:(Ny+1), force_data(i,5) = force_data(i-1,5) + Ly / Ny; end
 
 %// input the restrained dof data = logical and coordinates (release = 0, restrain = 1)
 support_data = [1, 1, 0, 0.0, Ly / 2;
-                 1, 1, 0,  Lx, Ly / 2];
+                1, 1, 0, Lx, Ly / 2];
                
 %// input the rigid beam constraint data = master and slave nodal coordinates
 constraint_data = zeros(2*Ny,4);
