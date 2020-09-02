@@ -27,6 +27,7 @@ n2 = [3; 2];
 E = 29.5e+06 * ones(length(ID), 1); % psi
 A = 1.0 * ones(length(ID), 1); % sq-in
 elements = table(ID, n1, n2, E, A);
+clear ID n1 n2
 
 %// force data, Fx, Fy, Mz, x, y
 force_data = [0, -1e+06, 0, 60, 120]; % forces in lb

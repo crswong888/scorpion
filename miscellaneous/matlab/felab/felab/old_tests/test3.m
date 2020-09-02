@@ -72,7 +72,7 @@ clear force_data support_data constraint_data
 % TODO: this actually isn't the max we want, we want the max from the
 % global matrix that is assembled from only the QUAD4 part of the mesh
 C = max(abs(k),[],'all') * penalty; % determine penalty stiffness as max Kij times coefficient
-[kc, kc_idx] = computeRB2D2Stiffness(constraints, nodes, C, isActiveDof);
+[kc, kc_idx] = computeSapRB2D2Stiffness(constraints, nodes, C, isActiveDof);
 
 %// store the number of dofs per node for more concise syntax
 num_dofs = length(isActiveDof(isActiveDof));

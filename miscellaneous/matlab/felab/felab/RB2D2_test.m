@@ -1,5 +1,4 @@
-%%% Example 4.1 from Chandrupatla, "Introduction to Finite Elements in Engineering, 2nd edition"
-%%% This solves a plane truss structure subject to concentrated forces at the joints.
+%%% Test for the SapRB2D2 rigid beam element (uses the formulation from SAP200 manual)
 
 clear all
 format longeng
@@ -12,45 +11,41 @@ addpath('functions')
 %%% ------------------------------------------------------------------------------------------------
 
 %// input boolean of active degrees of freedom, dof = ux, uy, uz, rx, ry, rz
-isActiveDof = logical([1, 1, 0, 0, 0, 0]);
+isActiveDof = logical([1, 1, 0, 0, 0, 1]);
 
-%// node table (coordinates in inches)
-ID = [1; 2; 3; 4];
-x = [0; 40; 40; 0];
-y = [0; 0; 30; 30];
+%// node table (coordinates in meters)
+ID = [1; 2; 3];
+x = [0; 2.5 * cos(pi / 4); 5.0 * cos(pi / 4)];
+y = [0; 2.5 * sin(pi / 4); 5.0 * sin(pi / 4)];
 nodes = table(ID, x, y);
 clear ID x y
 
-%// element connectivity and properties table
-ID = [1; 2; 3; 4];
-n1 = [1; 3; 1; 4];
-n2 = [2; 2; 3; 3];
-E = 29.5e+06 * ones(length(ID), 1); % psi
-A = 1.0 * ones(length(ID), 1); % sq-in
-elements = table(ID, n1, n2, E, A);
+%// element connectivity
+ID = [1; 2];
+n1 = [1; 2];
+n2 = [2; 3];
+elements = table(ID, n1, n2);
 clear ID n1 n2
 
 %// force data, Fx, Fy, Mz, x, y
-force_data = [20e+03, 0, 0, 40, 0;
-              0, -25.0e+03, 0, 40, 30]; % forces in lb
+P = 1e+06; % Newtons
+force_data = [P * cos(7 * pi / 4), P * sin(7 * pi / 4), 0, 5.0 * cos(pi / 4), 5.0 * sin(pi / 4)];
 
 %// input the restrained dof data = logical and coordinates (release = 0, restrain = 1)
-support_data = [1, 1, 0, 0, 0;
-                0, 1, 0, 40, 0;
-                1, 1, 0, 0, 30];
+support_data = [1, 1, 1, 0, 0];
 
-                
+
 %%% SOURCE COMPUTATIONS
 %%% ------------------------------------------------------------------------------------------------
 
 %// convert element-node connectivity info and properties to numeric arrays
-[mesh, props] = generateMesh(nodes, elements, 2, 2);
+mesh = generateMesh(nodes, elements, 2, 2);
 
 %// generate tables storing nodal forces and restraints
 [forces, supports] = generateBCs(nodes, force_data, support_data);
 
-%// compute truss element local stiffness matrix
-[k, k_idx] = computeT2D2Stiffness(mesh, props, isActiveDof);
+%// compute rigid beam local stiffness matrix (if penalty not provided - default value assumed)
+[k, k_idx] = computeRB2D2Stiffness(mesh, isActiveDof);
 
 %// store the number of dofs per node for more concise syntax
 num_dofs = length(isActiveDof(isActiveDof));

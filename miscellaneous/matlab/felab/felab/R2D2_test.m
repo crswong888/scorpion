@@ -28,6 +28,7 @@ ID = [1; 2];
 n1 = [1; 3];
 n2 = [3; 2];
 elements = table(ID, n1, n2);
+clear ID n1 n2
 
 %// force data, Fx, Fy, Mz, x, y
 force_data = [0, -1e+06, 0, 60, 120]; % forces in lb
@@ -46,7 +47,7 @@ mesh = generateMesh(nodes, elements, 2, 2);
 %// generate tables storing nodal forces and restraints
 [forces, supports] = generateBCs(nodes, force_data, support_data);
 
-%// compute link element local stiffness matrix (default oenalty is 1e+08 for all elements)
+%// compute link element local stiffness matrix (if penalty not provided - default value assumed)
 [k, k_idx] = computeR2D2Stiffness(mesh, isActiveDof);
 
 %// store the number of dofs per node for more concise syntax

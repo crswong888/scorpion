@@ -51,7 +51,7 @@ file_varnames = { 'node_file', 'elem_file', 'force_file', 'support_file', 'const
 
 %// compute rigid beam element local stiffness matrix
 C = max(abs(k),[],'all') * penalty; % determine penalty stiffness as max Kij times coefficient
-[kc, kc_idx] = computeRB2D2Stiffness(constraints, nodes, C, isActiveDof);
+[kc, kc_idx] = computeSapRB2D2Stiffness(constraints, nodes, C, isActiveDof);
 
 %// store the number of dofs per node for more concise syntax
 num_dofs = length(isActiveDof(isActiveDof));
