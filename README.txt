@@ -5,8 +5,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 This repository is developed by: Christopher J Wong - University of Utah
-                                 Hrishiv Neupane - University of Utah
-
 
 This project is in support of NEUP Project 17-12939 : Expansion of BISON
 Capabilities to Predict the Dynamic Response of Irradiated Fuel Rods:

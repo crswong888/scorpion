@@ -35,9 +35,10 @@ function [k, idx] = computeT2D2Stiffness(mesh, props, isActiveDof, varargin)
         if (~p.Results.rigid)
             k(:,:,e) = props(e,1) * props(e,2) * k(:,:,e); % multiply by EA
         else
+            penalty = props(e,1); % assumes first prop for the elem is a penalty coeff
             % multiply penalty by square length of the element to ensure length effects ignored
             if (ell > 1) % but only if the length is such that it would not reduce intended penalty
-                penalty = props(e,1) * ell^2; % assumes first prop for the elem is a penalty coeff
+                penalty = penalty * ell^2; 
             end
             k(:,:,e) = penalty * k(:,:,e);
         end   
