@@ -18,17 +18,18 @@ function [k, idx] = computeSapRB2D2Stiffness(mesh, isActiveDof, varargin)
     isLocalDof = logical([1, 1, 0, 0, 0, 1]); 
     num_eqns = 2 * length(isLocalDof(isLocalDof));
 
-    %// compute the rigid beam element stiffness matrix and store the global indices
+    %// compute rigid beam element stiffness matrix and store the global indices
     k = zeros(num_eqns,num_eqns,length(mesh(:,1))); idx = zeros(length(mesh(:,1)),num_eqns);
     for e = 1:length(mesh(:,1))
-        %/ compute the local axis vector for the beam element and the beam length
+        %/ compute beam element longitudinal axis vector
         dx = mesh(e,5) - mesh(e,2); dy = mesh(e,6) - mesh(e,3);
-        %/ compute the constraint coefficient matrix
+        %/ compute constraint coefficient matrix (enforces strains to be 0)
         B = [1, 0, -dy, -1,  0,  0;
              0, 1,  dx,  0, -1,  0;
-             0, 0,   1,  0,  0, -1]; 
+             0, 0,   1,  0,  0, -1];
+        %/ compute rigid stiffness matrix
         k(:,:,e) = p.Results.penalty(e) * transpose(B) * B;
-        %/ determine the global stiffness indices
+        %/ determine global stiffness indices
         idx(e,:) = getGlobalDofIndex(isLocalDof, isActiveDof, mesh(e,1:3:4));
     end
 

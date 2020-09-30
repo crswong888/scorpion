@@ -11,8 +11,7 @@
 [Mesh]
   type = GeneratedMesh
   dim = 1
-  nx = 2 #devel
-  # nx = 100
+  nx = 1
   xmin = 0.0
   xmax = 5.0
 []
@@ -97,7 +96,7 @@
 []
 
 [Materials]
-  [rigid]
+  [strain]
     type = ComputeRigidBeamStrain
   []
   [stress]
