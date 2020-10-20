@@ -5,10 +5,10 @@ function [q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F,
     isBC = false(num_eqns,1); % initialize boolean for which dofs are prescribed BCs
     for s = 1:length(supports{:,1})
         for dof = 1:num_dofs
-            if (supports{s,2+dof} == 1) % if it is restrained, mark the index for elimination
+            if (supports{s,(2 + dof)} == 1) % if it is restrained, mark the index for elimination
                 idx = num_dofs * (supports{s,2} - 1) + dof; % nominal dof index
                 idx = idx - real_idx_diff(idx); % adjust to active real dof index
-                isBC(idx) = true; 
+                isBC(idx) = true;
             end
         end
     end, K(isBC,:) = []; K(:,isBC) = []; F(isBC) = []; % eliminate restrained rows and columns

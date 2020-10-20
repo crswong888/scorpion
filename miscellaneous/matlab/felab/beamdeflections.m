@@ -2,18 +2,16 @@ clear all %#ok<CLALL>
 format longeng
 fprintf('\n')
 
-P = 75;
-L = norm([-2.8, 4, 2.8]);
-b = 0.1;
-h = 0.25;
-A = b * h;
-I = b * h^3 / 12;
-rho = 8050;
-g = 9.81;
-w = rho * g * A;
-E = 200e+06;
+P = 125;
+L = 700; % cm
+b = 18; % cm
+h = 40; % cm
+A = b * h; % cm^2
+I = b * h^3 / 12; % cm^4
+w = 0;
+E = 200e+09 / 10e+06; % kN / cm^2
 nu = 0.3;
-G = E / (2 + 2 * nu);
+G = E / (2 + 2 * nu); % kN / cm^2
 kappa = 10 * (1 + nu) / (12 + 11 * nu); % for solid rectangular sections
 
 pointLoadPinnedEuler = P * L^3 / (48 * E * I);

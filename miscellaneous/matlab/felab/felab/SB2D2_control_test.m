@@ -1,4 +1,4 @@
-%%% Test for the RB2D2 rigid beam element
+%%% 
 
 clear all %#ok<CLALL>
 format longeng
@@ -13,10 +13,10 @@ addpath('functions')
 %// input boolean of active degrees of freedom, dof = ux, uy, uz, rx, ry, rz
 isActiveDof = logical([1, 1, 0, 0, 0, 1]);
 
-%// node table (coordinates in meters)
+%// node table (coordinates in centimeters)
 ID = [1; 2; 3];
-x = [0; 2.5 * cos(pi / 4); 5.0 * cos(pi / 4)];
-y = [0; 2.5 * sin(pi / 4); 5.0 * sin(pi / 4)];
+x = [-350; 0; 350];
+y = [0; 0; 0];
 nodes = table(ID, x, y);
 clear ID x y
 
@@ -24,17 +24,21 @@ clear ID x y
 ID = [1; 2];
 n1 = [1; 2];
 n2 = [2; 3];
-elements = table(ID, n1, n2);
+E = 20e+03 * ones(2, 1);
+A = 720 * ones(2, 1);
+I = 96e+03 * ones(2, 1);
+elements = table(ID, n1, n2, E, A, I);
 clear ID n1 n2
 
 %// force data, Fx, Fy, Mz, x, y
-P = 1e+06; % Newtons
-force_data = [P * cos(7 * pi / 4), P * sin(7 * pi / 4), 0, 5.0 * cos(pi / 4), 5.0 * sin(pi / 4)];
+P = -125; % kN
+force_data = [0, P, 0, nodes{2,2:3}];
 
 %// input the restrained dof data = logical and coordinates (release = 0, restrain = 1)
-support_data = [1, 1, 1, 0, 0];
+support_data = [1, 1, 0, nodes{1,2:3};
+                1, 1, 0, nodes{3,2:3}];
 
-
+            
 %%% SOURCE COMPUTATIONS
 %%% ------------------------------------------------------------------------------------------------
 
@@ -43,13 +47,13 @@ num_dims = length(nodes{1,:}) - 1;
 num_dofs = length(isActiveDof(isActiveDof));
 
 %// convert element-node connectivity info and properties to numeric arrays
-mesh = generateMesh(nodes, elements, 2, 2);
+[mesh, props] = generateMesh(nodes, elements, num_dims, 2);
 
 %// generate tables storing nodal forces and restraints
 [forces, supports] = generateBCs(nodes, force_data, support_data, num_dims, isActiveDof);
 
-%// compute rigid beam local stiffness matrix (if penalty not provided - default value assumed)
-[k, k_idx] = computeRB2D2Stiffness(mesh, isActiveDof);
+%// compute Timoshenko beam local stiffness matrix
+[k, k_idx] = computeB2D2Stiffness(mesh, props, isActiveDof);
 
 %// determine wether a global dof is truly active based on element stiffness contributions
 [num_eqns, real_idx_diff] = checkActiveDofIndex(num_dofs, length(nodes{:,1}), {k_idx});

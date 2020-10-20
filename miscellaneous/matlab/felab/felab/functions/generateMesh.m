@@ -1,4 +1,6 @@
 function [mesh, props] = generateMesh(node_table, elem_table, num_dims, num_local_nodes)
+    %%% TODO: I need a block system to handle material properties instead of storing all of that
+    %%% data per element
 
     num_nodes = length(node_table{:,1});
     num_elems = length(elem_table{:,1});
