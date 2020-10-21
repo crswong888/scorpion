@@ -34,41 +34,26 @@ function [k, idx] = computeSB2D2Stiffness(mesh, props, isActiveDof)
         J = dN * x;
         k(comp,comp,e) = EA * W1 / J * transpose(dN) * dN;
         
-        %/ trying Reddy's direct stiffness
-        h = norm(mesh(e,5:6) - mesh(e,2:3));
-        Omega = Omega / h^2;
-        mu = 1 + 12 * Omega;
-        gamma = 1 - 6 * Omega;
-        lambda = 1 + 3 * Omega;
-        const = 2 * EI / (mu * h^3);
-        k(vcomp,vcomp,e) = const * [     6,           -3 * h,    -6,          -3 * h;
-                                    -3 * h, 2 * h^2 * lambda, 3 * h,     h^2 * gamma;
-                                        -6,            3 * h,     6,           3 * h;
-                                    -3 * h,      h^2 * gamma, 3 * h, 2 * h^2 * lambda];
-                                
-        %%% This thing indeed does give the exact EB solution when Omega = 0, or the Timoshenko
-        %%% when not
+        kv = zeros(4,4);
+        for qp = 1:3
+            [~, dN] = evaluateLagrangeShapeFun(xi3(qp));
+            J = dN * x;
+            
+            [~, dHv] = evaluateIIEShapeFun(xi3(qp), Omega, J, 'uz');
+            Homega = evaluateIIEShapeFun(xi3(qp), Omega, J, 'ry');
+            kv = kv + W3(qp) * transpose(dHv + J * Homega) * (dHv / J + Homega);
+        end
+        k(vcomp,vcomp,e) = kappaGA * kv;
         
-%         kv = zeros(4,4);
-%         for qp = 1:3
-%             [~, dN] = evaluateLagrangeShapeFun(xi3(qp));
-%             J = dN * x;
-%             
-%             [~, dHv] = evaluateIIEShapeFun(xi3(qp), Omega, 'uz');
-%             Homega = evaluateIIEShapeFun(xi3(qp), Omega, 'ry');
-%             kv = kv + W3(qp) * transpose(dHv + J * Homega) * (dHv / J + Homega);
-%         end
-%         k(vcomp,vcomp,e) = kappaGA * kv;
-%         
-%         kv = zeros(4, 4);
-%         for qp = 1:2
-%             [~, dN] = evaluateLagrangeShapeFun(xi2(qp));
-%             J = dN * x;
-%             
-%             [~, dHomega] = evaluateIIEShapeFun(xi2(qp), Omega, 'ry');
-%             kv = kv + W2(qp) / J * transpose(dHomega) * dHomega;
-%         end
-%         k(vcomp,vcomp,e) = k(vcomp,vcomp,e) + EI * kv;
+        kv = zeros(4, 4);
+        for qp = 1:2
+            [~, dN] = evaluateLagrangeShapeFun(xi2(qp));
+            J = dN * x;
+            
+            [~, dHomega] = evaluateIIEShapeFun(xi2(qp), Omega, J, 'ry');
+            kv = kv + W2(qp) / J * transpose(dHomega) * dHomega;
+        end
+        k(vcomp,vcomp,e) = k(vcomp,vcomp,e) + EI * kv;
         
         k(:,:,e) = transpose(L) * k(:,:,e) * L;
         

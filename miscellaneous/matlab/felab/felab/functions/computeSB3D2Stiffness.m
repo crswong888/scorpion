@@ -87,6 +87,8 @@ function [k, idx] = computeSB3D2Stiffness(mesh, props, isActiveDof)
         %%% (NG) we'll need to try to develop a 2D version as a control test
         %%%     -- the 2D version of this is wrong too
         %%% (OK) what if I just direct stiffnessed it as per Reddy (in the 2D code)?
+        %%%
+        %%% SOLVED: I needed to use the Jacobian map when deriving the complementary solution on xi!
         
         kv = zeros(4, 4); kw = zeros(4, 4);
         for qp = 1:2
