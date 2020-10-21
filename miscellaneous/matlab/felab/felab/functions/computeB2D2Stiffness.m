@@ -46,6 +46,6 @@ function [k, idx] = computeB2D2Stiffness(mesh, props, isActiveDof)
         k(:,:,e) = transpose(L) * k(:,:,e) * L;
         
         %/ determine the global stiffness indices
-        idx(e,:) = getGlobalDofIndex(isLocalDof, isActiveDof, mesh(e,1:3:4));
+        idx(e,:) = getGlobalDofIndex(isLocalDof, isActiveDof, mesh(e,[1, 4]));
     end
 end

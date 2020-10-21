@@ -72,18 +72,21 @@ function [k, idx] = computeSB3D2Stiffness(mesh, props, isActiveDof)
         k(vcomp,vcomp,e) = kappaGA * kv;
         k(wcomp,wcomp,e) = kappaGA * kw;
         
-        %%% (X) next lowest hanging fruit - what if c3 was negative in complementary solution?
-        %%% (X) what If I swap signs, e.g., (Homega - dHv / J), transpose(dHv - J * Homega), etc.
+        %%% (NG) next lowest hanging fruit - what if c3 was negative in complementary solution?
+        %%% (NG) what If I swap signs, e.g., (Homega - dHv / J), transpose(dHv - J * Homega), etc.
         %%%     -- WOAH! transpose(dHv - J * Homega) produced a symmetric matrix!!! Perhaps there is
         %%%        some way I can justify this? Note: transpose(-dHv + J * Homega) also works...
         %%%     -- Nvm, this doesn't produce the correct matrix, however, it does provide insight
-        %%% (X) we oughtta check that the complete derivation of the shape functions is good too...
-        %%% (X) New shape functions, new weak form? using new shape functions with old weak form?
-        %%% (X) what if I just use the same exact shape functions and weak form for both?
+        %%% we oughtta check that the complete derivation of the shape functions is good too...
+        %%% (NG) new shape functions, new weak form? using new shape functions with old weak form?
+        %%% (NG) what if I just use the same exact shape functions and weak form for both?
         %%%     -- the fact that even this doesn't work might suggest I have a deeper problem here.
-        %%% otherwise, inspect which property kv doesn't have that kw does...
-        %%% finally, theres the whole issue of the shearing force being the negative tau_xy, why?
-        %%% if none of this works - we'll need to try to develop a 2D version as a control test
+        %%% (NG) otherwise, inspect which property kv doesn't have that kw does...
+        %%%     -- they're both wrong
+        %%% theres the whole issue of the shearing force being the negative tau_xy, why?
+        %%% (NG) we'll need to try to develop a 2D version as a control test
+        %%%     -- the 2D version of this is wrong too
+        %%% (OK) what if I just direct stiffnessed it as per Reddy (in the 2D code)?
         
         kv = zeros(4, 4); kw = zeros(4, 4);
         for qp = 1:2
