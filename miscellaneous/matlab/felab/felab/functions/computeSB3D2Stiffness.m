@@ -61,12 +61,12 @@ function [k, idx] = computeSB3D2Stiffness(mesh, props, isActiveDof)
             [~, dN] = evaluateLagrangeShapeFun(xi3(qp));
             J = dN * x;
             
-            [~, dHv] = evaluateIIEShapeFun(xi3(qp), Omega_zz, 'uy');
-            Homega = evaluateIIEShapeFun(xi3(qp), Omega_zz, 'rz');
+            [~, dHv] = evaluateInterdependentShapeFun(xi3(qp), Omega_zz, 'uy');
+            Homega = evaluateInterdependentShapeFun(xi3(qp), Omega_zz, 'rz');
             kv = kv + W3(qp) * transpose(dHv + J * Homega) * (dHv / J - Homega); 
             
-            [~, dHw] = evaluateIIEShapeFun(xi3(qp), Omega_yy, 'uz');
-            Hphi = evaluateIIEShapeFun(xi3(qp), Omega_yy, 'ry');
+            [~, dHw] = evaluateInterdependentShapeFun(xi3(qp), Omega_yy, 'uz');
+            Hphi = evaluateInterdependentShapeFun(xi3(qp), Omega_yy, 'ry');
             kw = kw + W3(qp) * transpose(dHw + J * Hphi) * (dHw / J + Hphi);
         end
         k(vcomp,vcomp,e) = kappaGA * kv;
@@ -95,10 +95,10 @@ function [k, idx] = computeSB3D2Stiffness(mesh, props, isActiveDof)
             [~, dN] = evaluateLagrangeShapeFun(xi2(qp));
             J = dN * x;
             
-            [~, dHomega] = evaluateIIEShapeFun(xi2(qp), Omega_zz, 'rz');
+            [~, dHomega] = evaluateInterdependentShapeFun(xi2(qp), Omega_zz, 'rz');
             kv = kv + W2(qp) / J * transpose(dHomega) * dHomega;
             
-            [~, dHphi] = evaluateIIEShapeFun(xi2(qp), Omega_yy, 'ry');
+            [~, dHphi] = evaluateInterdependentShapeFun(xi2(qp), Omega_yy, 'ry');
             kw = kw + W2(qp) / J * transpose(dHphi) * dHphi;
         end
         k(vcomp,vcomp,e) = k(vcomp,vcomp,e) + EIzz * kv;
