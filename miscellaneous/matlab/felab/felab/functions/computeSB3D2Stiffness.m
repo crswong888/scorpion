@@ -3,16 +3,21 @@ function [k, idx] = computeSB3D2Stiffness(mesh, props, isActiveDof)
     isLocalDof = logical([1, 1, 1, 1, 1, 1]);
     num_eqns = 2 * length(isLocalDof(isLocalDof));
     
-    %// establish Gauss quadrature point rules
+    %// establish Gauss quadrature rules
     [xi1, W1] = gaussRules(1);
     [xi2, W2] = gaussRules(2);
     [xi3, W3] = gaussRules(3);
     
-    %// compute beam element stiffness matrix and store the global indices
-    k = zeros(num_eqns, num_eqns, length(mesh(:,1))); idx = zeros(length(mesh(:,1)), num_eqns);
-    comp = [1, 7]; vcomp = [2, 6, 8, 12]; wcomp = [3, 5, 9, 11];
+    %// store dof indices for individual stress divergence components
+    comp = [1, 7]; % uniaxial
+    vcomp = [2, 6, 8, 12]; % transverse deflection along y and bending about z
+    wcomp = [3, 5, 9, 11]; % transverse deflection along z and bending about y
+    
+    %// compute beam element stiffness matrix and store its system indices
+    k = zeros(num_eqns, num_eqns, length(mesh(:,1))); 
+    idx = zeros(length(mesh(:,1)), num_eqns);
     for e = 1:length(mesh(:,1))
-        %/ define convenience variables        
+        %/ define convenience variables for geo/mat props        
         G = props(e,1) / (2 + 2 * props(e,2));
         EA = props(e,1) * props(e,3);
         kappaGA = props(e,7) * G * props(e,3);
@@ -29,8 +34,8 @@ function [k, idx] = computeSB3D2Stiffness(mesh, props, isActiveDof)
         x = [nx, zeros(1,3); zeros(1,3), nx] * transpose([mesh(e,2:4), mesh(e,6:8)]);
         
         %/ compute a default unit normal for local y-axis or use input if provided
-        if (length(props(1,:)) == 8)
-            ny = props(:,8);
+        if (length(props(1,:)) == 10)
+            ny = props(e,8:10); % assumes vector components occupy last 3 columns of props array
         else
             ny = [-nx(2), nx(1), 0]; % rotates y about z by same amount x has
         end
@@ -43,70 +48,67 @@ function [k, idx] = computeSB3D2Stiffness(mesh, props, isActiveDof)
         %/ compute unit normal for local z-axis
         nz = cross(nx, ny);
         
-        %/ set Euler rotation matrix
+        %/ assemble Euler rotation matrix
         Phi = [nx; ny; nz];
         L = [Phi, zeros(3, 9); 
              zeros(3, 3), Phi, zeros(3, 6); 
              zeros(3, 6), Phi, zeros(3, 3); 
              zeros(3, 9), Phi];
         
+        %/ evaluate derivative of Lagrange shape functions (constant polynomial)
         [~, dN] = evaluateLagrangeShapeFun(xi1);
+        
+        %/ compute Jacobian (constant over element)
         J = dN * x;
+        
+        %/ evaluate Gauss quadrature integral for uniaxial stiffness components at qp
         ku = W1 / J * transpose(dN) * dN;
+        
+        %/ compute axial and torsional stiffnesses
         k(comp,comp,e) = EA * ku;
         k((comp + 3),(comp + 3),e) = kappaGJ * ku;
         
-        kv = zeros(4, 4); kw = zeros(4, 4);
+        %/ compute shear contribution to y & z-deflection and y & z-bending stiffnesses
         for qp = 1:3
-            [~, dN] = evaluateLagrangeShapeFun(xi3(qp));
-            J = dN * x;
+            % evaluate derivative of IIE shape functions for y-deflection at qp
+            [~, dHv] = evaluateInterdependentShapeFun(xi3(qp), J, Omega_zz, 'uy');
+            % evaluate IIE shape functions for z-bending at qp
+            Homega = evaluateInterdependentShapeFun(xi3(qp), J, Omega_zz, 'rz');
+            % evaluate Gauss quadrature intergral and accumulate stiffness over all qps
+            k(vcomp,vcomp,e) = k(vcomp,vcomp,e) + W3(qp)...
+                               * transpose(dHv - J * Homega) * (dHv / J - Homega);
             
-            [~, dHv] = evaluateInterdependentShapeFun(xi3(qp), Omega_zz, 'uy');
-            Homega = evaluateInterdependentShapeFun(xi3(qp), Omega_zz, 'rz');
-            kv = kv + W3(qp) * transpose(dHv + J * Homega) * (dHv / J - Homega); 
-            
-            [~, dHw] = evaluateInterdependentShapeFun(xi3(qp), Omega_yy, 'uz');
-            Hphi = evaluateInterdependentShapeFun(xi3(qp), Omega_yy, 'ry');
-            kw = kw + W3(qp) * transpose(dHw + J * Hphi) * (dHw / J + Hphi);
+            % evaluate derivative of IIE shape functions for z-deflection at qp 
+            [~, dHw] = evaluateInterdependentShapeFun(xi3(qp), J, Omega_yy, 'uz');
+            % evaluate IIE shape functions for y-bending at qp
+            Hphi = evaluateInterdependentShapeFun(xi3(qp), J, Omega_yy, 'ry');
+            % evaluate Gauss quadrature intergral and accumulate stiffness over all qps
+            k(wcomp,wcomp,e) = k(wcomp,wcomp,e) + W3(qp)...
+                               * transpose(dHw + J * Hphi) * (dHw / J + Hphi);
         end
-        k(vcomp,vcomp,e) = kappaGA * kv;
-        k(wcomp,wcomp,e) = kappaGA * kw;
+        k(vcomp,vcomp,e) = kappaGA * k(vcomp,vcomp,e); % multiply beam props
+        k(wcomp,wcomp,e) = kappaGA * k(wcomp,wcomp,e);
         
-        %%% (NG) next lowest hanging fruit - what if c3 was negative in complementary solution?
-        %%% (NG) what If I swap signs, e.g., (Homega - dHv / J), transpose(dHv - J * Homega), etc.
-        %%%     -- WOAH! transpose(dHv - J * Homega) produced a symmetric matrix!!! Perhaps there is
-        %%%        some way I can justify this? Note: transpose(-dHv + J * Homega) also works...
-        %%%     -- Nvm, this doesn't produce the correct matrix, however, it does provide insight
-        %%% we oughtta check that the complete derivation of the shape functions is good too...
-        %%% (NG) new shape functions, new weak form? using new shape functions with old weak form?
-        %%% (NG) what if I just use the same exact shape functions and weak form for both?
-        %%%     -- the fact that even this doesn't work might suggest I have a deeper problem here.
-        %%% (NG) otherwise, inspect which property kv doesn't have that kw does...
-        %%%     -- they're both wrong
-        %%% theres the whole issue of the shearing force being the negative tau_xy, why?
-        %%% (NG) we'll need to try to develop a 2D version as a control test
-        %%%     -- the 2D version of this is wrong too
-        %%% (OK) what if I just direct stiffnessed it as per Reddy (in the 2D code)?
-        %%%
-        %%% SOLVED: I needed to use the Jacobian map when deriving the complementary solution on xi!
-        
-        kv = zeros(4, 4); kw = zeros(4, 4);
+        %/ compute curvature contribution to y & z-deflection and y & z-bending stiffnesses
+        kv = zeros(4, 4); kw = zeros(4, 4); % allocate a temporary space to store contributions
         for qp = 1:2
-            [~, dN] = evaluateLagrangeShapeFun(xi2(qp));
-            J = dN * x;
-            
-            [~, dHomega] = evaluateInterdependentShapeFun(xi2(qp), Omega_zz, 'rz');
-            kv = kv + W2(qp) / J * transpose(dHomega) * dHomega;
-            
-            [~, dHphi] = evaluateInterdependentShapeFun(xi2(qp), Omega_yy, 'ry');
+            % evaluate derivative of IIE shape functions for y-bending at qp
+            [~, dHphi] = evaluateInterdependentShapeFun(xi2(qp), J, Omega_yy, 'ry');
+            % evaluate Gauss quadrature intergral and accumulate stiffness over all qps
             kw = kw + W2(qp) / J * transpose(dHphi) * dHphi;
+            
+            % evaluate derivative of IIE shape functions for z-bending at qp
+            [~, dHomega] = evaluateInterdependentShapeFun(xi2(qp), J, Omega_zz, 'rz');
+            % evaluate Gauss quadrature intergral and accumulate stiffness over all qps
+            kv = kv + W2(qp) / J * transpose(dHomega) * dHomega;
         end
+        k(wcomp,wcomp,e) = k(wcomp,wcomp,e) + EIyy * kw; % multiply beam props and add contribution
         k(vcomp,vcomp,e) = k(vcomp,vcomp,e) + EIzz * kv;
-        k(wcomp,wcomp,e) = k(wcomp,wcomp,e) + EIyy * kw;
         
+        %/ rotate dofs into global coordinate system
         k(:,:,e) = transpose(L) * k(:,:,e) * L;
         
-        %/ determine the global stiffness indices
+        %/ determine system indices
         idx(e,:) = getGlobalDofIndex(isLocalDof, isActiveDof, mesh(e,[1, 5]));
     end
 end

@@ -13,20 +13,38 @@ function [q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F,
         end
     end, K(isBC,:) = []; K(:,isBC) = []; F(isBC) = []; % eliminate restrained rows and columns
     
-    %// solve global system using LU factorization with full pivoting
+    %// solve unrestrained system
     q = zeros(num_eqns,1); % initialize so that original system array indices are preserved
+    
+    %/ first try to solve system using LU decomposition
+    warning('off', 'MATLAB:singularMatrix') % this warning is handled by this function
     [L, U, P, Q] = lu(K, [1 1]); % lower & upper triangular matrices plus a row & col permutations
     q(~isBC) = Q * (U \ (L \ (P * F)));
+    
+    %/ if LU failed, it is probably due to a problematic FE setup, but try gmres as a last resort
+    warning('on', 'MATLAB:singularMatrix')
+    if ((any(isnan(q))) || (1e-09 < norm(K * q(~isBC) - F) / norm(F)))
+        fprintf(['LU decomposition was unsuccesful for the released DOF indices of the\n',...
+                 'stiffness matrix with condition number for inversion, %g. Attempting to\n',...
+                 'solve with GMRES...\n\n'], condest(K))
+             
+        q(~isBC) = gmres(K, F, size(K, 1), 1e-09);
+        fprintf('\n')
+    end
 
     %// determine the reaction forces at the supports from the solution
-    Reactions = K_old(isBC,:) * q; Index = find(isBC);
-    R = table(Reactions, Index); %/ return reactions as table with the corresponding dof index
+    Reactions = K_old(isBC,:) * q; 
+    R = table(Reactions, find(isBC));
     
     %// report accuracy of solution to terminal
-    F_old(isBC,:) = F_old(isBC,:) + Reactions; sqnorm = norm(K_old * q - F_old)^2;
-    fprintf('Solver converged with a residual norm of %g\n\n', sqnorm);
+    F_old(isBC,:) = F_old(isBC,:) + Reactions; 
+    res = norm(K_old * q - F_old) / norm(F_old);
+    fprintf('Solve procedure complete! The system relative residual is %g.\n\n', res)
     
-    %// ignore small discplacement values (if desired)
-    if (nargin > 6), q = round(q / precision) * precision; end
+    %// ignore small discplacement and reaction values (if desired)
+    if (nargin > 6) 
+        q = round(q / precision) * precision;
+        R{:,1} = round(R{:,1} / precision) * precision;
+    end
 
 end

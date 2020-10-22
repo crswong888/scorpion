@@ -1,4 +1,4 @@
-function [H, dH] = evaluateInterdependentShapeFun(xi, Omega, J, component)
+function [H, dH] = evaluateInterdependentShapeFun(xi, J, Omega, component)
     %// parse 'component' input controlling which component of the IIE shape function is desired
     params = inputParser;
     addRequired(params, 'component', @(x) any(validatestring(x, {'uy', 'uz', 'ry', 'rz'})))

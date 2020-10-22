@@ -40,26 +40,26 @@ function [k, idx] = computeSB2D2Stiffness(mesh, props, isActiveDof)
         %/ compute Jacobian (constant over element)
         J = dN * x;
         
-        %/ compute axial stiffness at qp
+        %/ evaluate Gauss quadrature intergral and compute axial stiffness at qp
         k(comp,comp,e) = EA * W1 / J * transpose(dN) * dN;
         
-        %/ compute shear contribution to y-deflection & z-bending stiffnesses
+        %/ compute shear contribution to y-deflection and z-bending stiffnesses
         for qp = 1:3
             % evaluate derivative of IIE shape functions for y-deflection at qp
-            [~, dHv] = evaluateInterdependentShapeFun(xi3(qp), Omega, J, 'uy');
+            [~, dHv] = evaluateInterdependentShapeFun(xi3(qp), J, Omega, 'uy');
             % evaluate IIE shape functions for z-bending at qp
-            Homega = evaluateInterdependentShapeFun(xi3(qp), Omega, J, 'rz');
+            Homega = evaluateInterdependentShapeFun(xi3(qp), J, Omega, 'rz');
             % evaluate Gauss quadrature intergral and accumulate stiffness over all qps
             k(vcomp,vcomp,e) = k(vcomp,vcomp,e) + W3(qp)...
                                * transpose(dHv - J * Homega) * (dHv / J - Homega);
         end
         k(vcomp,vcomp,e) = kappaGA * k(vcomp,vcomp,e); % multiply beam props
         
-        %/ compute curvature contribution to y-deflection & z-bending stiffnesses
+        %/ compute curvature contribution to y-deflection and z-bending stiffnesses
         kv = zeros(4, 4); % allocate a temporary space to store contributions
         for qp = 1:2
             % evaluate derivative of IIE shape functions for z-bending at qp
-            [~, dHomega] = evaluateInterdependentShapeFun(xi2(qp), Omega, J, 'rz');
+            [~, dHomega] = evaluateInterdependentShapeFun(xi2(qp), J, Omega, 'rz');
             % evaluate Gauss quadrature intergral and accumulate stiffness over all qps
             kv = kv + W2(qp) / J * transpose(dHomega) * dHomega;
         end

@@ -36,10 +36,10 @@ function [k, idx] = computeB2D2Stiffness(mesh, props, isActiveDof)
         %/ compute Jacobian (constant over element)
         J = dN * x;
         
-        %/ compute axial stiffness at qp
+        %/ evaluate Gauss quadrature intergral and compute axial stiffness at qp
         k(comp,comp,e) = EA * W1 / J * transpose(dN) * dN;
         
-        %/ compute y-deflection & z-bending stiffnesses
+        %/ compute y-deflection and z-bending stiffnesses
         for qp = 1:2
             % evaluate second derivative of Hermite shape functions at qp
             [~, d2H] = evaluateHermiteShapeFun(xi2(qp));

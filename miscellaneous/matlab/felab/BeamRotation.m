@@ -6,7 +6,7 @@ fprintf('\n')
 node = [100, 150, -300; -100, -150, 300];
 
 %// direction vector
-x = zeros(3,1);
+x = zeros(1,3);
 for i = 1:3
     x(i) = node(2,i) - node(1,i); 
 end
@@ -27,3 +27,5 @@ nz = cross(nx, ny);
 isxyortho = round(dot(nx, ny), 16) == 0;
 isxzortho = round(dot(nx, nz), 16) == 0;
 isyzortho = round(dot(ny, nz), 16) == 0;
+
+%%% note, if x is a pythagorean quadruplet, `format rat` may come in handy

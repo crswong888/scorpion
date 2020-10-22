@@ -1,4 +1,5 @@
-%%% Test for the SB3D2 Timoshenko beam element
+%%% Same as SB3D2_test.m, but uses the y_orientation property such that load is projected along the 
+%%% beam's strong axis so that bending is about the weak axis
 
 clear all %#ok<CLALL>
 format longeng
@@ -28,11 +29,12 @@ n2 = [2; 3];
 E = 20e+03 * ones(2, 1);
 nu = 0.3 * ones(2, 1);
 A = 720 * ones(2, 1);
-Iyy = 96e+03 * ones(2, 1);
-Izz = 19.44e+03 * ones(2, 1);
+Iyy = 19.44e+03 * ones(2, 1);
+Izz = 96e+03 * ones(2, 1);
 J = 290.4e+03 * ones(2, 1);
 kappa = 10 * (1 + nu) / (12 + 11 * nu) * ones(2, 1);
-elements = table(ID, n1, n2, E, nu, A, Iyy, Izz, J, kappa);
+y_orientation = 1 / 49 * [-12, -18, -13] .* ones(2,1);
+elements = table(ID, n1, n2, E, nu, A, Iyy, Izz, J, kappa, y_orientation);
 clear ID n1 n2
 
 %// force data, Fx, Fy, Fz, Mx, My, Mz, x, y, z
@@ -70,4 +72,4 @@ K = assembleGlobalStiffness(num_eqns, real_idx_diff, {k}, {k_idx});
 F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 
 %// apply the boundary conditions and solve for the displacements and reactions
-[q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F);
+[q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F, 1e-12);
