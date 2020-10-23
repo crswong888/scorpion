@@ -12,8 +12,8 @@ function [k, idx] = computeB2D2Stiffness(mesh, props, isActiveDof)
     vcomp = [2, 3, 5, 6]; % transverse deflection along y and bending about z
     
     %// compute beam element stiffness matrix and store its system indices
-    k = zeros(num_eqns,num_eqns,length(mesh(:,1))); 
-    idx = zeros(length(mesh(:,1)),num_eqns); 
+    k = zeros(num_eqns, num_eqns, length(mesh(:,1))); 
+    idx = zeros(length(mesh(:,1)), num_eqns); 
     for e = 1:length(mesh(:,1))
         %/ define convenience variables for geo/mat props        
         EA = props(e,1) * props(e,2);

@@ -1,50 +1,54 @@
 function [k, idx] = computeT2D2Stiffness(mesh, props, isActiveDof, varargin)
-
-    %// parse additional argument to for computing either a normal or rigid element stiffness
-    p = inputParser; % create instance to access the inputParser class
-    addParameter(p, 'rigid', false, @(x) islogical(x));
-    parse(p, varargin{:});
+    %// parse additional argument for computing either a normal or rigid element stiffness
+    params = inputParser;
+    addParameter(params, 'rigid', false, @(x) islogical(x));
+    parse(params, varargin{:});
 
     %// establish local system size
     isLocalDof = logical([1, 1, 0, 0, 0, 0]); 
     num_eqns = 2 * length(isLocalDof(isLocalDof));
     
-    %// establish the Gauss quadrature point (1-point rule for linear)
-    gauss = 0; weight = 2;
+    %// establish Gauss quadrature rule
+    [xi1, W1] = gaussRules(1);
     
-    %// compute the truss element stiffness matrix and store the global indices
-    k = zeros(num_eqns,num_eqns,length(mesh(:,1))); idx = zeros(length(mesh(:,1)),num_eqns);
+    %// compute beam element stiffness matrix and store its system indices
+    k = zeros(num_eqns, num_eqns, length(mesh(:,1))); 
+    idx = zeros(length(mesh(:,1)), num_eqns); 
     for e = 1:length(mesh(:,1))
-        %/ compute the unit normal of the truss axis vector
-        dx = mesh(e,5) - mesh(e,2); dy = mesh(e,6) - mesh(e,3); ell = sqrt(dx * dx + dy * dy);
-        %/ compute the Euler transformation matrix
-        m = dx / ell; n = dy / ell; Phi = [m, n, 0, 0; 0, 0, m, n];
-        for qp = 1
-            %/ evaluate the second derivative of the shape functions at the QPs
-            [~, dN] = evaluateT2D2ShapeFun(gauss(qp));
-            %/ compute the QP Jacobian
-            J = dN * Phi * [mesh(e,2); mesh(e,3); mesh(e,5); mesh(e,6)];
-            %/ compute the element B matrix
-            B = 1 / J * dN * Phi;
-            %/ evaluate QP intergrals and accumulate element local stiffness
-            JxW = J * weight(qp);
-            k(:,:,e) = k(:,:,e) + transpose(B) * B * JxW;
-        end
+        %/ compute length of element
+        ell = norm(mesh(e,5:6) - mesh(e,2:3));
         
         %/ determine wether to compute a normal or rigid stifness matrix
-        if (~p.Results.rigid)
-            k(:,:,e) = props(e,1) * props(e,2) * k(:,:,e); % multiply by EA
+        if (~params.Results.rigid)
+            EA = props(e,1) * props(e,2); % standard truss geo/mat props
         else
-            penalty = props(e,1); % assumes first prop for the elem is a penalty coeff
+            EA = props(e,1); % for link element - mat prop is penalty stiffness
             % multiply penalty by square length of the element to ensure length effects ignored
             if (ell > 1) % but only if the length is such that it would not reduce intended penalty
-                penalty = penalty * ell^2; 
+                EA = EA * ell^2; 
             end
-            k(:,:,e) = penalty * k(:,:,e);
         end   
+        
+        %/ compute unit normal of truss longitudinal axis
+        nx = (mesh(e,5:6) - mesh(e,2:3)) / ell;
+        
+        %/ get nodal coordinates in natural system
+        L = [nx, zeros(1,2); zeros(1,2), nx];
+        x = L * transpose([mesh(e,2:3), mesh(e,5:6)]);
+        
+        %/ evaluate derivative of Lagrange shape functions (constant polynomial)
+        [~, dN] = evaluateLagrangeShapeFun(xi1);
+        
+        %/ compute Jacobian (constant over element)
+        J = dN * x;
+        
+        %/ evaluate Gauss quadrature intergral and compute axial stiffness at qp
+        k_bar = EA * W1 / J * transpose(dN) * dN;
+        
+        %/ resolve dofs into components in global coordinate system
+        k(:,:,e) = transpose(L) * k_bar * L;
         
         %/ determine the global stiffness indices
         idx(e,:) = getGlobalDofIndex(isLocalDof, isActiveDof, mesh(e,1:3:4));
     end
-
 end
