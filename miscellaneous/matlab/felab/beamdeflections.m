@@ -4,12 +4,12 @@ fprintf('\n')
 
 P = 125;
 L = 700; % cm
-b = 18; % cm
-h = 40; % cm
+b = 40; % cm
+h = 18; % cm
 A = b * h; % cm^2
 I = b * h^3 / 12; % cm^4
 w = 0;
-E = 200e+09 / 10e+06; % kN / cm^2
+E = 20e+03; % kN / cm^2
 nu = 0.3;
 G = E / (2 + 2 * nu); % kN / cm^2
 kappa = 10 * (1 + nu) / (12 + 11 * nu); % for solid rectangular sections

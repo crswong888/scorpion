@@ -48,7 +48,7 @@ function [k, idx] = computeT2D2Stiffness(mesh, props, isActiveDof, varargin)
         %/ resolve dofs into components in global coordinate system
         k(:,:,e) = transpose(L) * k_bar * L;
         
-        %/ determine the global stiffness indices
-        idx(e,:) = getGlobalDofIndex(isLocalDof, isActiveDof, mesh(e,1:3:4));
+        %/ determine system indices
+        idx(e,:) = getGlobalDofIndex(isLocalDof, isActiveDof, mesh(e,[1, 4]));
     end
 end

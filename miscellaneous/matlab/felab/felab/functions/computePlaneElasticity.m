@@ -1,11 +1,11 @@
 function D = computePlaneElasticity(E, nu, formulation)
     %// parse the formulation input to ensure clarity on wether to use Plane Stress or Plane Strain
-    p = inputParser; % create instance to access the inputParser class
-    addRequired(p, 'formulation', @(x) any(validatestring(x, {'PlaneStress', 'PlaneStrain'})));
-    parse(p, formulation) % parse the inputs into the class instance
+    params = inputParser; % create instance to access the inputParser class
+    addRequired(params, 'formulation', @(x) any(validatestring(x, {'PlaneStress', 'PlaneStrain'})));
+    parse(params, formulation) % parse the inputs into the class instance
     
     %// Compute the stress-strain compatibility matrix according to specified formulation
-    if (strcmp(p.Results.formulation, 'PlaneStress'))
+    if (strcmp(params.Results.formulation, 'PlaneStress'))
         D = E / (1 - nu^2) * [ 1, nu,            0;   % stress_zz
                               nu,  1,            0;   % stress_yy
                                0,  0, (1 - nu) / 2]; % 2 * stress_xy
