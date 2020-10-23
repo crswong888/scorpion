@@ -1,5 +1,4 @@
 function [k, idx] = computeC3D8Stiffness(mesh, props, isActiveDof)
-
     %// establish local system size
     isLocalDof = logical([1, 1, 1, 0, 0, 0]); 
     num_eqns = 8 * length(isLocalDof(isLocalDof));
@@ -38,5 +37,4 @@ function [k, idx] = computeC3D8Stiffness(mesh, props, isActiveDof)
         %/ determine the global stiffness indices
         idx(e,:) = getGlobalDofIndex(isLocalDof, isActiveDof, mesh(e,1:4:29));
     end
-    
 end

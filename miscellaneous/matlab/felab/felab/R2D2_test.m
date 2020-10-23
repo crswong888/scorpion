@@ -3,9 +3,9 @@
 %%% points and a very large load is applied to the apex point. Despite the load being very large (1
 %%% million pounds), the 2 truss members should not deform.
 
-clear all
+clear all %#ok<CLALL>
 format longeng
-fprintf('\n') % Command Window output formatting
+fprintf('\n')
 
 addpath('functions')
 
@@ -30,28 +30,29 @@ n2 = [3; 2];
 elements = table(ID, n1, n2);
 clear ID n1 n2
 
-%// force data, Fx, Fy, Mz, x, y
-force_data = [0, -1e+06, 0, 60, 120]; % forces in lb
+%// force data, Fx, Fy, x, y
+force_data = [0, -1e+06, nodes{3,2:3}]; % forces in lb
 
 %// input the restrained dof data = logical and coordinates (release = 0, restrain = 1)
-support_data = [1, 1, 0, 0, 0;
-                1, 1, 0, 120, 0];
+support_data = [1, 1, nodes{1,2:3};
+                1, 1, nodes{2,2:3}];
 
-            
+
 %%% SOURCE COMPUTATIONS
 %%% ------------------------------------------------------------------------------------------------
 
+%// store number of dimensions and number of dofs per node for more concise syntax
+num_dims = length(nodes{1,:}) - 1;
+num_dofs = length(isActiveDof(isActiveDof));
+
 %// convert element-node connectivity info and properties to numeric arrays
-mesh = generateMesh(nodes, elements, 2, 2);
+mesh = generateMesh(nodes, elements, num_dims, 2);
 
 %// generate tables storing nodal forces and restraints
-[forces, supports] = generateBCs(nodes, force_data, support_data);
+[forces, supports] = generateBCs(nodes, force_data, support_data, num_dims, isActiveDof);
 
 %// compute link element local stiffness matrix (if penalty not provided - default value assumed)
 [k, k_idx] = computeR2D2Stiffness(mesh, isActiveDof);
-
-%// store the number of dofs per node for more concise syntax
-num_dofs = length(isActiveDof(isActiveDof));
 
 %// determine wether a global dof is truly active based on element stiffness contributions
 [num_eqns, real_idx_diff] = checkActiveDofIndex(num_dofs, length(nodes{:,1}), {k_idx});

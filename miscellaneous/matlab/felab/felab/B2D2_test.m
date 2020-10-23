@@ -1,4 +1,4 @@
-%%% 
+%%% Test for the B2D2 Euler-Bernoulli plane frame element - matches analytical solution exactly
 
 clear all %#ok<CLALL>
 format longeng

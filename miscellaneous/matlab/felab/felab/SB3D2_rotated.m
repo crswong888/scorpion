@@ -1,5 +1,5 @@
 %%% Same as SB3D2_test.m, but uses the y_orientation property such that load is projected along the 
-%%% beam's strong axis so that bending is about the weak axis
+%%% beam's strong axis so that bending is about the weak axis - matches analytical solution exactly
 
 clear all %#ok<CLALL>
 format longeng

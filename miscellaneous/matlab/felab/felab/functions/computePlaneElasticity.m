@@ -1,5 +1,4 @@
 function D = computePlaneElasticity(E, nu, formulation)
-    
     %// parse the formulation input to ensure clarity on wether to use Plane Stress or Plane Strain
     p = inputParser; % create instance to access the inputParser class
     addRequired(p, 'formulation', @(x) any(validatestring(x, {'PlaneStress', 'PlaneStrain'})));
@@ -16,6 +15,5 @@ function D = computePlaneElasticity(E, nu, formulation)
                                nu, 1 - nu, 0,                0;   % stress_yy
                                nu,     nu, 0,                0;   % stress_zz
                                 0,      0, 0, (1 - 2 * nu) / 2]; % 2 * stress_xy
-    end 
-
+    end
 end

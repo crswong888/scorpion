@@ -1,4 +1,4 @@
-%%% Test for the SB3D2 Timoshenko beam element
+%%% Test for the SB3D2 Timoshenko space frame element - matches analytical solution exactly
 
 clear all %#ok<CLALL>
 format longeng
@@ -47,7 +47,7 @@ support_data = [1, 1, 1, 0, 0, 0, nodes{1,2:4};
 %%% SOURCE COMPUTATIONS
 %%% ------------------------------------------------------------------------------------------------
 
-%// store the number of dimensions and the number of dofs per node for more concise syntax
+%// store number of dimensions and number of dofs per node for more concise syntax
 num_dims = length(nodes{1,:}) - 1;
 num_dofs = length(isActiveDof(isActiveDof));
 

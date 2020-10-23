@@ -34,5 +34,4 @@ function [mesh, props] = generateMesh(node_table, elem_table, num_dims, num_loca
     else
         props = [];
     end
-
 end

@@ -1,9 +1,9 @@
 %%% Example 4.1 from Chandrupatla, "Introduction to Finite Elements in Engineering, 2nd edition"
 %%% This solves a plane truss structure subject to concentrated forces at the joints.
 
-clear all
+clear all %#ok<CLALL>
 format longeng
-fprintf('\n') % Command Window output formatting
+fprintf('\n')
 
 addpath('functions')
 
@@ -30,30 +30,31 @@ A = 1.0 * ones(length(ID), 1); % sq-in
 elements = table(ID, n1, n2, E, A);
 clear ID n1 n2
 
-%// force data, Fx, Fy, Mz, x, y
-force_data = [20e+03, 0, 0, 40, 0;
-              0, -25.0e+03, 0, 40, 30]; % forces in lb
+%// force data, Fx, Fy, x, y
+force_data = [20e+03, 0, nodes{2,2:3};
+              0, -25.0e+03, nodes{3,2:3}]; % forces in lb
 
 %// input the restrained dof data = logical and coordinates (release = 0, restrain = 1)
-support_data = [1, 1, 0, 0, 0;
-                0, 1, 0, 40, 0;
-                1, 1, 0, 0, 30];
+support_data = [1, 1, nodes{1,2:3};
+                0, 1, nodes{2,2:3};
+                1, 1, nodes{4,2:3}];
 
                 
 %%% SOURCE COMPUTATIONS
 %%% ------------------------------------------------------------------------------------------------
 
+%// store number of dimensions and number of dofs per node for more concise syntax
+num_dims = length(nodes{1,:}) - 1;
+num_dofs = length(isActiveDof(isActiveDof));
+
 %// convert element-node connectivity info and properties to numeric arrays
-[mesh, props] = generateMesh(nodes, elements, 2, 2);
+[mesh, props] = generateMesh(nodes, elements, num_dims, 2);
 
 %// generate tables storing nodal forces and restraints
-[forces, supports] = generateBCs(nodes, force_data, support_data);
+[forces, supports] = generateBCs(nodes, force_data, support_data, num_dims, isActiveDof);
 
 %// compute truss element local stiffness matrix
 [k, k_idx] = computeT2D2Stiffness(mesh, props, isActiveDof);
-
-%// store the number of dofs per node for more concise syntax
-num_dofs = length(isActiveDof(isActiveDof));
 
 %// determine wether a global dof is truly active based on element stiffness contributions
 [num_eqns, real_idx_diff] = checkActiveDofIndex(num_dofs, length(nodes{:,1}), {k_idx});

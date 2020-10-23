@@ -1,4 +1,4 @@
-%%% 
+%%% Test for the SB2D2 Timoshenko plane frame element - matches analytical solution exactly
 
 clear all %#ok<CLALL>
 format longeng
