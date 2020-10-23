@@ -1,6 +1,5 @@
 function [num_eqns, real_idx_diff] = checkActiveDofIndex(num_dofs, num_nodes, idx)
-
-    %// establish the nominal size of the system of equations
+    %// establish nominal size of the system of equations
     num_eqns = num_dofs * num_nodes;
     
     %// loop over element blocks & find active dofs, i.e., find equations w/ stiffness contributions
@@ -19,5 +18,4 @@ function [num_eqns, real_idx_diff] = checkActiveDofIndex(num_dofs, num_nodes, id
     for dof = 1:length(isActive)
         if (~isActive(dof)), real_idx_diff(dof:end) = real_idx_diff(dof:end) + 1; end 
     end
-
 end

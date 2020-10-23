@@ -70,4 +70,4 @@ K = assembleGlobalStiffness(num_eqns, real_idx_diff, {k}, {k_idx});
 F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 
 %// apply the boundary conditions and solve for the displacements and reactions
-[q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F, 1e-12);
+[q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F);
