@@ -1,5 +1,5 @@
-%%% Test for the RB2D2 rigid beam element - despite a 1,000,000 N force being applied to the free
-%%% end of the cantilever, the beam does not deflect. The fixed end reactions are correct.
+%%% Test for the RB3D2 rigid beam element - despite a 1,000,000 N force being applied at the midspan
+%%% of a simple beam, no deflections occur.
 
 clear all %#ok<CLALL>
 format longeng
@@ -12,14 +12,15 @@ addpath('functions')
 %%% ------------------------------------------------------------------------------------------------
 
 %// input boolean of active degrees of freedom, dof = ux, uy, uz, rx, ry, rz
-isActiveDof = logical([1, 1, 0, 0, 0, 1]);
+isActiveDof = logical([1, 1, 1, 1, 1, 1]);
 
-%// node table (coordinates in meters)
+%// node table (coordinates in centimeters)
 ID = [1; 2; 3];
-x = [0; 2.5 * cos(pi / 4); 5.0 * cos(pi / 4)];
-y = [0; 2.5 * sin(pi / 4); 5.0 * sin(pi / 4)];
-nodes = table(ID, x, y);
-clear ID x y
+x = [100; 0; -100];
+y = [150; 0; -150];
+z = [-300; 0; 300];
+nodes = table(ID, x, y, z);
+clear ID x y z
 
 %// element connectivity
 ID = [1; 2];
@@ -29,11 +30,12 @@ elements = table(ID, n1, n2);
 clear ID n1 n2
 
 %// force data, Fx, Fy, Mz, x, y
-P = 1e+06; % Newtons
-force_data = [P * cos(7 * pi / 4), P * sin(7 * pi / 4), 0, nodes{3,2:3}];
+P = -1e+03; % kN
+force_data = [P * 3 / 7, -P * 2 / 7, 0, 0, 0, 0, nodes{2,2:4}];
 
 %// input the restrained dof data = logical and coordinates (release = 0, restrain = 1)
-support_data = [1, 1, 1, nodes{1,2:3}];
+support_data = [1, 1, 1, 0, 0, 0, nodes{1,2:4};
+                1, 1, 1, 0, 0, 0, nodes{3,2:4}];
 
 
 %%% SOURCE COMPUTATIONS
@@ -49,7 +51,7 @@ num_dofs = length(isActiveDof(isActiveDof));
 [forces, supports] = generateBCs(nodes, force_data, support_data, isActiveDof);
 
 %// compute rigid beam local stiffness matrix (if penalty not provided - default value assumed)
-[k, k_idx] = computeRB2D2Stiffness(mesh, isActiveDof);
+[k, k_idx] = computeRB3D2Stiffness(mesh, isActiveDof);
 
 %// determine wether a global dof is truly active based on element stiffness contributions
 [num_eqns, real_idx_diff] = checkActiveDofIndex(nodes, num_dofs, k_idx);

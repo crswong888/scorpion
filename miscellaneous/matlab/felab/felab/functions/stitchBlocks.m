@@ -33,25 +33,30 @@ function [nodes, blocks] = stitchBlocks(node_blk, ele_blk, num_local_nodes, tol)
         tol = 1e-16; % default is approximately double precision (16 decimals)
     end
     
-    %// 
+    %// loop through subdomains and build a global node index of all nodes at unique points in space
     nodes = table();
     for b = 1:(num_blocks - 1)
+        %/ it's possible that all nodes on a block have already been merged, so no need to proceed
         if (isempty(node_blk{b}))
             continue
         end
+        
+        %/ add block nodes to global index
         nodes = cat(1, nodes, node_blk{b});
+        
+        %/ compare nodal coordinates to those on all remaining blocks 
         for bb = (b + 1):num_blocks
+            %/ find any coincident nodes
             [~, m1, m2] = intersect(round(node_blk{b}{:,2:(1 + num_dims)} / tol) * tol,...
                                     round(node_blk{bb}{:,2:(1 + num_dims)} / tol) * tol, 'rows');
             
-            for n = 2:(1 + num_local_nodes(bb))
-                [iscoincident, matchID] = ismember(ele_blk{bb}{:,n}, node_blk{bb}{m2,1});
-                ele_blk{bb}{iscoincident,n} = node_blk{b}{m1(nonzeros(matchID)),1};
-            end
-            
-            node_blk{bb}(m2,:) = [];
-            
+            %/ if there are coincident nodes, merge them with current block
             if (~isempty(m2))
+                for n = 2:(1 + num_local_nodes(bb))
+                    [iscoincident, matchID] = ismember(ele_blk{bb}{:,n}, node_blk{bb}{m2,1});
+                    ele_blk{bb}{iscoincident,n} = node_blk{b}{m1(nonzeros(matchID)),1};
+                end
+                node_blk{bb}(m2,:) = [];
                 fprintf('Merged %d nodes on block %d.\n\n', length(m2), bb)
             end
         end

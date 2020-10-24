@@ -17,18 +17,20 @@ function [q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F,
     q = zeros(num_eqns,1); % initialize so that original system array indices are preserved
     
     %/ first try to solve system using LU decomposition
-    warning('off', 'MATLAB:singularMatrix') % this warning is handled by this function
+    warning('off', 'MATLAB:singularMatrix')
+    warning('off', 'MATLAB:nearlySingularMatrix') % these warnings are handled below
     [L, U, P, Q] = lu(K, [1 1]); % lower & upper triangular matrices plus a row & col permutations
     q(~isBC) = Q * (U \ (L \ (P * F)));
     
     %/ if LU failed, it is probably due to a problematic FE setup, but try gmres as a last resort
     warning('on', 'MATLAB:singularMatrix')
-    if ((any(isnan(q))) || (1e-09 < norm(K * q(~isBC) - F) / norm(F)))
+    warning('on', 'MATLAB:nearlySingularMatrix')
+    if ((any(isnan(q))) || (1e-06 < norm(K * q(~isBC) - F) / norm(F)))
         fprintf(['LU decomposition was unsuccesful for the released DOF indices of the\n',...
                  'stiffness matrix with condition number for inversion, %g. Attempting to\n',...
                  'solve with GMRES...\n\n'], condest(K))
              
-        q(~isBC) = gmres(K, F, size(K, 1), 1e-09);
+        q(~isBC) = gmres(K, F, size(K, 1), 1e-06);
         fprintf('\n')
     end
 

@@ -11,7 +11,7 @@ function [k, idx] = computeT2D2Stiffness(mesh, props, isActiveDof, varargin)
     %// establish Gauss quadrature rule
     [xi1, W1] = gaussRules(1);
     
-    %// compute beam element stiffness matrix and store its system indices
+    %// compute truss element stiffness matrix and store its system indices
     k = zeros(num_eqns, num_eqns, length(mesh(:,1))); 
     idx = zeros(length(mesh(:,1)), num_eqns); 
     for e = 1:length(mesh(:,1))
