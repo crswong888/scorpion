@@ -1,5 +1,4 @@
-function [forces, supports] = generateBCs(nodes, force_data, support_data, num_dims, isActiveDof,... 
-                                          tol)
+function [forces, supports] = generateBCs(nodes, force_data, support_data, isActiveDof, tol)
     %%% TODO: this is kind of a horrible way to do all of this - make it better
     
     %%% Ultimately, the only reason this function is useful is for the case where the mesh is huge
@@ -8,6 +7,7 @@ function [forces, supports] = generateBCs(nodes, force_data, support_data, num_d
     %// sort the nodal coordinate data in ascending x and y order
     nodes = table2array(nodes); % convert to normal array to increase search performance
     num_nodes = length(nodes(:,1));
+    num_dims = length(nodes(1,2:end));
     num_dofs = length(isActiveDof(isActiveDof));
     
     %// round the input data to the specified match tolerance

@@ -50,24 +50,23 @@ support_data(Ny+2:end,4) = support_data(1:Ny+1,4);
 %%% SOURCE COMPUTATIONS
 %%% ------------------------------------------------------------------------------------------------
 
-%// store the number of dimensions and the number of dofs per node for more concise syntax
-num_dims = length(nodes{1,:}) - 1;
+%// store number of dofs per node for more concise syntax
 num_dofs = length(isActiveDof(isActiveDof));
 
 %// convert element-node connectivity info and properties to numeric arrays
-[mesh, props] = generateMesh(nodes, elements, num_dims, 4);
+[mesh, props] = generateMesh(nodes, elements, 4);
 
 %// generate tables storing nodal forces and restraints
-[forces, supports] = generateBCs(nodes, force_data, support_data, num_dims, isActiveDof);
+[forces, supports] = generateBCs(nodes, force_data, support_data, isActiveDof);
 
 %// compute plane stress QUAD4 element local stiffness matrix
 [k, k_idx] = computeCPS4Stiffness(mesh, props, isActiveDof);
 
 %// determine wether a global dof is truly active based on element stiffness contributions
-[num_eqns, real_idx_diff] = checkActiveDofIndex(num_dofs, length(nodes{:,1}), {k_idx});
+[num_eqns, real_idx_diff] = checkActiveDofIndex(nodes, num_dofs, k_idx);
 
 %// assemble the global stiffness matrix
-K = assembleGlobalStiffness(num_eqns, real_idx_diff, {k}, {k_idx});
+K = assembleGlobalStiffness(num_eqns, real_idx_diff, k, k_idx);
 
 %// compute global force vector
 F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);

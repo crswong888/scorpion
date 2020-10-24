@@ -2,7 +2,10 @@
 %%% plane using RB2D2 elements, while only pinning the central node. Thus, this is also a
 %%% demonstration of how to use multiple element types in a single model.
 %%%
-%%% 
+%%% The max deflections in accordance with Euler-Bernoulli and Timoshenko Beam theories are 
+%%% 1.6200e-03 m and 1.6544e-03 m, respectively. The max deflection computed here is 1.64720e-03 m
+%%% and so the model lines up with the theory. Also, the vertical reactions at each pin are P / 2, 
+%%% and the horizontal reactions are zero, as expected.
 
 clear all %#ok<CLALL>
 format longeng
@@ -26,72 +29,80 @@ nu = 0.3; % Poisson's Ratio of steel
 t = 0.1; % m, thickness of cross-section
 
 %// generate a QUAD4 mesh for a simple, rectangular domain
-[cps4_nodes, cps4_elements] = createRectilinearMesh('QUAD4',...
+[nodes1, elems1] = createRectilinearMesh('QUAD4',...
     'Lx', Lx, 'Nx', Nx, 'Ly', Ly, 'Ny', Ny, 'E', E, 'nu', nu, 't', t);
 
 %// generate RB2D2 nodes
-rb2d2_nodes = zeros(2 * (Ny + 1), 3);
-rb2d2_nodes(:,1) = transpose(1:length(rb2d2_nodes));
-rb2d2_nodes((Ny + 2):end,2) = Lx;
+nodes2 = zeros(2 * (Ny + 1), 3);
+nodes2(:,1) = transpose(1:length(nodes2));
+nodes2((Ny + 2):end,2) = Lx;
 for i = 2:(Ny + 1)
-    rb2d2_nodes(i,3) = (i - 1) * Ly;
+    nodes2(i,3) = (i - 1) * (Ly / Ny);
 end
-rb2d2_nodes((Ny + 2):end,3) = rb2d2_nodes(1:(Ny + 1),3);
-rb2d2_nodes = array2table(rb2d2_nodes, 'VariableNames', {'ID', 'x', 'y'});
+nodes2((Ny + 2):end,3) = nodes2(1:(Ny + 1),3);
+nodes2 = array2table(nodes2, 'VariableNames', {'ID', 'x', 'y'});
 
 %// generate RB2D2 element connectivity
-rb2d2_elements = zeros(2 * Ny, 4);
-rb2d2_elements(:,1) = transpose(1:length(rb2d2_elements));
+elems2 = zeros(2 * Ny, 4);
+elems2(:,1) = transpose(1:length(elems2));
 for i = 1:Ny
-    rb2d2_elements(i,2) = i;
-    rb2d2_elements(i,3) = i + 1;
+    elems2(i,2) = i;
+    elems2(i,3) = i + 1;
 end
-rb2d2_elements((Ny + 1):end,2:3) = rb2d2_elements(1:Ny,2:3) + 11;
+elems2((Ny + 1):end,2:3) = elems2(1:Ny,2:3) + 11;
 
 %/ append penalty stiffness to elements and convert to table array
-rb2d2_elements(:,4) = 1e+09;
-rb2d2_elements = array2table(rb2d2_elements, 'VariableNames', {'ID', 'n1', 'n2', 'penalty'});
+elems2(:,4) = 1e+08;
+elems2 = array2table(elems2, 'VariableNames', {'ID', 'n1', 'n2', 'penalty'});
 
 %// consolidate coincident nodes between meshes
-[nodes, cps4_elements, rb2d2_elements] = stitchMesh({cps4_nodes, rb2d2_nodes},...
-                                                    {cps4_elements, rb2d2_elements}, [4, 2]);
-    
-error(' ')
+[nodes, blocks] = stitchBlocks({nodes1, nodes2}, {elems1, elems2}, [4, 2]);
 
-% NOTE: to plot the displacement, transverse displacement, run something like:
-% plot(q((2:3:3*Nx+3)-transpose(real_idx_diff(2:3:3*Nx+3))))
+%// input the distributed point force data = dof magnitude and coordinates
+P = -75; % kN, the concentrated force to be distributed along the nodeset
+force_data = zeros(Ny+1,5);
+force_data(1,2) = P / Ny / 2; force_data(end,2) = force_data(1,2);
+force_data(2:end-1,2) = P / Ny;
+force_data(:,4) = Lx / 2;
+for i = 2:(Ny+1), force_data(i,5) = force_data(i-1,5) + Ly / Ny; end
+
+%// input the restrained dof data = logical and coordinates (release = 0, restrain = 1)
+support_data = [1, 1, 0, 0.0, Ly / 2;
+                1, 1, 0, Lx, Ly / 2];
+
 
 %%% SOURCE COMPUTATIONS
 %%% ------------------------------------------------------------------------------------------------
 
-%// generate tables storing nodal forces and restraints
-[forces, supports] = generateBCs(cps4_nodes, force_data, support_data);
-constraints = generateConstraints(cps4_nodes, rb2d2_nodes);
-clear force_data support_data constraint_data
-
-%// convert element-node connectivity info and properties to numeric arrays
-[mesh, props] = generateMesh(cps4_nodes, cps4_elements, 2, 4);
-
-%// compute plane stress QUAD4 element local stiffness matrix
-[k, k_idx] = computeCPS4Stiffness(mesh, props, isActiveDof);
-
-%// compute rigid beam element local stiffness matrix
-% TODO: this actually isn't the max we want, we want the max from the
-% global matrix that is assembled from only the QUAD4 part of the mesh
-C = max(abs(k),[],'all') * penalty; % determine penalty stiffness as max Kij times coefficient
-[kc, kc_idx] = computeRB2D2Stiffness(constraints, cps4_nodes, C, isActiveDof);
-
-%// store the number of dofs per node for more concise syntax
+%// store number of dofs per node for more concise syntax
 num_dofs = length(isActiveDof(isActiveDof));
 
+%// convert element-node connectivity info and properties to numeric arrays on all blocks
+[mesh1, props1] = generateMesh(nodes, blocks{1}, 4);
+[mesh2, props2] = generateMesh(nodes, blocks{2}, 2);
+
+%// generate tables storing nodal forces and restraints
+[forces, supports] = generateBCs(nodes, force_data, support_data, isActiveDof);
+
+%// compute stiffness matrices of all elements on each block
+[k1, k1_idx] = computeCPS4Stiffness(mesh1, props1, isActiveDof);
+[k2, k2_idx] = computeRB2D2Stiffness(mesh2, isActiveDof, 'penalty', props2);
+
 %// determine wether a global dof is truly active based on element stiffness contributions
-[num_eqns, real_idx_diff] = checkActiveDofIndex(num_dofs, length(cps4_nodes{:,1}), {k_idx, kc_idx});
+[num_eqns, real_idx_diff] = checkActiveDofIndex(nodes, num_dofs, {k1_idx, k2_idx});
 
 %// assemble the global stiffness matrix
-K = assembleGlobalStiffness(num_eqns, real_idx_diff, {k, kc}, {k_idx, kc_idx});
+K = assembleGlobalStiffness(num_eqns, real_idx_diff, {k1, k2}, {k1_idx, k2_idx});
 
 %// compute global force vector
 F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 
 %// apply the boundary conditions and solve for the displacements and reactions
-[q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F);
+[q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F, 1e-08);
+
+
+%%% POSTPROCESSING
+%%% ------------------------------------------------------------------------------------------------
+
+%// deflection along length of beam
+plot(q((2:3:3*Nx+3)-transpose(real_idx_diff(2:3:3*Nx+3))))

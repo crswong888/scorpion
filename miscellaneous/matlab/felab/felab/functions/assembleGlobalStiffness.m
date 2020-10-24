@@ -1,4 +1,8 @@
 function K = assembleGlobalStiffness(num_eqns, real_idx_diff, k, idx)
+    %// this assumes that input is a cell array of element blocks - convert to cell if not
+    if (~iscell(k)), k = {k}; end
+    if (~iscell(idx)), idx = {idx}; end
+
     %// assemble global stiffness matrix
     K = sparse(num_eqns,num_eqns); % save memory by using sparse storage
     for block = 1:length(k)
