@@ -1,5 +1,6 @@
 %%% Example 4.1 from Chandrupatla, "Introduction to Finite Elements in Engineering, 2nd edition"
-%%% This solves a plane truss structure subject to concentrated forces at the joints.
+%%% This solves a plane truss structure subject to concentrated forces at the joints. The results 
+%%% for the deflections and reactions match those given by Chandrupatla
 
 clear all %#ok<CLALL>
 format longeng

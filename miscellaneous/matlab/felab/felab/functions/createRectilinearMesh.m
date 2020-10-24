@@ -69,6 +69,9 @@ function [nodes, elements] = createRectilinearMesh(eletype, varargin)
     %%% HEX8 %%%
     %%%%%%%%%%%%    
     
+    %%% TODO: for some reason, Lx must be the long in-plane direction or this generator doesn't
+    %%% work. Make this not the case.
+    
     else
         %// validate existance of the required input params
         validateRequiredParams(params, 'Lx', 'Ly', 'Lz', 'Nx', 'Ny', 'Nz')
@@ -80,6 +83,11 @@ function [nodes, elements] = createRectilinearMesh(eletype, varargin)
         Ny = params.Results.Ny; 
         Nz = params.Results.Nz;
         
+        if (Lx < Ly)
+            error(['Unfortunately, ''Lx'' must be the longer dimension in the xy-plane. This ',...
+                   'will be fixed in the future.'])
+        end
+        
         %// compute total number of nodes and number of elements
         num_nodes = (Nx + 1) * (Ny + 1) * (Nz + 1); 
         num_elems = Nx * Ny * Nz;
@@ -88,7 +96,7 @@ function [nodes, elements] = createRectilinearMesh(eletype, varargin)
         
         %// compute x, y, and z dimensions of the elements
         dx = Lx / Nx; 
-        dy = Ly / Ny; 
+        dy = Ly / Ny;
         dz = Lz / Nz;
         
         %// generate node coordinate table (ID, x, y, z)
@@ -96,12 +104,12 @@ function [nodes, elements] = createRectilinearMesh(eletype, varargin)
         x = zeros(num_nodes,1); 
         y = x; z = x;
         for i = 1:num_nodes 
-            row = ceil(i / (Nx + 1)); 
+            row = ceil(i / (Nx + 1));
             col = i + (Nx + 1) * (1 - row);
             ext = ceil(i / num_in_plane);
             
             x(i) = (col - 1) * dx; 
-            y(i) = (row - 1) * dy; 
+            y(i) = (row - 2 * ext + 1) * dy;
             z(i) = (ext - 1) * dz;
         end
         nodes = table(ID, x, y, z);
@@ -133,8 +141,10 @@ function [nodes, elements] = createRectilinearMesh(eletype, varargin)
         
         %// write names of unmatched fields from input parser and their values to table format
         props = struct2table(params.Unmatched);
-        for idx = 1:length(props{1,:})
-            props{2:num_elems,idx} = props{1,idx}; % copy the value to all elements
+        if (~isempty(props))
+            for idx = 1:length(props{1,:})
+                props{2:num_elems,idx} = props{1,idx}; % copy the value to all elements
+            end
         end
         
         %// append the additional input properties to the element table

@@ -1,10 +1,17 @@
-%%% TEST 4: Generate Stiffness Matrix of C3D8 Element
+%%% Problem 9.1 from Chandrupatla, "Introduction to Finite Elements in Engineering, 2nd edition"
+%%% This models a cantilevered steel plates subject to a concentrated force at a top corner of the
+%%% free end face. The results for the deflections and reactions match those given in the solution
+%%% manual which could be found online at:
+%%%
+%%% ```https://www.studocu.com/en-ca/document/the-university-of-british-columbia/advanced-ship-struc
+%%%    tures/other/solution-manual-for-introduction-to-finite-elements-in-engineering-4th-edition/38
+%%%    24327/view````
 
-clear all
+clear all %#ok<CLALL>
 format longeng
 fprintf('\n')
 
-addpath('../functions')
+addpath('functions')
 
 
 %%% INPUT PARAMETERS
@@ -13,28 +20,51 @@ addpath('../functions')
 %// input boolean of active degrees of freedom, dof = ux, uy, uz, rx, ry, rz
 isActiveDof = logical([1, 1, 1, 0, 0, 0]);
 
-%// node table
-ID = [1; 2; 3; 4; 5; 6; 7; 8];
-x = [0; 1; 1; 0; 0; 1; 1; 0];
-y = [0; 0; 1; 1; 0; 0; 1; 1];
-z = [0; 0; 0; 0; 1; 1; 1; 1];
-nodes = table(ID, x, y, z);
-clear ID x y z
+%// input the mesh discretization parameters (length in inches)
+Lx = 20; Nx = 3; Ly = 2.5; Ny = 1; Lz = 0.5; Nz = 1;
 
-%// element connectivity and properties table
-ID = 1; 
-n1 = 1; n2 = 2; n3 = 3; n4 = 4; n5 = 5; n6 = 6; n7 = 7; n8 = 8;
-E = 200e+09; % Pa, Young's modulus of steel
-nu = 0.3; % Poisson's Ratio of steel
-elements = table(ID, n1, n2, n3, n4, n5, n6, n7, n8, E, nu);
-clear ID n1 n2 n3 n4 n5 n6 n7 n8
+%// input material properties
+E = 30e+06; % psi, Young's modulus
+nu = 0.3; % Poisson's Ratio
 
+%// generate a HEX8 mesh
+[nodes, elements] = createRectilinearMesh('HEX8',...
+    'Lx', Lx, 'Nx', Nx, 'Ly', Ly, 'Ny', Ny, 'Lz', Lz, 'Nz', Nz, 'E', E, 'nu', nu);
 
+%// input concentrated force data
+P = 600; % lb
+force_data = [0, 0, -P, 20, 0, 0.5];
+
+%// input restrained dof data = logical and coordinates (release = 0, restrain = 1)
+support_data = [1, 1, 1, 0, 0, 0;
+                1, 1, 1, 0, 2.5, 0;
+                1, 1, 1, 0, 0, 0.5;
+                1, 1, 1, 0, 2.5, 0.5];
+
+            
 %%% SOURCE COMPUTATIONS
 %%% ------------------------------------------------------------------------------------------------
 
+%// store number of dofs per node for more concise syntax
+num_dofs = length(isActiveDof(isActiveDof));
+
 %// convert element-node connectivity info and properties to numeric arrays
-[mesh, props] = generateMesh(nodes, elements, 3, 8);
+[mesh, props] = generateMesh(nodes, elements, 8);
+
+%// generate tables storing nodal forces and restraints
+[forces, supports] = generateBCs(nodes, force_data, support_data, isActiveDof);
 
 %// compute plane stress QUAD4 element local stiffness matrix
 [k, k_idx] = computeC3D8Stiffness(mesh, props, isActiveDof);
+
+%// determine wether a global dof is truly active based on element stiffness contributions
+[num_eqns, real_idx_diff] = checkActiveDofIndex(nodes, num_dofs, k_idx);
+
+%// assemble the global stiffness matrix
+K = assembleGlobalStiffness(num_eqns, real_idx_diff, k, k_idx);
+
+%// compute global force vector
+F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
+
+%// apply the boundary conditions and solve for the displacements and reactions
+[q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F);
