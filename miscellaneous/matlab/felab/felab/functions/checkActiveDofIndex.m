@@ -45,6 +45,8 @@ function [num_eqns, real_idx_diff] = checkActiveDofIndex(nodes, num_dofs, idx)
     %// nominal indices must be shifted by number of inactive dofs below it - compute shift amount 
     real_idx_diff = zeros(length(isActive),1);
     for dof = 1:length(isActive)
-        if (~isActive(dof)), real_idx_diff(dof:end) = real_idx_diff(dof:end) + 1; end 
+        if (~isActive(dof))
+            real_idx_diff(dof:end) = real_idx_diff(dof:end) + 1; 
+        end 
     end
 end

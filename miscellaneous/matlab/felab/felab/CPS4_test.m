@@ -94,16 +94,40 @@ close all
 
 %%% might be simplere to use range() here, plus, I'm not even sure If im using min/max vals after
 %%% this
-nodes = table2array(nodes);
-num_dims = length(nodes(1,2:end));
+num_nodes = length(nodes{:,1});
+num_dims = length(nodes{1,2:end});
+
+scale = 1000;
+
+displaced_nodes = zeros(num_nodes, num_dims);
+for s = 1:num_dims
+    for i = 1:num_nodes
+        idx = num_dofs * (i - 1) + s;
+        
+        real_idx = idx - real_idx_diff(idx);
+        
+        displaced_nodes(i,s) = nodes{i,(s + 1)} + scale * q(real_idx);
+    end
+end
+
 extents = zeros(num_dims, 4);
 extents(:, 1) = 1:num_dims;
 for s = 1:num_dims
-    extents(s, 2) = min(nodes(:,(s + 1)));
-    extents(s, 3) = max(nodes(:,(s + 1)));
+    extents(s, 2) = min(displaced_nodes(:,s));
+    extents(s, 3) = max(displaced_nodes(:,s));
 end
 extents(:,4) = extents(:,3) - extents(:,2);
 sort(extents, 4);
+
+%%% because of scaling, this whole fancy grid system concept is officially obsolete. Damn.
+%%% what I can do is show "Real Displacements" in the contour plot and legend, and perhaps label the
+%%% title appropriately. But the spatial coordinates will reflect values as if the displacements
+%%% were actually those scaled values. Theres really no good way around this. It would have to be a
+%%% very sophisticated grid system in order to label it properly.
+%%% I suppose I could actually accomplish it, although I would need to draw the grid myself, and it 
+%%% it would start at the points I've defined myself on the plot bounds, but then expand by some
+%%% sort of function related to scale factor and displacements where coordinates are actually
+%%% distorted
 
 lowest = Inf;
 for i = 10:20
@@ -123,11 +147,14 @@ offset = max(dx, abs((extents(1,4) .* resolution / resolution(1) - extents(:,4))
 limits(:,1) = extents(:,2) - round(offset / dx) * dx;
 limits(:,2) = extents(:,3) + round(offset / dx) * dx;
 
+grid = {(round(limits(1,1) / dx) * dx - 10 * dx):dx:(round(limits(1,2) / dx) * dx + 10 * dx);
+        (round(limits(2,1) / dx) * dx - 10 * dx):dx:(round(limits(2,2) / dx) * dx + 10 * dx)};
+
 figure(1);
-plot(nodes(:,2), nodes(:,3), 'o', 'markerfacecolor', [0, 0, 0], 'markersize', 1) % probably won't even plot nodes
-xticks((limits(1,1) - 10 * dx):dx:(limits(1,2) + 10 * dx))
+plot(displaced_nodes(:,1), displaced_nodes(:,2), 'o', 'markerfacecolor', [0, 0, 0], 'markersize', 1) % probably won't even plot nodes
+xticks(grid{1})
 xlim(limits(1,:))
-yticks((limits(2,1) - 10 * dx):dx:(limits(2,2) + 10 * dx))
+yticks(grid{2})
 ylim(limits(2,:))
 hold on
 
