@@ -92,7 +92,8 @@ set(ax, 'Units', 'pixels');
 resolution = [max(ax.Position(3:4)); min(ax.Position(3:4))];
 close all
 
-
+%%% might be simplere to use range() here, plus, I'm not even sure If im using min/max vals after
+%%% this
 nodes = table2array(nodes);
 num_dims = length(nodes(1,2:end));
 extents = zeros(num_dims, 4);
@@ -104,18 +105,6 @@ end
 extents(:,4) = extents(:,3) - extents(:,2);
 sort(extents, 4);
 
-%%% always round to some multiple of 2, 5 or 10
-%%% this is simple, I'll have to just say that if the magnitude of x is N, then I have to try and
-%%% subdivide it by the closes multiples of 1eN-2, 2eN-2, 5eN-2
-%%%
-%%% then check how close round(x / d / 1eN-2) * 1eN-2 * d is to x for all three multiples on all 10
-%%% allowable number of subdivisions.
-%%%
-%%% if some increment at 11 subdivisions and one at 17 subdvisions are both equally nice, use 11
-%%% subdivisions Less subdivisions are better.
-%%%
-%%% best number is 1eN, then 5eN, finally 2eN, if all 3 multiples work, take 1eN, if the last two
-%%% both work, take 5eN
 lowest = Inf;
 for i = 10:20
     %/ some magnitude that is a multiple of 5 is best, 2 is okay, and 1 not best
@@ -130,23 +119,17 @@ for i = 10:20
     end
 end
 
-%%% finally, the offset value at either end of x shall always be dx / 2, such that the maximum
-%%% offset on either side is 5% of the mesh when 10 subdivisions are used, and the minimum offest is
-%%% 2.5% of the mesh when 20 subdivisions are used. It's possible that I could also use an offset of
-%%% dx, sucb that I could get up to 10% whitespace on either side, but I think this is too much loss
-%%% in accuracy. However, I don't know what it's gonna look like yet, so I shall try this. Perhaps
-%%% it looks fine, and this would actually be preferable, since the plots would always end neatly at
-%%% an increment of dx.
-    
-    
-    
-limits = zeros(num_dims, 2);
-limits(:,1) = extents(:,2) - 0.05 * extents(:,4);
-limits(:,2) = extents(:,3) + 0.05 * extents(:,4);
+offset = max(dx, abs((extents(1,4) .* resolution / resolution(1) - extents(:,4)) / 2));
+limits(:,1) = extents(:,2) - round(offset / dx) * dx;
+limits(:,2) = extents(:,3) + round(offset / dx) * dx;
 
-% figure(1);
-% plot(nodes(:,2), nodes(:,3), 'o', 'markerfacecolor', [0, 0, 0], 'markersize', 1) % probably won't even plot nodes
-% hold on
+figure(1);
+plot(nodes(:,2), nodes(:,3), 'o', 'markerfacecolor', [0, 0, 0], 'markersize', 1) % probably won't even plot nodes
+xticks((limits(1,1) - 10 * dx):dx:(limits(1,2) + 10 * dx))
+xlim(limits(1,:))
+yticks((limits(2,1) - 10 * dx):dx:(limits(2,2) + 10 * dx))
+ylim(limits(2,:))
+hold on
 
 
 
