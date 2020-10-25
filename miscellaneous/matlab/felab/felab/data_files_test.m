@@ -21,6 +21,11 @@ node_file = 'nodes.csv';
 %// element file headers: 'ID', 'node i', 'node j', 'E', 'A', 'I'
 elem_file = 'elements.csv';
 
+%// element properties
+E = 200e+09; % N/m/m, Young's modulus
+A = 0.01761; % m^2, cross-sectional area
+I = 0.8616e-04; % m^4, second moment of area
+
 %// force file headers: 'ID', 'node', 'Fz', 'Fy', 'Mz'
 force_file = 'forces.csv';
 
@@ -40,10 +45,10 @@ clear file_varnames
 num_dofs = length(isActiveDof(isActiveDof));
 
 %// convert element-node connectivity info and properties to numeric arrays
-[mesh, props] = generateMesh(nodes, elements, 2);
+mesh = generateMesh(nodes, elements, 2);
 
-%// compute Timoshenko beam local stiffness matrix
-[k, k_idx] = computeB2D2Stiffness(mesh, props, isActiveDof);
+%// compute beam local stiffness matrix
+[k, k_idx] = computeB2D2Stiffness(mesh, isActiveDof, E, A, I);
 
 %// determine wether a global dof is truly active based on element stiffness contributions
 [num_eqns, real_idx_diff] = checkActiveDofIndex(nodes, num_dofs, k_idx);

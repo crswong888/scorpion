@@ -3,8 +3,7 @@ function [k, idx] = computeRB2D2Stiffness(mesh, isActiveDof, varargin)
     %// Square Root Rule," described in C. Fellipa (2004), "Introduction to Finite Element Methods."
     %// University of Colorado, Boulder, CO., with max(K(i,j)) = 0.
     params = inputParser;
-    default_penalty = sqrt(10^digits) * ones(length(mesh(:,1)),1);
-    addParameter(params, 'penalty', default_penalty, @(x) isnumeric(x) && all(x > 0));
+    addParameter(params, 'penalty', sqrt(10^digits), @(x) (isnumeric(x) && (x > 0)));
     parse(params, varargin{:});
 
     %// establish local system size
@@ -25,7 +24,7 @@ function [k, idx] = computeRB2D2Stiffness(mesh, isActiveDof, varargin)
              0, 0,   1,  0,  0, -1];
         
         %/ compute rigid stiffness matrix
-        k(:,:,e) = params.Results.penalty(e) * transpose(B) * B;
+        k(:,:,e) = params.Results.penalty * transpose(B) * B;
         
         %/ determine system indices
         idx(e,:) = getGlobalDofIndex(isLocalDof, isActiveDof, mesh(e,[1, 4]));

@@ -1,5 +1,4 @@
 function [] = validateRequiredParams(p, varargin)
-    
     %%% This function makes optional parameter objects of Matlab's inputParser class required. This
     %%% is useful for the case where certain additional arguments are needed based on the input for
     %%% an actually required inputParser object.
@@ -13,5 +12,4 @@ function [] = validateRequiredParams(p, varargin)
             error(['Missing required paramater, ', varargin{param}, ', for ', funcstr]) 
         end
     end
-    
 end

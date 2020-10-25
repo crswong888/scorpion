@@ -1,5 +1,4 @@
 function idx = getGlobalDofIndex(isLocalDof, isActiveDof, nodes)
-
     %// establish global system size
     isLocalDof = isLocalDof(isActiveDof); % local dofs need only correspond to active globals
     num_dof = length(isActiveDof(isActiveDof));

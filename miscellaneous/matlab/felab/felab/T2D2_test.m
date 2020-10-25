@@ -26,10 +26,12 @@ clear ID x y
 ID = [1; 2; 3; 4];
 n1 = [1; 3; 1; 4];
 n2 = [2; 2; 3; 3];
-E = 29.5e+06 * ones(length(ID), 1); % psi
-A = 1.0 * ones(length(ID), 1); % sq-in
-elements = table(ID, n1, n2, E, A);
+elements = table(ID, n1, n2);
 clear ID n1 n2
+
+%// element properties
+E = 29.5e+06; % psi
+A = 1.0; % sq-in
 
 %// force data, Fx, Fy, x, y
 force_data = [20e+03, 0, nodes{2,2:3};
@@ -48,13 +50,13 @@ support_data = [1, 1, nodes{1,2:3};
 num_dofs = length(isActiveDof(isActiveDof));
 
 %// convert element-node connectivity info and properties to numeric arrays
-[mesh, props] = generateMesh(nodes, elements, 2);
+mesh = generateMesh(nodes, elements, 2);
 
 %// generate tables storing nodal forces and restraints
 [forces, supports] = generateBCs(nodes, force_data, support_data, isActiveDof);
 
 %// compute truss element local stiffness matrix
-[k, k_idx] = computeT2D2Stiffness(mesh, props, isActiveDof);
+[k, k_idx] = computeT2D2Stiffness(mesh, isActiveDof, E, A);
 
 %// determine wether a global dof is truly active based on element stiffness contributions
 [num_eqns, real_idx_diff] = checkActiveDofIndex(nodes, num_dofs, k_idx);

@@ -1,4 +1,15 @@
-function [k, idx] = computeSB3D2Stiffness(mesh, props, isActiveDof)    
+function [k, idx] = computeSB3D2Stiffness(mesh, isActiveDof, E, nu, A, Iyy, Izz, J, kappa, varargin)    
+    %// parse additional arguments for element local y-axis orientation relative to second moments
+    params = inputParser;
+    
+    %/ a valid input must be defined either once for all elements or uniquely defined per element, 
+    %/ no in between. Note that if an element's unit y-norm is [0, 0, 0], then the default 
+    %/ y-orientation is invoked.
+    default_input = zeros(length(mesh(:,1)), 3);
+    valid_input = @(x) ((isequal(size(x), size(default_input))) || (isequal(size(x), [1, 3])));
+    addParameter(params, 'y_orientation', default_input, valid_input);
+    parse(params, varargin{:});
+
     %// establish local system size
     isLocalDof = logical([1, 1, 1, 1, 1, 1]);
     num_eqns = 2 * length(isLocalDof(isLocalDof));
@@ -13,20 +24,21 @@ function [k, idx] = computeSB3D2Stiffness(mesh, props, isActiveDof)
     vcomp = [2, 6, 8, 12]; % transverse deflection along y and bending about z
     wcomp = [3, 5, 9, 11]; % transverse deflection along z and bending about y
     
+    %/ define convenience variables for geo/mat props        
+    G = E / (2 + 2 * nu);
+    EA = E * A;
+    kappaGA = kappa * G * A;
+    kappaGJ = kappa * G * J;
+    EIyy = E * Iyy;
+    EIzz = E * Izz;
+    Omega_yy = EIyy / kappaGA;
+    Omega_zz = EIzz / kappaGA;
+    y = params.Results.y_orientation;
+    
     %// compute beam element stiffness matrix and store its system indices
     k = zeros(num_eqns, num_eqns, length(mesh(:,1))); 
     idx = zeros(length(mesh(:,1)), num_eqns);
-    for e = 1:length(mesh(:,1))
-        %/ define convenience variables for geo/mat props        
-        G = props(e,1) / (2 + 2 * props(e,2));
-        EA = props(e,1) * props(e,3);
-        kappaGA = props(e,7) * G * props(e,3);
-        kappaGJ = props(e,7) * G * props(e,6);
-        EIyy = props(e,1) * props(e,4);
-        EIzz = props(e,1) * props(e,5);
-        Omega_yy = EIyy / kappaGA;
-        Omega_zz = EIzz / kappaGA;
-        
+    for e = 1:length(mesh(:,1))        
         %/ compute unit normal of beam longitudinal axis
         nx = (mesh(e,6:8) - mesh(e,2:4)) / norm(mesh(e,6:8) - mesh(e,2:4));
         
@@ -34,15 +46,27 @@ function [k, idx] = computeSB3D2Stiffness(mesh, props, isActiveDof)
         x = [nx, zeros(1,3); zeros(1,3), nx] * transpose([mesh(e,2:4), mesh(e,6:8)]);
         
         %/ compute a default unit normal for local y-axis or use input if provided
-        if (length(props(1,:)) == 10)
-            ny = props(e,8:10); % assumes vector components occupy last 3 columns of props array
+        valid_idx = min(e, length(y(:,1))); % idx for y defined on each element or once for all
+        if (~any(y(valid_idx,:))) % if all zeros, use defualt
+            % default assumes that y-axis rotates about z-axis by the same amount as x-axis
+            ny = [-nx(2), nx(1), 0] / norm([-nx(2), nx(1), 0]);
         else
-            ny = [-nx(2), nx(1), 0]; % rotates y about z by same amount x has
+            % verify that y is a unit normal (rounded to nearest 12 decimal points)
+            if (norm(y(valid_idx,:)) ~= 1)
+                error(['The ''y_orientation'' property on element %d is not a unit normal. ',...
+                       'The vector which defines the local y-axis must be normalized, i.e., ',...
+                       'it must satisfy ''norm(y_orientation) == 1'''], e)
+            end
+            
+            % take y normal as input value
+            ny = y(valid_idx,:);
         end
         
-        %/ assert that y-axis is perpindicular to x (rounded to nearest 16 decimal points)
-        if (round(dot(nx, ny) / 1e-16) * 1e-16 ~= 0)
-            error(' ')
+        %/ assert that y-axis is perpindicular to x (rounded to nearest 12 decimal points)
+        if (round(dot(nx, ny) / 1e-12) * 1e-12 ~= 0)
+            error(['The ''y_orientation'' property on element %d is not perpindicular to the ',...
+                   'beam longitudinal axis. These axes must be strictly orthogonal, i.e., they ',...
+                   'must satisfy ''dot(x_orientation, y_orientation) == 0'''], e)
         end
         
         %/ compute unit normal for local z-axis

@@ -1,7 +1,10 @@
-function [k, idx] = computeT2D2Stiffness(mesh, props, isActiveDof, varargin)
-    %// parse additional argument for computing either a normal or rigid element stiffness
+function [k, idx] = computeT2D2Stiffness(mesh, isActiveDof, varargin)
+    %// parse additional arguments for standard or rigid link element stiffness
     params = inputParser;
     addParameter(params, 'rigid', false, @(x) islogical(x));
+    addOptional(params, 'E', []);
+    addOptional(params, 'A', []);
+    addParameter(params, 'penalty', sqrt(10^digits), @(x) (isnumeric(x) && (x > 0)));
     parse(params, varargin{:});
 
     %// establish local system size
@@ -20,12 +23,17 @@ function [k, idx] = computeT2D2Stiffness(mesh, props, isActiveDof, varargin)
         
         %/ determine wether to compute a normal or rigid stifness matrix
         if (~params.Results.rigid)
-            EA = props(e,1) * props(e,2); % standard truss geo/mat props
+            % ensure Young's modulus and cross-sectional area provided then compute their product
+            validateRequiredParams(params, 'E', 'A');
+            EA = params.Results.E * params.Results.A; % standard truss geo/mat props
         else
-            EA = props(e,1); % for link element - mat prop is penalty stiffness
+            % ensure that penalty coefficient is provided then take it as product EA
+            validateRequiredParams(params, 'penalty');
+            EA = params.Results.penalty; % for link element - mat prop is penalty coefficient
+            
             % multiply penalty by square length of the element to ensure length effects ignored
             if (ell > 1) % but only if the length is such that it would not reduce intended penalty
-                EA = EA * ell^2; 
+                EA = EA * ell^2;
             end
         end   
         

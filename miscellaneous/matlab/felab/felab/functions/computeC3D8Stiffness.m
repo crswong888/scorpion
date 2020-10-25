@@ -1,4 +1,4 @@
-function [k, idx] = computeC3D8Stiffness(mesh, props, isActiveDof)
+function [k, idx] = computeC3D8Stiffness(mesh, isActiveDof, E, nu)
     %// establish local system size
     isLocalDof = logical([1, 1, 1, 0, 0, 0]); 
     num_eqns = 8 * length(isLocalDof(isLocalDof));
@@ -29,7 +29,7 @@ function [k, idx] = computeC3D8Stiffness(mesh, props, isActiveDof)
             B(5,2:3:23) = dNdx(3,:); B(5,3:3:24) = dNdx(2,:); % 2 * strain_yz
             B(6,1:3:22) = dNdx(3,:); B(6,3:3:24) = dNdx(1,:); % 2 * strain_zx
             %/ compute the isotropic elasticity compatibility tensor
-            D = computeIsotropicElasticity(props(e,1), props(e,2));
+            D = computeIsotropicElasticity(E, nu);
             %/ evaluate qp intergrals and accumulate element local stiffness
             JxW = J * weight(qp,1) * weight(qp,2) * weight(qp,3);
             k(:,:,e) = k(:,:,e) + JxW * transpose(B) * D * B;

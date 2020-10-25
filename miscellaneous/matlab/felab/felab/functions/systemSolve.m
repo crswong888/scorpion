@@ -1,5 +1,4 @@
 function [q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F, precision)
-
     %// condition global stiffness matrix by eliminating rows i & j corresponding to known jth BCs
     K_old = K; F_old = F; % store the old system for later computations
     isBC = false(num_eqns,1); % initialize boolean for which dofs are prescribed BCs
@@ -48,5 +47,4 @@ function [q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F,
         q = round(q / precision) * precision;
         R{:,1} = round(R{:,1} / precision) * precision;
     end
-
 end

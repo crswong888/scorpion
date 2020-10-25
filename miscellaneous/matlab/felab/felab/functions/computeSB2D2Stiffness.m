@@ -1,4 +1,4 @@
-function [k, idx] = computeSB2D2Stiffness(mesh, props, isActiveDof)    
+function [k, idx] = computeSB2D2Stiffness(mesh, isActiveDof, E, nu, A, I, kappa)    
     %// establish local system size
     isLocalDof = logical([1, 1, 0, 0, 0, 1]);
     num_eqns = 2 * length(isLocalDof(isLocalDof));
@@ -12,17 +12,17 @@ function [k, idx] = computeSB2D2Stiffness(mesh, props, isActiveDof)
     comp = [1, 4]; % uniaxial 
     vcomp = [2, 3, 5, 6]; % transverse deflection along y and bending about z
     
+    %/ define convenience variables for geo/mat props        
+    G = E / (2 + 2 * nu);
+    EA = E * A;
+    kappaGA = kappa * G * A;
+    EI = E * I;
+    Omega = EI / kappaGA;
+    
     %// compute beam element stiffness matrix and store its system indices
     k = zeros(num_eqns, num_eqns, length(mesh(:,1))); 
     idx = zeros(length(mesh(:,1)), num_eqns);
     for e = 1:length(mesh(:,1))
-        %/ define convenience variables for geo/mat props        
-        G = props(e,1) / (2 + 2 * props(e,2));
-        EA = props(e,1) * props(e,3);
-        kappaGA = props(e,5) * G * props(e,3);
-        EI = props(e,1) * props(e,4);
-        Omega = EI / kappaGA;
-        
         %/ compute unit normal of beam longitudinal axis
         nx = (mesh(e,5:6) - mesh(e,2:3)) / norm(mesh(e,5:6) - mesh(e,2:3));
         

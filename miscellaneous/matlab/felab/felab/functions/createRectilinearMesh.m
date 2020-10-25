@@ -1,6 +1,6 @@
-function [nodes, elements] = createRectilinearMesh(eletype, varargin)
-    %%% TODO: make it possible to specify spatial position of created mesh (an origin param)
+%%% TODO: make it possible to specify spatial position of created mesh (an origin param)
 
+function [nodes, elements] = createRectilinearMesh(eletype, varargin)
     %// inputs for the element type and its dimensions
     params = inputParser; % create instance to access the inputParser class
     addRequired(params, 'eletype', @(x) any(validatestring(x, {'QUAD4', 'HEX8'})));
@@ -128,31 +128,4 @@ function [nodes, elements] = createRectilinearMesh(eletype, varargin)
         end
         elements = table(ID, n1, n2, n3, n4, n5, n6, n7, n8);
     end
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% ELEMENT PROPERTIES %%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-    % NOTE: properties appended to element table are optional and must be constant scalar values
-    
-    if (~isempty(params.Unmatched))
-        %// supress warning about appending row values to individual table variables (columns)
-        warning('off', 'MATLAB:table:RowsAddedExistingVars')
-        
-        %// write names of unmatched fields from input parser and their values to table format
-        props = struct2table(params.Unmatched);
-        if (~isempty(props))
-            for idx = 1:length(props{1,:})
-                props{2:num_elems,idx} = props{1,idx}; % copy the value to all elements
-            end
-        end
-        
-        %// append the additional input properties to the element table
-        elements = cat(2, elements, props);
-        
-        %// turn the warning back on before returning
-        warning('on', 'MATLAB:table:RowsAddedExistingVars')
-    end
-    
-    % TODO: it would be better to create an element block system and assign material properties
 end

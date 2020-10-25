@@ -1,4 +1,4 @@
-function [k, idx] = computeCPS4Stiffness(mesh, props, isActiveDof)
+function [k, idx] = computeCPS4Stiffness(mesh, isActiveDof, E, nu, t)
     %// establish local system size
     isLocalDof = logical([1, 1, 0, 0, 0, 0]); 
     num_eqns = 4 * length(isLocalDof(isLocalDof));
@@ -25,11 +25,11 @@ function [k, idx] = computeCPS4Stiffness(mesh, props, isActiveDof)
             B(2,2:2:8) = dNdx(2,:); % strain_yy
             B(3,1:2:7) = dNdx(2,:); B(3,2:2:8) = dNdx(1,:); % 2 * strain_xy
             %/ compute the plane stress compatibility tensor
-            D = computePlaneElasticity(props(e,1), props(e,2), 'PlaneStress');
+            D = computePlaneElasticity(E, nu, 'PlaneStress');
             %/ evaluate qp intergrals and accumulate element local stiffness
             JxW = J * weight(qp,1) * weight(qp,2); 
             k(:,:,e) = k(:,:,e) + JxW * transpose(B) * D * B;
-        end, k(:,:,e) = props(e,3) * k(:,:,e); % multiply by element thickness
+        end, k(:,:,e) = t * k(:,:,e); % multiply by element thickness
         %/ determine the global stiffness indices
         idx(e,:) = getGlobalDofIndex(isLocalDof, isActiveDof, mesh(e,1:3:10));
     end

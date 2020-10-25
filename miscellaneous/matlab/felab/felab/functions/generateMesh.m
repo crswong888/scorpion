@@ -1,7 +1,4 @@
-function [mesh, props] = generateMesh(node_table, elem_table, num_local_nodes)
-    %%% TODO: I need a block system to handle material properties instead of storing all of that
-    %%% data per element
-
+function [mesh] = generateMesh(node_table, elem_table, num_local_nodes)
     %// determine number of dimensions based on node input
     width = length(node_table{1,:});
     num_dims = width - 1;
@@ -18,15 +15,5 @@ function [mesh, props] = generateMesh(node_table, elem_table, num_local_nodes)
             [~, local_node] = intersect(node(:,1), elem_table{e,(i-1)/width+2});
             mesh(e,i:i+num_dims) = node(local_node,:); 
         end
-    end
-    
-    %// create element property table if specified (for example, E, A, I)
-    if (length(elem_table{1,:}) > num_local_nodes + 1)
-        props = zeros(num_elems,length(elem_table{1,num_local_nodes+2:end}));
-        for e = 1:num_elems
-            props(e,:) = elem_table{e,num_local_nodes+2:end};
-        end
-    else
-        props = [];
     end
 end

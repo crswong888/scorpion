@@ -19,17 +19,16 @@ addpath('functions')
 %// input boolean of active degrees of freedom, dof = ux, uy, uz, rx, ry, rz
 isActiveDof = logical([1, 1, 0, 0, 0, 0]);
 
-%// input the mesh discretization parameters
+%// input mesh discretization parameters
 Lx = 2.5; Nx = 100; Ly = 0.2; Ny = 8;
 
-%// input material properties
+%// element properties
 E = 200e+06; % kPa, Young's modulus of steel
 nu = 0.3; % Poisson's Ratio of steel
 t = 0.1; % m, thickness of cross-section
 
-%// generate a QUAD4 mesh for a simple, rectangular domain
-[nodes, elements] = createRectilinearMesh('QUAD4',...
-    'Lx', Lx, 'Nx', Nx, 'Ly', Ly, 'Ny', Ny, 'E', E, 'nu', nu, 't', t);
+%// generate a QUAD4 mesh
+[nodes, elements] = createRectilinearMesh('QUAD4', 'Lx', Lx, 'Nx', Nx, 'Ly', Ly, 'Ny', Ny);
 
 %// input concentrated force data = dof magnitude and coordinates
 P = -100; % kN, the concentrated force to be distributed along the nodeset
@@ -54,13 +53,13 @@ support_data(Ny+2:end,4) = support_data(1:Ny+1,4);
 num_dofs = length(isActiveDof(isActiveDof));
 
 %// convert element-node connectivity info and properties to numeric arrays
-[mesh, props] = generateMesh(nodes, elements, 4);
+mesh = generateMesh(nodes, elements, 4);
 
 %// generate tables storing nodal forces and restraints
 [forces, supports] = generateBCs(nodes, force_data, support_data, isActiveDof);
 
 %// compute plane stress QUAD4 element local stiffness matrix
-[k, k_idx] = computeCPS4Stiffness(mesh, props, isActiveDof);
+[k, k_idx] = computeCPS4Stiffness(mesh, isActiveDof, E, nu, t);
 
 %// determine wether a global dof is truly active based on element stiffness contributions
 [num_eqns, real_idx_diff] = checkActiveDofIndex(nodes, num_dofs, k_idx);

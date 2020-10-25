@@ -1,4 +1,4 @@
-function [k, idx] = computeB2D2Stiffness(mesh, props, isActiveDof)
+function [k, idx] = computeB2D2Stiffness(mesh, isActiveDof, E, A, I)
     %// establish local system size
     isLocalDof = logical([1, 1, 0, 0, 0, 1]);
     num_eqns = 2 * length(isLocalDof(isLocalDof));
@@ -14,11 +14,7 @@ function [k, idx] = computeB2D2Stiffness(mesh, props, isActiveDof)
     %// compute beam element stiffness matrix and store its system indices
     k = zeros(num_eqns, num_eqns, length(mesh(:,1))); 
     idx = zeros(length(mesh(:,1)), num_eqns); 
-    for e = 1:length(mesh(:,1))
-        %/ define convenience variables for geo/mat props        
-        EA = props(e,1) * props(e,2);
-        EI = props(e,1) * props(e,3);
-        
+    for e = 1:length(mesh(:,1))      
         %/ compute unit normal of beam longitudinal axis
         nx = (mesh(e,5:6) - mesh(e,2:3)) / norm(mesh(e,5:6) - mesh(e,2:3));
         
@@ -37,7 +33,7 @@ function [k, idx] = computeB2D2Stiffness(mesh, props, isActiveDof)
         J = dN * x;
         
         %/ evaluate Gauss quadrature intergral and compute axial stiffness at qp
-        k(comp,comp,e) = EA * W1 / J * transpose(dN) * dN;
+        k(comp,comp,e) = E * A * W1 / J * transpose(dN) * dN;
         
         %/ compute y-deflection and z-bending stiffnesses
         for qp = 1:2
@@ -48,7 +44,7 @@ function [k, idx] = computeB2D2Stiffness(mesh, props, isActiveDof)
             % evaluate Gauss quadrature intergral and accumulate stiffness over all qps
             k(vcomp,vcomp,e) = k(vcomp,vcomp,e) + W2(qp) * J * transpose(B) * B;
         end
-        k(vcomp,vcomp,e) = EI * k(vcomp,vcomp,e); % multiply beam props
+        k(vcomp,vcomp,e) = E * I * k(vcomp,vcomp,e); % multiply beam props
         
         %/ rotate dofs into global coordinate system
         k(:,:,e) = transpose(L) * k(:,:,e) * L;

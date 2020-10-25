@@ -23,13 +23,13 @@ isActiveDof = logical([1, 1, 1, 0, 0, 0]);
 %// input the mesh discretization parameters (length in inches)
 Lx = 20; Nx = 3; Ly = 2.5; Ny = 1; Lz = 0.5; Nz = 1;
 
-%// input material properties
+%// element properties
 E = 30e+06; % psi, Young's modulus
 nu = 0.3; % Poisson's Ratio
 
 %// generate a HEX8 mesh
 [nodes, elements] = createRectilinearMesh('HEX8',...
-    'Lx', Lx, 'Nx', Nx, 'Ly', Ly, 'Ny', Ny, 'Lz', Lz, 'Nz', Nz, 'E', E, 'nu', nu);
+    'Lx', Lx, 'Nx', Nx, 'Ly', Ly, 'Ny', Ny, 'Lz', Lz, 'Nz', Nz);
 
 %// input concentrated force data
 P = 600; % lb
@@ -41,7 +41,7 @@ support_data = [1, 1, 1, 0, 0, 0;
                 1, 1, 1, 0, 0, 0.5;
                 1, 1, 1, 0, 2.5, 0.5];
 
-            
+
 %%% SOURCE COMPUTATIONS
 %%% ------------------------------------------------------------------------------------------------
 
@@ -49,13 +49,13 @@ support_data = [1, 1, 1, 0, 0, 0;
 num_dofs = length(isActiveDof(isActiveDof));
 
 %// convert element-node connectivity info and properties to numeric arrays
-[mesh, props] = generateMesh(nodes, elements, 8);
+mesh = generateMesh(nodes, elements, 8);
 
 %// generate tables storing nodal forces and restraints
 [forces, supports] = generateBCs(nodes, force_data, support_data, isActiveDof);
 
 %// compute plane stress QUAD4 element local stiffness matrix
-[k, k_idx] = computeC3D8Stiffness(mesh, props, isActiveDof);
+[k, k_idx] = computeC3D8Stiffness(mesh, isActiveDof, E, nu);
 
 %// determine wether a global dof is truly active based on element stiffness contributions
 [num_eqns, real_idx_diff] = checkActiveDofIndex(nodes, num_dofs, k_idx);

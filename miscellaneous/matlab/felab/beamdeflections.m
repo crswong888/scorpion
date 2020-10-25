@@ -2,10 +2,10 @@ clear all %#ok<CLALL>
 format longeng
 fprintf('\n')
 
-P = 125;
-L = 700; % cm
-b = 40; % cm
-h = 18; % cm
+P = 175;
+L = 650; % cm
+b = 18; % cm
+h = 40; % cm
 A = b * h; % cm^2
 I = b * h^3 / 12; % cm^4
 w = 0;
