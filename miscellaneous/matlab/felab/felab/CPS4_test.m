@@ -56,7 +56,7 @@ support_data(Ny+2:end,4) = support_data(1:Ny+1,4);
 num_dofs = length(isActiveDof(isActiveDof));
 
 %// convert element-node connectivity info and properties to numeric arrays
-mesh = generateMesh(nodes, elements, 4);
+mesh = generateMesh(nodes, elements);
 
 %// generate tables storing nodal forces and restraints
 [forces, supports] = generateBCs(nodes, force_data, support_data, isActiveDof);
@@ -97,7 +97,7 @@ close all
 num_nodes = length(nodes{:,1});
 num_dims = length(nodes{1,2:end});
 
-scale = 1000;
+scale = 100;
 
 displaced_nodes = zeros(num_nodes, num_dims);
 for s = 1:num_dims
@@ -117,7 +117,7 @@ for s = 1:num_dims
     extents(s, 3) = max(displaced_nodes(:,s));
 end
 extents(:,4) = extents(:,3) - extents(:,2);
-sort(extents, 4);
+extents = sortrows(extents, 4, 'descend');
 
 %%% because of scaling, this whole fancy grid system concept is officially obsolete. Damn.
 %%% what I can do is show "Real Displacements" in the contour plot and legend, and perhaps label the
@@ -149,9 +149,13 @@ limits(:,2) = extents(:,3) + round(offset / dx) * dx;
 
 grid = {(round(limits(1,1) / dx) * dx - 10 * dx):dx:(round(limits(1,2) / dx) * dx + 10 * dx);
         (round(limits(2,1) / dx) * dx - 10 * dx):dx:(round(limits(2,2) / dx) * dx + 10 * dx)};
+    
+%%% if ordering is not counterclockwise, this won't work.
 
 figure(1);
-plot(displaced_nodes(:,1), displaced_nodes(:,2), 'o', 'markerfacecolor', [0, 0, 0], 'markersize', 1) % probably won't even plot nodes
+plot(displaced_nodes(:,1), displaced_nodes(:,2), 'o', 'markerfacecolor', [0, 0, 0], 'markersize', 1.5) % probably won't even plot nodes
+
+
 xticks(grid{1})
 xlim(limits(1,:))
 yticks(grid{2})

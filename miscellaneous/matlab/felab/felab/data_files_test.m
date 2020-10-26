@@ -45,7 +45,7 @@ clear file_varnames
 num_dofs = length(isActiveDof(isActiveDof));
 
 %// convert element-node connectivity info and properties to numeric arrays
-mesh = generateMesh(nodes, elements, 2);
+mesh = generateMesh(nodes, elements);
 
 %// compute beam local stiffness matrix
 [k, k_idx] = computeB2D2Stiffness(mesh, isActiveDof, E, A, I);

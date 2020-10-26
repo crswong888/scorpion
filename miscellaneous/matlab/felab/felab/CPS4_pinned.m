@@ -77,8 +77,8 @@ support_data = [1, 1, 0, 0.0, Ly / 2;
 num_dofs = length(isActiveDof(isActiveDof));
 
 %// convert element-node connectivity info and properties to numeric arrays on all blocks
-mesh1 = generateMesh(nodes, blocks{1}, 4);
-mesh2 = generateMesh(nodes, blocks{2}, 2);
+mesh1 = generateMesh(nodes, blocks{1});
+mesh2 = generateMesh(nodes, blocks{2});
 
 %// generate tables storing nodal forces and restraints
 [forces, supports] = generateBCs(nodes, force_data, support_data, isActiveDof);

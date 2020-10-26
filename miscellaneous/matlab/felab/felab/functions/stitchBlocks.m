@@ -1,12 +1,13 @@
-function [nodes, blocks] = stitchBlocks(node_blk, ele_blk, num_local_nodes, tol)    
+function [nodes, blocks] = stitchBlocks(node_blk, ele_blk, tol)    
     %// assert same number of node_blocks as element_blocks
     num_blocks = length(node_blk);
     if (num_blocks ~= length(ele_blk))
         error('The number of node blocks must be equal to the number of element blocks.')
     end
     
-    %// determine number of dimensions based on node_blocks input
+    %// convenience variables
     num_dims = length(node_blk{1}{1,2:end});
+    num_local_nodes = zeros(1, num_blocks);
     
     for b = 1:num_blocks
         %// assert all node blocks use same dimensions
@@ -18,6 +19,9 @@ function [nodes, blocks] = stitchBlocks(node_blk, ele_blk, num_local_nodes, tol)
         if (~isequal(length(node_blk{b}{:,1}), length(unique(node_blk{b}{:,1}))))
             error('Duplicate node IDs found on block %d. A block must have all unique node IDs.', b)
         end
+        
+        %// get number of local nodes in block elements
+        num_local_nodes(b) = length(ele_blk{b}{1,2:end});
     end
     
     %// accumulate a uniform increase to all node IDs in each succesive block
