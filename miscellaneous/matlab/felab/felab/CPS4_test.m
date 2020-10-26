@@ -80,41 +80,57 @@ F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 %%% POSTPROCESSING
 %%% ------------------------------------------------------------------------------------------------
 
-%// 'reset(groot)' breaks 'DefaultFigurePosition', so store current default and manually reset
-defaultFP = get(groot, 'DefaultFigurePosition');
-set(groot, 'DefaultAxesPosition', [0.05, 0.05, 0.9, 0.9], 'DefaultFigureUnits', 'normalize', 'DefaultFigurePosition', [0.125, 0.25, 0.75, 0.75]);
+%%% we would need some sort of of 3D equivalent for this with L, W, H - do 3D in separate function
 
-%%% we would need some sort of of 3D equivalent for this with L, W, H
-figure('Visible', 'off')
-set(axes, 'Visible', 'off', 'Units', 'pixels')
-ax = axes('Visible', 'off');
+%%% once all of the features are in the plot, e.g., colorbar, title, and axis labels, then we need
+%%% to generate this test plot with all of those objects and finally get the axis resolution
+figure('Visible', 'off', 'Units', 'normalize', 'Position', [0.125, 0.25, 0.75, 0.75])
+ax = axes('Visible', 'off', 'Position', [0.05, 0.05, 0.9, 0.9]);
 set(ax, 'Units', 'pixels');
 resolution = [max(ax.Position(3:4)); min(ax.Position(3:4))];
 close all
 
-%%% might be simplere to use range() here, plus, I'm not even sure If im using min/max vals after
-%%% this
 num_nodes = length(nodes{:,1});
 num_dims = length(nodes{1,2:end});
+num_blocks = 1;
+num_local_nodes = 4; % length(ele_blk{b}{1,:}) / (num_dims + 1);
+num_elems = length(mesh(:,1)); % length(ele_blk{b}{:,1});
 
-scale = 100;
+ele_blk = {mesh};
+
+% you can just put 0 here and get undisplaced mesh - default value will be 1
+scale = 250;
 
 displaced_nodes = zeros(num_nodes, num_dims);
-for s = 1:num_dims
-    for i = 1:num_nodes
-        idx = num_dofs * (i - 1) + s;
-        
-        real_idx = idx - real_idx_diff(idx);
-        
-        displaced_nodes(i,s) = nodes{i,(s + 1)} + scale * q(real_idx);
-    end
+disp_mag = zeros(num_nodes, 1);
+for i = 1:num_nodes
+    idx = num_dofs * (i - 1) + [1; 2];
+    
+    real_idx = idx - real_idx_diff(idx);
+    
+    displaced_nodes(i,:) = nodes{i,([1, 2] + 1)} + transpose(scale * q(real_idx));
+    
+    disp_mag(i) = norm(q(real_idx));
+    
+    
+%     for s = 1:num_dims
+%         idx = num_dofs * (i - 1) + s;
+%         
+%         real_idx = idx - real_idx_diff(idx);
+%         
+%         displaced_nodes(i,s) = nodes{i,(s + 1)} + scale * q(real_idx);
+%     end
 end
 
+% % append dim ids to extents so if we swap x and y we know which is which
+% extents = cat(1, transpose(1:2), transpose(range(displaced_nodes(:,1:2))));
+
+%%% could've used range() here, but I need the min and max too for later calc, so keeping it
 extents = zeros(num_dims, 4);
 extents(:, 1) = 1:num_dims;
 for s = 1:num_dims
-    extents(s, 2) = min(displaced_nodes(:,s));
-    extents(s, 3) = max(displaced_nodes(:,s));
+    extents(s, 2) = min(displaced_nodes(:,s)); % min(nodes{:,(s + 1)});
+    extents(s, 3) = max(displaced_nodes(:,s)); % max(nodes{:,(s + 1)});
 end
 extents(:,4) = extents(:,3) - extents(:,2);
 extents = sortrows(extents, 4, 'descend');
@@ -143,44 +159,73 @@ for i = 10:20
     end
 end
 
-offset = max(dx, abs((extents(1,4) .* resolution / resolution(1) - extents(:,4)) / 2));
-limits(:,1) = extents(:,2) - round(offset / dx) * dx;
-limits(:,2) = extents(:,3) + round(offset / dx) * dx;
+%%% need to only do this max thing for y, otherwise, my assumptions here may be invalid. Plus, this
+%%% is going to be a 2D plotter, so its fine
+offset = max(dx, abs(((extents(1,4) + 2 * dx) .* resolution / resolution(1) - extents(:,4)) / 2));
+limits(:,1) = extents(:,2) - offset;
+limits(:,2) = extents(:,3) + offset;
 
 grid = {(round(limits(1,1) / dx) * dx - 10 * dx):dx:(round(limits(1,2) / dx) * dx + 10 * dx);
         (round(limits(2,1) / dx) * dx - 10 * dx):dx:(round(limits(2,2) / dx) * dx + 10 * dx)};
     
-%%% if ordering is not counterclockwise, this won't work.
+%// get element connectivity lines on each block
+connectivity = cell(1, num_blocks);
+for b = 1:num_blocks
+    connectivity{b} = zeros((num_local_nodes + 1), num_dims, num_elems);
+    for e = 1:num_elems
+        idx = mesh(e,1:(num_dims + 1):end);
+        connectivity{b}(:,:,e) = [displaced_nodes(idx,1:2); displaced_nodes(idx(1),1:2)];
+    end
+end
 
-figure(1);
-plot(displaced_nodes(:,1), displaced_nodes(:,2), 'o', 'markerfacecolor', [0, 0, 0], 'markersize', 1.5) % probably won't even plot nodes
 
+%%% my linear interpolation function will be useful for interpolating the colorbar, with extrapolate
+%%% as false, because I'm gonna set the color bar limits to max and min displacements of course.
+%%% however, I still shall interpolate using my shape functions.
+    
+% also get jet here
+% ramp = repmat(linspace(1, 0, resolution(2)).', 1, resolution(1)); % Create gray ramp 
 
-xticks(grid{1})
-xlim(limits(1,:))
-yticks(grid{2})
-ylim(limits(2,:))
+figure(1)
+set(gcf, 'Units', 'normalize', 'Position', [0.125, 0.25, 0.75, 0.75])
+ax = axes('Position', [0.05, 0.05, 0.9, 0.9]);
+
+%/ plot nodes
+plot(displaced_nodes(:,1), displaced_nodes(:,2), 'o', 'markerfacecolor', [0, 0, 0], 'markersize', 2)
 hold on
 
+%/ loop through mesh blocks and plot each element
+plot(connectivity{1}(1,:,1), connectivity{1}(2,:,1))
+for b = 1:num_blocks
+    for e = 1:num_elems
+        plot(connectivity{b}(:,1,e), connectivity{b}(:,2,e), 'Color', 'b')
+    end
+end
 
+xlim(limits(1,:))
+xticks(grid{1})
+ylim(limits(2,:))
+yticks(grid{2})
+set(gca,'Layer', 'top')
 
+%// set gradient background
+bgx = [limits(1,1), limits(1,2), limits(1,2), limits(1,1)];
+bgy = [limits(2,1), limits(2,1), limits(2,2), limits(2,2)];
 
-%// reset root graphics properties
-reset(groot)
-set(groot, 'DefaultFigurePosition', defaultFP);
+%0.325, 0.545, 0.78 %0.40, 0.596, 0.804 (other nice monochrome colors)
+cdata(1,1,:) = [0.475, 0.647, 0.827];
+cdata(1,2,:) = [0.475, 0.647, 0.827];
+cdata(1,3,:) = [0.196, 0.396, 0.608];
+cdata(1,4,:) = [0.196, 0.396, 0.608];
+p = patch(bgx, bgy, 'k', 'Parent', ax);
+set(p, 'CData', cdata, 'FaceColor','interp', 'EdgeColor', 'none');
+uistack(p, 'bottom') % Put gradient underneath everything else
 
-
-
-% %/ aspect
-% extents = [max(nodes(:,2)) - min(nodes(:,2)), max(nodes(:,3)) - min(nodes(:,3))];
-% 
-% resolution = 480e+03;
-% width = sqrt(extents(1) * resolution / extents(2));
-% if (width > 800)
-%     resolution = 476.432e+03;
-%     width = min(sqrt(extents(1) * resolution / extents(2)), 1024);
-% end
-% height = width * extents(2) / extents(1);
+%%% DAMN ima have to come up with my own tic for the colorbar lmao
+colormap jet(256)
+c = colorbar;
+ylabel(c, 'Real Displacement') % or just displacement, depending on if scale is 1 or not
+caxis([min(disp_mag), max(disp_mag)])
 
 
 
