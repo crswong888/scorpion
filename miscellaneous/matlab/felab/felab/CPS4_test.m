@@ -10,7 +10,7 @@ clear all %#ok<CLALL>
 format longeng
 fprintf('\n')
 
-addpath('functions')
+addpath(genpath('functions'))
 
 
 %%% INPUT PARAMETERS
@@ -344,8 +344,8 @@ bgx = [lims(1,1), lims(1,2), lims(1,2), lims(1,1)]; % coordinates of extended pl
 bgy = [lims(2,1), lims(2,1), lims(2,2), lims(2,2)];
 
 % I call this color scheme "Shallow Ocean" haha I'm silly XD
-cdata(1,1,:) = [0.196, 0.396, 0.608]; % bottom RGB
-cdata(1,2,:) = [0.196, 0.396, 0.608];
+cdata(1,1,:) = [0.173, 0.349, 0.529]; % bottom RGB
+cdata(1,2,:) = [0.173, 0.349, 0.529];
 cdata(1,3,:) = [0.475, 0.647, 0.827]; % top RGB
 cdata(1,4,:) = [0.475, 0.647, 0.827];
 

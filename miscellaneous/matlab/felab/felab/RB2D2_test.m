@@ -5,7 +5,7 @@ clear all %#ok<CLALL>
 format longeng
 fprintf('\n')
 
-addpath('functions')
+addpath(genpath('functions'))
 
 
 %%% INPUT PARAMETERS

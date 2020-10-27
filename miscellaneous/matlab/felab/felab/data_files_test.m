@@ -5,8 +5,8 @@ clear all %#ok<CLALL>
 format longeng
 fprintf('\n')
 
-addpath('functions')
-addpath('data_files')
+addpath(genpath('functions'))
+addpath('data_files_test')
 
 
 %%% INPUT PARAMETERS
