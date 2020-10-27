@@ -1,11 +1,11 @@
 function [k, idx] = computeT2D2Stiffness(mesh, isActiveDof, varargin)
     %// parse additional arguments for standard or rigid link element stiffness
     params = inputParser;
-    addParameter(params, 'rigid', false, @(x) islogical(x));
-    addOptional(params, 'E', []);
-    addOptional(params, 'A', []);
-    addParameter(params, 'penalty', sqrt(10^digits), @(x) (isnumeric(x) && (x > 0)));
-    parse(params, varargin{:});
+    addParameter(params, 'rigid', false, @(x) islogical(x))
+    addOptional(params, 'E', [])
+    addOptional(params, 'A', [])
+    addParameter(params, 'penalty', sqrt(10^digits), @(x) ((isnumeric(x)) && (x > 0)))
+    parse(params, varargin{:})
 
     %// establish local system size
     isLocalDof = logical([1, 1, 0, 0, 0, 0]); 

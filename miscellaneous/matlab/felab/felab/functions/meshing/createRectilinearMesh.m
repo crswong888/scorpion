@@ -15,7 +15,7 @@ function [nodes, elements] = createRectilinearMesh(eletype, varargin)
     %// parse inputs into class instance - optional props should be input in expected appendix order
     params.KeepUnmatched = true; % unmatched inputs, e.g., mat props, will be appended to elements table
     params.PartialMatching = false; % make sure were not accidentally pairing unmatches to known params
-    parse(params, eletype, varargin{:}); % parse the inputs into the class instance
+    parse(params, eletype, varargin{:}) % parse the inputs into the class instance
     
     %%%%%%%%%%%%%
     %%% QUAD4 %%%

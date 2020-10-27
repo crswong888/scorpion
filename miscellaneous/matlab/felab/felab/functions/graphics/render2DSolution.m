@@ -1,15 +1,4 @@
-function [] = render2DSolution(nodes, ele_blk, num_dofs, real_idx_diff, Q, scale_factor, data_pts)
-    %%% we would need some sort of of 3D equivalent for this with L, W, H - do 3D in separate function
-
-    %%% I might need to seriously increase the load for this problem so I don't have to apply such a
-    %%% huge scale factor. Or switch up the mat/geo props so its not so stiff, either or
-
-    %%% perhaps all of the different plot object titles could be customized too, but def set defaults
-
-    %%% if i get crazy and do a full 2 coloring and then like fill in colors with edge face colors and 
-    %%% shit (i.e., same way the gradient works), I could include a 'surface', and then other ones too
-    %%% like 'surface with edges', 'wireframe', and 'points'. I literrally already got the last 2.
-
+function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, Q, varargin)
     %%% edges need to be colored too, but when the option is 'surface with edges', don't color them
     %%% make sure uncolored edges render on top of the colored surface and that they dont blend
     %%% for 'wireframe', don't show nodes for this option. Do show them, uncolored, for surface & edges
@@ -17,119 +6,96 @@ function [] = render2DSolution(nodes, ele_blk, num_dofs, real_idx_diff, Q, scale
     %%% 'points' is only nodes, and they need to be colored, and they probably should be FAT fat
     %%% one plot style could be 'undeformed', just dges and nodes uncolored in original positions
 
-    %%% contours = true/false could also be an option
-
-    %%% element_types will need to be an input parameter unfortunately. thats how I will determine the
-    %%% shape functions to use, among other things
-
     %%% if the number of nodes is only 2, then 'wireframe', 'surface', and 'surface with edges' all
     %%% produce the same result: a colored line with uncolored nodes. 'points' is the same
-
-    %%% if style = points, else if nodes == 2, else if style = 'wireframe', else if style == ...
-
-    %%% the default plot style shall be 'surface with edges', which won't have any affect on 2-pointers
-
-    %%% might even need a different function for beam plots specificially because the spatial
-    %%% interpolation is quite different
-
-    %%% line interpolation, quad interpolation, hex interpolation, ...
-
+    
     %// this assumes that input is a cell array of element blocks - convert to cell if not
-    if (~iscell(ele_blk))
-        ele_blk = {ele_blk};
+    if (~iscell(eleblk)), eleblk = {eleblk}; end
+    if (~iscell(eletype)), eletype = {eletype}; end
+    
+    %// valid additional inputs
+    valid_element = @(x) all(ismember(x, {'B2D2', 'CPS4', 'R2D2', 'RB2D2' 'SB2D2', 'T2D2'}));
+    valid_component = @(x) any(validatestring(x, {'x', 'y', 'magnitude'}));
+    valid_style = @(x) any(validatestring(x, {'points', 'surface', 'surface with edges',...
+                                              'wireframe'}));
+                                          
+    %// parse additional inputs which control plot behavior
+    params = inputParser;
+    addRequired(params, 'eletype', valid_element)
+    addParameter(params, 'Component', 'magnitude', valid_component)
+    addParameter(params, 'Style', 'surface with edges', valid_style)
+    addParameter(params, 'Contours', true, @(x) islogical(x))
+    addParameter(params, 'ScaleFactor', 1, @(x) isnumeric(x))
+    addParameter(params, 'SamplesPerElement', 10, @(x) ((isnumeric(x)) && (x > 1)))
+    addParameter(params, 'Omega', 0, @(x) ((isnumeric(x)) && (x >= 0))) % for SB2D2 elements only
+    parse(params, eletype, varargin{:})
+    
+    %/ simplify some parser syntax
+    eletype = params.Results.eletype;
+    component = params.Results.Component;
+    style = params.Results.Style;
+    contours = params.Results.Contours;
+    scale_factor = params.Results.ScaleFactor;
+    data_pts = params.Results.SamplesPerElement;
+    
+    %/ if displacement scale factor is 0, turn off contours.
+    if (scale_factor == 0)
+        contours = false;
     end
-
-    % needed input params:
-    % Component
-    % element type
-    % object titles
-    % plot style
-    % contours
-
-
-    %// This process could potentially take more than a few moments, so let its user know its working.
-    fprintf('Generating plot... ')
-
+    
     %// convenience variables
     num_nodes = length(nodes{:,1});
-    num_blocks = length(ele_blk);
+    num_blocks = length(eleblk);
     num_elems = zeros(1, num_blocks);
     for b = 1:num_blocks
-        num_elems(b) = length(ele_blk{b}(:,1));
+        num_elems(b) = length(eleblk{b}(:,1));
     end
+    
+    %// this process could potentially take more than a few moments, so let user know its working
+    fprintf('Generating plot... ')
 
-    %// Retrieve nodal values and displace original mesh
-    displaced_nodes = zeros(num_nodes, 2);
-    field = zeros(num_nodes, 1);
+    %// retrieve nodal values and displace original mesh
+    displaced = zeros(num_nodes, 2);
+    fld = zeros(num_nodes, 1);
     for i = 1:num_nodes
-        %/ Determine DOF positions in global displacement index
+        %/ determine DOF positions in global displacement index
         idx = num_dofs * (i - 1) + [1; 2];
         real_idx = idx - real_idx_diff(idx);
 
         %/ apply scaled displacements to nodes and get their new positions
-        displaced_nodes(i,:) = nodes{i,([1, 2] + 1)} + transpose(scale_factor * Q(real_idx));
+        displaced(i,:) = nodes{i,([1, 2] + 1)} + transpose(scale_factor * Q(real_idx));
 
         %/ get desired nodal displacement value
         % if magnitude, else, field...
-        field(i) = norm(Q(real_idx));
+        fld(i) = norm(Q(real_idx));
     end
 
     %// interpolate displacement field through elements and get their nodal connectivity
-    coords = cell(2, num_blocks);
-    subfield = cell(1, num_blocks);
-    connectivity = cell(1, num_blocks);
+    if (~strcmp(style, 'points'))
+        coords = cell(2, num_blocks);
+        subfld = cell(1, num_blocks);
+        connectivity = cell(1, num_blocks);
+        for b = 1:num_blocks
+            %/ use element shape functions to interpolate nodal displacements through specified grid
+            if (strcmp(eletype{b}, 'B2D2'))
+            elseif (strcmp(eletype{b}, 'CPS4'))
+                [coords{:,b}, subfld{b}] = fieldCPS4(eleblk{b}, num_dofs, real_idx_diff, Q,...
+                                                     'SamplesPerElement', data_pts,...
+                                                     'ScaleFactor', scale_factor,...
+                                                     'Component', component);
+            elseif (strcmp(eletype{b}, 'SB2D2'))
+                validateRequiredParams(params, 'Omega')
+            elseif (strcmp(eletype{b}, 'T2D2'))
 
-    %/ set up element interpolation grid in natural coordinate system
-    dxi = 2 / (data_pts - 1);
-    xi = -1:dxi:1;
-    eta = -1:dxi:1;
-
-    %/ loop through all blocks domains
-    for b = 1:num_blocks
-        %/ initialize element data
-        coords{1,b} = zeros(data_pts, data_pts, num_elems(b));
-        coords{2,b} = zeros(data_pts, data_pts, num_elems(b));
-        subfield{b} = zeros(data_pts, data_pts, num_elems(b));
-
-        %/ displacement index
-        q_idx = zeros(2 * length(ele_blk{b}(1,:)) / 3, 1);
-        u_idx = 1:2:length(q_idx);
-        v_idx = u_idx + 1;
-
-        %/ loop through all elements on block
-        for e = 1:num_elems(b)
-            %/ global node IDs and coordinates
-            nodeIDs = transpose(ele_blk{b}(e,1:3:end));
-
-            % ---------
-            % if contours
-            xy = transpose([ele_blk{b}(e,2:3:end); ele_blk{b}(e,3:3:end)]);
-
-            %/ retrieve the nodal displacements from global index
-            q_idx(u_idx) = num_dofs * (nodeIDs - 1) + 1;
-            q_idx(v_idx) = q_idx(u_idx) + 1;
-            q = Q(q_idx - real_idx_diff(q_idx));
-
-            %/ use shape functions to interpolate nodal displacements to specified grid points
-            for i = 1:data_pts
-                for j = 1:data_pts
-                    % evaluate shape functions and get displacement values
-                    N = evaluateCPS4ShapeFun(xi(i), eta(j));
-                    u = N * q(u_idx);
-                    v = N * q(v_idx);
-
-                    % apply scaled displacements to grid points and get their new positions
-                    coords{1,b}(i,j,e) = N * xy(:,1) + scale_factor * u;
-                    coords{2,b}(i,j,e) = N * xy(:,2) + scale_factor * v;
-
-                    %/ get desired nodal displacement value
-                    % if magnitude, else, subfield...
-                    subfield{b}(i,j,e) = norm([u, v]);
-                end
+            elseif (strcmp(eletype{b}, 'R2D2') || strcmp(eletype{b}, 'RB2D2'))
+                contours = false;
             end
 
             %/ get element connectivity lines on each block for wireframe and edges plots
-            connectivity{b}(:,:,e) = displaced_nodes([nodeIDs; nodeIDs(1)],:);
+            for e = 1:num_elems(b)
+                nodeIDs = transpose(eleblk{b}(e,1:3:end));
+                connectivity{b}(:,:,e) = displaced([nodeIDs; nodeIDs(1)],:);
+            end
         end
     end
 
@@ -137,54 +103,102 @@ function [] = render2DSolution(nodes, ele_blk, num_dofs, real_idx_diff, Q, scale
     figure('Units', 'normalize', 'Position', [0.125, 0.25, 0.75, 0.75])
     ax = axes('Position', [0.05, 0.05, 0.9, 0.9], 'Layer', 'top');
 
-    %/ plot nodes to at least intialize a plot space - show/hide them depending on plot style
-    plot(displaced_nodes(:,1), displaced_nodes(:,2), 'o', 'markerfacecolor', 'w', 'markersize', 3.5)
+    %/ plot nodes to initialize a plot space
+    plt = plot(displaced(:,1), displaced(:,2), 'o', 'MarkerFaceColor', 'w', 'MarkerSize', 2.5,...
+                         'MarkerEdgeColor', 'none');
     hold on
-
-    % if points, need to add color to connectivity
+    
+    % define color mapping system for plot contours
+    cmap = colormap(jet(128)); % might be helpful to know the colormap even if its not used
+    if (contours)
+        c = colorbar;
+        ylabel(c, 'Real Displacement Magnitude')
+        clim = [min(fld), max(fld)];
+        set(ax, 'CLim', clim)
+    end
 
     %/ loop through mesh blocks and plot each element
-    % ~points
-    for b = 1:num_blocks
-        for e = 1:num_elems(b)
+    if ((strcmp(style, 'surface with edges')) || (strcmp(style, 'surface')))
+        for b = 1:num_blocks
+            if (contours)
+                for e = 1:num_elems(b)
+                    for i = 1:(data_pts - 1)
+                        for j = 1:(data_pts - 1)
+                            % set up plot vertices in a closed polygon fashion
+                            sample_x = [coords{1,b}(i,j,e),...
+                                        coords{1,b}((i + 1),j,e),...
+                                        coords{1,b}((i + 1),(j + 1),e),...
+                                        coords{1,b}(i,(j + 1),e)];
 
-            % set contour colors for desired field component at each sample point
-            % if contours
-            for i = 1:(data_pts - 1)
-                for j = 1:(data_pts - 1)
-                    % set up plot vertices in a closed polygon fashion so patch object can be used
-                    sample_x = [coords{1,b}(i,j,e),...
-                                coords{1,b}((i + 1),j,e),...
-                                coords{1,b}((i + 1),(j + 1),e),...
-                                coords{1,b}(i,(j + 1),e)];
+                            sample_y = [coords{2,b}(i,j,e),...
+                                        coords{2,b}((i + 1),j,e),...
+                                        coords{2,b}((i + 1),(j + 1),e),...
+                                        coords{2,b}(i,(j + 1),e)];
 
-                    sample_y = [coords{2,b}(i,j,e),...
-                                coords{2,b}((i + 1),j,e),...
-                                coords{2,b}((i + 1),(j + 1),e),...
-                                coords{2,b}(i,(j + 1),e)];
+                            sample_val = [subfld{b}(i,j,e),...
+                                          subfld{b}((i + 1),j,e),...
+                                          subfld{b}((i + 1),(j + 1),e),...
+                                          subfld{b}(i,(j + 1),e)];
 
-                    sample_val = [subfield{b}(i,j,e),...
-                                  subfield{b}((i + 1),j,e),...
-                                  subfield{b}((i + 1),(j + 1),e),...
-                                  subfield{b}(i,(j + 1),e)];
-
-                    % if a surface plot, color whole element, else, just edges
-                    p = patch(sample_x, sample_y, 'k', 'Parent', ax);
-                    set(p, 'CData', sample_val, 'FaceColor', 'interp', 'CDataMapping', 'scaled', 'EdgeColor', 'none');
+                            % create patch object to fill surface with field contour colors
+                            p = patch(sample_x, sample_y, 'k', 'Parent', ax);
+                            set(p, 'CData', sample_val, 'FaceColor', 'interp',...
+                                'CDataMapping', 'scaled', 'EdgeColor', 'none');
+                        end
+                    end
+                end
+            else
+                % fill displaced mesh domain with zero-valued colormap index
+                for e = 1:num_elems(b)
+                    fill(connectivity{b}(:,1,e), connectivity{b}(:,2,e), cmap(1,:),...
+                         'EdgeColor', 'none')
                 end
             end
 
-            % if surface with edges or wireframe with no contours
-            plot(connectivity{b}(:,1,e), connectivity{b}(:,2,e), 'Color', 'w')
+            % superimpose mesh to surface with edges plot or hide for surface only
+            if (strcmp(style, 'surface with edges'))
+                % plot element edges on top of surface
+                for e = 1:num_elems(b)
+                    plot(connectivity{b}(:,1,e), connectivity{b}(:,2,e), 'Color', 'w')
+                end
+
+                % bring nodes plot to front of edges
+                uistack(plt, 'top')
+            else
+                set(plt, 'Visible', 'off')
+            end
+        end
+    elseif (strcmp(style, 'wireframe'))
+        set(plt, 'Visible', 'off')
+        for b = 1:num_blocks
+            if (contours)
+                for e = 1:num_elems(b)
+                    nodeIDs = transpose(eleblk{b}(e,1:3:end));
+                    p = patch(connectivity{b}(:,1,e), connectivity{b}(:,2,e), 'k', 'Parent', ax);
+                    set(p, 'CData', [fld(nodeIDs); fld(nodeIDs(1))], 'FaceColor', 'none',...
+                        'CDataMapping', 'scaled', 'EdgeColor', 'interp');
+                end
+            else
+                for e = 1:num_elems(b)
+                    plot(connectivity{b}(:,1,e), connectivity{b}(:,2,e), 'Color', 'w')
+                end
+            end
+        end
+    else % points plot
+        if (contours)
+            % if points and contours, interpolate colormap to indicate nodal field values
+            set(plt, 'Visible', 'off')
+            for i = 1:num_nodes
+                rgb = cmap(round(1 + (fld(i) - clim(1)) * (128 - 1) / (clim(2) - clim(1))),:);
+                plot(displaced(i,1), displaced(i,2), 'o', 'MarkerFaceColor', rgb,...
+                     'MarkerEdgeColor', 'none', 'MarkerSize', 4.5);
+            end
+        else
+            % make node plot points bigger
+            set(plt, 'MarkerSize', 4.5)
         end
     end
-
-    %// define color mapping system for plot contours
-    colormap jet(128)
-    c = colorbar;
-    ylabel(c, 'Real Displacement Magnitude')
-    set(ax, 'CLim', [min(field), max(field)])
-
+    
     %/ set up plot space with a 1:1 ratio for both dimensions
     set(ax, 'Units', 'pixels');
     resolution = [max(ax.Position(3:4)); min(ax.Position(3:4))]; % current resolution of axes window
@@ -194,8 +208,8 @@ function [] = render2DSolution(nodes, ele_blk, num_dofs, real_idx_diff, Q, scale
     extents = zeros(2, 4);
     extents(:, 1) = 1:2;
     for s = 1:2
-        extents(s, 2) = min(displaced_nodes(:,s));
-        extents(s, 3) = max(displaced_nodes(:,s));
+        extents(s, 2) = min(displaced(:,s));
+        extents(s, 3) = max(displaced(:,s));
     end
     extents(:,4) = extents(:,3) - extents(:,2);
     [~, smax] = max(extents(:,4));
@@ -212,7 +226,6 @@ function [] = render2DSolution(nodes, ele_blk, num_dofs, real_idx_diff, Q, scale
             if (remainder < lowest)
                 lowest = remainder;
                 dx = round(extents(smax,4) / i / commdom) * commdom;
-                Nx = i;
             end
         end
     end
@@ -233,7 +246,7 @@ function [] = render2DSolution(nodes, ele_blk, num_dofs, real_idx_diff, Q, scale
     bgx = [lims(1,1), lims(1,2), lims(1,2), lims(1,1)]; % coordinates of extended plot space vertices
     bgy = [lims(2,1), lims(2,1), lims(2,2), lims(2,2)];
 
-    % I call this color scheme "Shallow Ocean" haha I'm silly XD
+    % I call this color scheme "Shallow Ocean" lol
     cdata(1,1,:) = [0.173, 0.349, 0.529]; % bottom RGB
     cdata(1,2,:) = [0.173, 0.349, 0.529];
     cdata(1,3,:) = [0.475, 0.647, 0.827]; % top RGB
@@ -248,10 +261,10 @@ function [] = render2DSolution(nodes, ele_blk, num_dofs, real_idx_diff, Q, scale
     fprintf('Done.\n\n')
     
     %%% devel checks
-    resolution(1) / resolution(2)
-    range(lims(1,:)) / range(lims(2,:))
-    lims(1,2) - extents(1,3)
-    lims(1,1) - extents(1,2)
-    lims(2,2) - extents(2,3)
-    lims(2,1) - extents(2,2)
+%     resolution(1) / resolution(2)
+%     range(lims(1,:)) / range(lims(2,:))
+%     lims(1,2) - extents(1,3)
+%     lims(1,1) - extents(1,2)
+%     lims(2,2) - extents(2,3)
+%     lims(2,1) - extents(2,2)
 end
