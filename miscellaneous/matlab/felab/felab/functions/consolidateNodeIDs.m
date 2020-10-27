@@ -1,12 +1,16 @@
-function [nodes, blocks] = consolidateNodeIDs(nodes, blocks, num_local_nodes)
+function [nodes, blocks] = consolidateNodeIDs(nodes, blocks)
     %// this assumes that input is a cell array of element blocks - convert to cell if not
     if (~iscell(blocks))
         blocks = {blocks};
     end
     
-    %// store input data sizes
+    %// convenience variables
     num_nodes = length(nodes{:,1});
     num_blocks = length(blocks);
+    num_local_nodes = zeros(1, num_blocks);
+    for b = 1:num_blocks
+        num_local_nodes(b) = length(blocks{b}{1,2:end});
+    end
     
     %// search for duplicate node IDs
     duplicates = [];

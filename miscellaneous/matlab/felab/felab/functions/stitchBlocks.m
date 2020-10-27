@@ -67,5 +67,5 @@ function [nodes, blocks] = stitchBlocks(node_blk, ele_blk, tol)
     end
     
     %// append nodes from final block to global index and then consolidate IDs
-    [nodes, blocks] = consolidateNodeIDs(cat(1, nodes, node_blk{end}), ele_blk, num_local_nodes);
+    [nodes, blocks] = consolidateNodeIDs(cat(1, nodes, node_blk{end}), ele_blk);
 end

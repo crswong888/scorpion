@@ -97,11 +97,11 @@ K = assembleGlobalStiffness(num_eqns, real_idx_diff, {k1, k2}, {k1_idx, k2_idx})
 F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 
 %// apply the boundary conditions and solve for the displacements and reactions
-[q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F, 1e-08);
+[Q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F, 1e-08);
 
 
 %%% POSTPROCESSING
 %%% ------------------------------------------------------------------------------------------------
 
 %// deflection along length of beam
-plot(q((2:3:3*Nx+3)-transpose(real_idx_diff(2:3:3*Nx+3))))
+plot(Q((2:3:3*Nx+3)-transpose(real_idx_diff(2:3:3*Nx+3))))
