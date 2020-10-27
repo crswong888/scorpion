@@ -20,10 +20,10 @@ addpath(genpath('functions'))
 isActiveDof = logical([1, 1, 0, 0, 0, 0]);
 
 %// input mesh discretization parameters
-Lx = 2.5; Nx = 100; Ly = 0.2; Ny = 8;
+Lx = 0.2; Nx = 8; Ly = 2.5; Ny = 100;
 
 %%% devel
-Lx = 2.47371; Nx = 50; Ly = 0.2; Ny = 4;
+Lx = 0.2; Nx = 4; Ly = 2.47371; Ny = 50;
 
 %// element properties
 E = 200e+06; % kPa, Young's modulus of steel
@@ -34,46 +34,24 @@ t = 0.1; % m, thickness of cross-section
 [nodes, elements] = createRectilinearMesh('QUAD4', 'Lx', Lx, 'Nx', Nx, 'Ly', Ly, 'Ny', Ny);
 
 %// input concentrated force data = dof magnitude and coordinates
-P = -100; % kN, the concentrated force to be distributed along the nodeset
-force_data = zeros(Ny+1,4);
-force_data(1,2) = P / Ny / 2; force_data(end,2) = force_data(1,2);
-force_data(2:end-1,2) = P / Ny;
-force_data(:,3) = Lx / 2;
-for i = 2:(Ny+1), force_data(i,4) = force_data(i-1,4) + Ly / Ny; end
+P = 100; % kN, the concentrated force to be distributed along the nodeset
+force_data = zeros(Nx + 1, 4);
+force_data(1,1) = P / Nx / 2; 
+force_data(end,1) = force_data(1,1);
+force_data(2:(end - 1),1) = P / Nx;
+force_data(:,4) = Ly / 2;
+for i = 2:(Nx + 1) 
+    force_data(i,3) = force_data((i - 1),3) + Lx / Nx; 
+end
 
 %// input restrained dof data = logical and coordinates (release = 0, restrain = 1)
-support_data = zeros(2*Ny+2,4);
+support_data = zeros(2 * Nx + 2, 4);
 support_data(:,1:2) = 1;
-support_data(Ny+2:end,3) = Lx;
-for i = 2:(Ny + 1), support_data(i,4) = support_data(i-1,4) + Ly / Ny; end
-support_data(Ny+2:end,4) = support_data(1:Ny+1,4);
-
-
-% %%% devel
-% Lx = 0.2; Nx = 4; Ly = 2.47371; Ny = 50;
-% 
-% %// element properties
-% E = 200e+06; % kPa, Young's modulus of steel
-% nu = 0.3; % Poisson's Ratio of steel
-% t = 0.1; % m, thickness of cross-section
-% 
-% %// generate a QUAD4 mesh
-% [nodes, elements] = createRectilinearMesh('QUAD4', 'Lx', Lx, 'Nx', Nx, 'Ly', Ly, 'Ny', Ny);
-% 
-% %// input concentrated force data = dof magnitude and coordinates
-% P = -100; % kN, the concentrated force to be distributed along the nodeset
-% force_data = zeros(Nx+1,4);
-% force_data(1,2) = P / Nx / 2; force_data(end,2) = force_data(1,2);
-% force_data(2:end-1,2) = P / Nx;
-% force_data(:,3) = Ly / 2;
-% for i = 2:(Nx+1), force_data(i,4) = force_data(i-1,4) + Lx / Nx; end
-% 
-% %// input restrained dof data = logical and coordinates (release = 0, restrain = 1)
-% support_data = zeros(2*Nx+2,4);
-% support_data(:,1:2) = 1;
-% support_data(Nx+2:end,3) = Ly;
-% for i = 2:(Nx + 1), support_data(i,4) = support_data(i-1,4) + Lx / Nx; end
-% support_data(Nx+2:end,4) = support_data(1:Nx+1,4);
+support_data((Nx + 2):end,4) = Ly;
+for i = 2:(Nx + 1)
+    support_data(i,3) = support_data((i - 1),3) + Lx / Nx; 
+end
+support_data((Nx + 2):end,3) = support_data(1:(Nx + 1),3);
 
              
 %%% SOURCE COMPUTATIONS
@@ -184,8 +162,7 @@ for i = 1:num_nodes
 end
 
 %// interpolate displacement field through elements and get their nodal connectivity
-x = cell(1, num_blocks);
-y = cell(1, num_blocks);
+coords = cell(2, num_blocks);
 subfield = cell(1, num_blocks);
 connectivity = cell(1, num_blocks);
 
@@ -197,8 +174,8 @@ eta = -1:dxi:1;
 %/ loop through all blocks domains
 for b = 1:num_blocks
     %/ initialize element data
-    x{b} = zeros(data_pts, data_pts, num_elems(b));
-    y{b} = zeros(data_pts, data_pts, num_elems(b));
+    coords{1,b} = zeros(data_pts, data_pts, num_elems(b));
+    coords{2,b} = zeros(data_pts, data_pts, num_elems(b));
     subfield{b} = zeros(data_pts, data_pts, num_elems(b));
     
     %/ displacement index
@@ -213,7 +190,7 @@ for b = 1:num_blocks
         
         % ---------
         % if contours
-        coords = transpose([mesh(e,2:3:end); mesh(e,3:3:end)]);
+        xy = transpose([mesh(e,2:3:end); mesh(e,3:3:end)]);
         
         %/ retrieve the nodal displacements from global index
         q_idx(u_idx) = num_dofs * (nodeIDs - 1) + 1;
@@ -229,8 +206,8 @@ for b = 1:num_blocks
                 v = N * q(v_idx);
                 
                 % apply scaled displacements to grid points and get their new positions
-                x{b}(i,j,e) = N * coords(:,1) + scale * u;
-                y{b}(i,j,e) = N * coords(:,2) + scale * v;
+                coords{1,b}(i,j,e) = N * xy(:,1) + scale * u;
+                coords{2,b}(i,j,e) = N * xy(:,2) + scale * v;
                 
                 %/ get desired nodal displacement value
                 % if magnitude, else, subfield...
@@ -263,15 +240,15 @@ for b = 1:num_blocks
         for i = 1:(data_pts - 1)
             for j = 1:(data_pts - 1)
                 % set up plot vertices in a closed polygon fashion so patch object can be used
-                sample_x = [x{b}(i,j,e),...
-                            x{b}((i + 1),j,e),...
-                            x{b}((i + 1),(j + 1),e),...
-                            x{b}(i,(j + 1),e)];
+                sample_x = [coords{1,b}(i,j,e),...
+                            coords{1,b}((i + 1),j,e),...
+                            coords{1,b}((i + 1),(j + 1),e),...
+                            coords{1,b}(i,(j + 1),e)];
                         
-                sample_y = [y{b}(i,j,e),...
-                            y{b}((i + 1),j,e),...
-                            y{b}((i + 1),(j + 1),e),...
-                            y{b}(i,(j + 1),e)];
+                sample_y = [coords{2,b}(i,j,e),...
+                            coords{2,b}((i + 1),j,e),...
+                            coords{2,b}((i + 1),(j + 1),e),...
+                            coords{2,b}(i,(j + 1),e)];
                         
                 sample_val = [subfield{b}(i,j,e),...
                               subfield{b}((i + 1),j,e),...
@@ -308,27 +285,27 @@ for s = 1:2
     extents(s, 3) = max(displaced_nodes(:,s));
 end
 extents(:,4) = extents(:,3) - extents(:,2);
-extents = sortrows(extents, 4, 'descend');
+[~, smax] = max(extents(:,4));
 
 % determine a grid tick spacing for long dimension that conforms well to extents of displaced domain
 lowest = Inf;
 for i = 10:20 % minum of 10 increments and a maximum of 20
     for m = [5, 2, 1] % some order of magnitude of a multiple 5 is best, 2 is okay, and 1 not best
         % test a grid spacing and see how close it gets to an integer division (nice and clean)
-        commdom = m * 10^(sign(log10(extents(1,4) / i)) * floor(abs(log10(extents(1,4) / i)) + 2));
-        remainder = abs(extents(1,4) - round(extents(1,4) / i / commdom) * commdom * i);
+        commdom = m * 10^(sign(log10(extents(smax,4) / i)) * floor(abs(log10(extents(smax,4) / i)) + 2));
+        remainder = abs(extents(smax,4) - round(extents(smax,4) / i / commdom) * commdom * i);
         
         % attempt to find a number of divisions that comes closest to covering entire extent
         if (remainder < lowest)
             lowest = remainder;
-            dx = round(extents(1,4) / i / commdom) * commdom;
+            dx = round(extents(smax,4) / i / commdom) * commdom;
             Nx = i;
         end
     end
 end
 
 % offset extents to have a uniform empty spacing around displaced mesh domain - this preserves scale
-offset = max(dx, abs(((extents(1,4) + 2 * dx) .* resolution / resolution(1) - extents(:,4)) / 2));
+offset = max(dx, abs(((extents(smax,4) + 2 * dx) .* resolution / resolution(smax) - extents(:,4)) / 2));
 lims(:,1) = extents(:,2) - offset;
 lims(:,2) = extents(:,3) + offset;
 
