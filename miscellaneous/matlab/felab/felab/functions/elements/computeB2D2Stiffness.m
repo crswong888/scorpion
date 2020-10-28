@@ -18,7 +18,7 @@ function [k, idx] = computeB2D2Stiffness(mesh, isActiveDof, E, A, I)
         %/ compute unit normal of beam longitudinal axis
         nx = (mesh(e,5:6) - mesh(e,2:3)) / norm(mesh(e,5:6) - mesh(e,2:3));
         
-        %/ get nodal coordinates in natural system
+        %/ get nodal coordinates in local system
         x = [nx, zeros(1,2); zeros(1,2), nx] * transpose([mesh(e,2:3), mesh(e,5:6)]);
         
         %/ assemble Euler rotation matrix
@@ -38,11 +38,9 @@ function [k, idx] = computeB2D2Stiffness(mesh, isActiveDof, E, A, I)
         %/ compute y-deflection and z-bending stiffnesses
         for qp = 1:2
             % evaluate second derivative of Hermite shape functions at qp
-            [~, d2H] = evaluateHermiteShapeFun(xi2(qp));
-            % compute strain-displacement interpolation matrix
-            B = 1 / (J * J) * [d2H(1), d2H(2) * J, d2H(3), d2H(4) * J];
+            [~, ~, d2H] = evaluateHermiteShapeFun(xi2(qp), J);
             % evaluate Gauss quadrature intergral and accumulate stiffness over all qps
-            k(vcomp,vcomp,e) = k(vcomp,vcomp,e) + W2(qp) * J * transpose(B) * B;
+            k(vcomp,vcomp,e) = k(vcomp,vcomp,e) + W2(qp) / J^3 * transpose(d2H) * d2H;
         end
         k(vcomp,vcomp,e) = E * I * k(vcomp,vcomp,e); % multiply beam props
         

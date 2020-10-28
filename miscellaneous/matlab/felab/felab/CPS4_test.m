@@ -1,6 +1,6 @@
-%%% Model of a Fixed-Fixed, Slender Beam with a point load at its center using CPS4 elements
-%%% The beams cross-sectional dimension relative to its length are small and loading is transverse
-%%% so a plane stress formulation is appropriate
+%%% Test for CPS4 constant plane stress quadrilateral. The model is of a Fixed-Fixed, Slender Column 
+%%% with a lateral concentrated force at its center. The columns cross-sectional dimensions relative 
+%%% to its length are small and loading is transverse so a plane stress formulation is appropriate
 %%%
 %%% The max deflections in accordance with Euler-Bernoulli and Timoshenko Beam theories are 
 %%% 0.6104e-03 m and 0.6582e-03 m, respectively. The max deflection computed here is 0.6510e-03 m
@@ -88,5 +88,5 @@ F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 %%% POSTPROCESSING
 %%% ------------------------------------------------------------------------------------------------
 
-render2DSolution(nodes, mesh, 'CPS4', num_dofs, real_idx_diff, Q, 'Contours', false,...
-                 'ScaleFactor', 250, 'SamplesPerElement', 3, 'Style', 'wireframe')
+render2DSolution(nodes, mesh, 'CPS4', num_dofs, real_idx_diff, Q, 'Contours', true,...
+                 'ScaleFactor', 250, 'SamplesPerEdge', 12, 'Style', 'wireframe')

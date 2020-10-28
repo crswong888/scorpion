@@ -40,7 +40,7 @@ function [k, idx] = computeT2D2Stiffness(mesh, isActiveDof, varargin)
         %/ compute unit normal of truss longitudinal axis
         nx = (mesh(e,5:6) - mesh(e,2:3)) / ell;
         
-        %/ get nodal coordinates in natural system
+        %/ get nodal coordinates in local system
         L = [nx, zeros(1,2); zeros(1,2), nx];
         x = L * transpose([mesh(e,2:3), mesh(e,5:6)]);
         

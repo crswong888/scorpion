@@ -1,44 +1,43 @@
 function [x, y, field] = fieldCPS4(mesh, num_dofs, real_idx_diff, Q, varargin)
     %// parse additional for which component to output
     params = inputParser;
-    valid_component = @(x) any(validatestring(x, {'x', 'y', 'magnitude'}));
-    addParameter(params, 'SamplesPerElement', 10, @(x) ((isnumeric(x)) && (x >= 0)))
+    addParameter(params, 'SamplesPerEdge', 10, @(x) ((isnumeric(x)) && (x >= 0)))
     addParameter(params, 'ScaleFactor', 1, @(x) isnumeric(x))
-    addParameter(params, 'Component', 'magnitude', valid_component)
+    valid_component = @(x) validatestring(x, {'disp_x', 'disp_y', 'disp_mag', 'none'});
+    addParameter(params, 'Component', 'disp_mag', @(x) any(valid_component(x)))
     parse(params, varargin{:})
 
     %// initialize element data
-    data_pts = params.Results.SamplesPerElement;
+    Nx = params.Results.SamplesPerEdge;
     scale_factor = params.Results.ScaleFactor;
     num_elems = length(mesh(:,1));
-    x = zeros(data_pts, data_pts, num_elems);
-    y = zeros(data_pts, data_pts, num_elems);
-    field = zeros(data_pts, data_pts, num_elems);
+    x = zeros(Nx, Nx, num_elems);
+    y = zeros(Nx, Nx, num_elems);
+    field = zeros(Nx, Nx, num_elems);
 
     %// set up element interpolation grid in natural coordinate system
-    dxi = 2 / (data_pts - 1);
+    dxi = 2 / (Nx - 1);
     xi = -1:dxi:1;
     eta = -1:dxi:1;
     
     %// displacement index
-    q_idx = zeros(2 * length(mesh(1,:)) / 3, 1);
-    u_idx = 1:2:length(q_idx);
-    v_idx = u_idx + 1;
+    q_idx = zeros(8, 1);
+    u_idx = [1, 3, 5, 7];
+    v_idx = [2, 4, 6, 8];
     
     %// loop through all elements on block
     for e = 1:num_elems
-        %/ global node IDs and coordinates
-        nodeIDs = transpose(mesh(e,1:3:end));
+        %/ global node coordinates
         coords = transpose([mesh(e,2:3:end); mesh(e,3:3:end)]);
 
-        %/ retrieve the nodal displacements from global index
-        q_idx(u_idx) = num_dofs * (nodeIDs - 1) + 1;
+        %/ retrieve nodal displacements from global index
+        q_idx(u_idx) = num_dofs * (transpose(mesh(e,1:3:end)) - 1) + 1;
         q_idx(v_idx) = q_idx(u_idx) + 1;
         q = Q(q_idx - real_idx_diff(q_idx));
 
         %/ use shape functions to interpolate nodal displacements to specified grid points
-        for i = 1:data_pts
-            for j = 1:data_pts
+        for i = 1:Nx
+            for j = 1:Nx
                 % evaluate shape functions and get displacement values
                 N = evaluateCPS4ShapeFun(xi(i), eta(j));
                 u = N * q(u_idx);

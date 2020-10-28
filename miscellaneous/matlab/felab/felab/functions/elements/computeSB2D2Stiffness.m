@@ -26,7 +26,7 @@ function [k, idx] = computeSB2D2Stiffness(mesh, isActiveDof, E, nu, A, I, kappa)
         %/ compute unit normal of beam longitudinal axis
         nx = (mesh(e,5:6) - mesh(e,2:3)) / norm(mesh(e,5:6) - mesh(e,2:3));
         
-        %/ get nodal coordinates in natural system
+        %/ get nodal coordinates in local system
         x = [nx, zeros(1,2); zeros(1,2), nx] * transpose([mesh(e,2:3), mesh(e,5:6)]);
         
         %/ assemble Euler rotation matrix

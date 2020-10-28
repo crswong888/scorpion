@@ -15,28 +15,27 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
     
     %// valid additional inputs
     valid_element = @(x) all(ismember(x, {'B2D2', 'CPS4', 'R2D2', 'RB2D2' 'SB2D2', 'T2D2'}));
-    valid_component = @(x) any(validatestring(x, {'x', 'y', 'magnitude'}));
-    valid_style = @(x) any(validatestring(x, {'points', 'surface', 'surface with edges',...
-                                              'wireframe'}));
-                                          
+    valid_component = @(x) validatestring(x, {'disp_x', 'disp_y', 'rot_z', 'disp_mag'});
+    valid_style = @(x) validatestring(x, {'points', 'surface', 'surface with edges', 'wireframe'});
+    
     %// parse additional inputs which control plot behavior
     params = inputParser;
     addRequired(params, 'eletype', valid_element)
-    addParameter(params, 'Component', 'magnitude', valid_component)
-    addParameter(params, 'Style', 'surface with edges', valid_style)
+    addParameter(params, 'Component', 'disp_mag', @(x) any(valid_component(x)))
+    addParameter(params, 'Style', 'surface with edges', @(x) any(valid_style(x)))
     addParameter(params, 'Contours', true, @(x) islogical(x))
     addParameter(params, 'ScaleFactor', 1, @(x) isnumeric(x))
-    addParameter(params, 'SamplesPerElement', 10, @(x) ((isnumeric(x)) && (x > 1)))
+    addParameter(params, 'SamplesPerEdge', 10, @(x) ((isnumeric(x)) && (x > 1)))
     addParameter(params, 'Omega', 0, @(x) ((isnumeric(x)) && (x >= 0))) % for SB2D2 elements only
     parse(params, eletype, varargin{:})
     
     %/ simplify some parser syntax
     eletype = params.Results.eletype;
-    component = params.Results.Component;
-    style = params.Results.Style;
+    component = valid_component(params.Results.Component);
+    style = valid_style(params.Results.Style);
     contours = params.Results.Contours;
     scale_factor = params.Results.ScaleFactor;
-    data_pts = params.Results.SamplesPerElement;
+    Nx = params.Results.SamplesPerEdge;
     
     %/ if displacement scale factor is 0, turn off contours.
     if (scale_factor == 0)
@@ -78,23 +77,39 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
         for b = 1:num_blocks
             %/ use element shape functions to interpolate nodal displacements through specified grid
             if (strcmp(eletype{b}, 'B2D2'))
-            elseif (strcmp(eletype{b}, 'CPS4'))
-                [coords{:,b}, subfld{b}] = fieldCPS4(eleblk{b}, num_dofs, real_idx_diff, Q,...
-                                                     'SamplesPerElement', data_pts,...
+                [coords{:,b}, subfld{b}] = fieldB2D2(eleblk{b}, num_dofs, real_idx_diff, Q,...
+                                                     'SamplesPerEdge', Nx,...
                                                      'ScaleFactor', scale_factor,...
                                                      'Component', component);
+                
+            elseif (strcmp(eletype{b}, 'CPS4'))
+                if (~strcmp(component, 'rot_z'))
+                    [coords{:,b}, subfld{b}] = fieldCPS4(eleblk{b}, num_dofs, real_idx_diff, Q,...
+                                                         'SamplesPerEdge', Nx,...
+                                                         'ScaleFactor', scale_factor,...
+                                                         'Component', component);
+                else
+                    [coords{:,b}, subfld{b}] = fieldCPS4(eleblk{b}, num_dofs, real_idx_diff, Q,...
+                                                         'SamplesPerEdge', Nx,...
+                                                         'ScaleFactor', scale_factor,...
+                                                         'Component', 'none');
+                end
             elseif (strcmp(eletype{b}, 'SB2D2'))
                 validateRequiredParams(params, 'Omega')
             elseif (strcmp(eletype{b}, 'T2D2'))
-
-            elseif (strcmp(eletype{b}, 'R2D2') || strcmp(eletype{b}, 'RB2D2'))
-                contours = false;
+                
             end
 
-            %/ get element connectivity lines on each block for wireframe and edges plots
+            %/ get element connectivity lines on each block using interpolated displaced coordinates
             for e = 1:num_elems(b)
-                nodeIDs = transpose(eleblk{b}(e,1:3:end));
-                connectivity{b}(:,:,e) = displaced([nodeIDs; nodeIDs(1)],:);
+                connectivity{b}(:,:,e) = [coords{1,b}(1:end,1,e),...
+                                          coords{2,b}(1:end,1,e);
+                                          transpose(coords{1,b}(end,2:end,e)),... 
+                                          transpose(coords{2,b}(end,2:end,e));
+                                          flip(coords{1,b}(1:(end - 1),end,e)),...
+                                          flip(coords{2,b}(1:(end - 1),end,e));
+                                          flip(transpose(coords{1,b}(1,2:(end - 1),e))),...
+                                          flip(transpose(coords{2,b}(1,2:(end - 1),e)))];
             end
         end
     end
@@ -119,11 +134,13 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
 
     %/ loop through mesh blocks and plot each element
     if ((strcmp(style, 'surface with edges')) || (strcmp(style, 'surface')))
+        %%% if 2 node element, invoke wirefram plot function, also reapply plt nodes on bottom
+        
         for b = 1:num_blocks
-            if (contours)
+            if (contours) % and not rigid element
                 for e = 1:num_elems(b)
-                    for i = 1:(data_pts - 1)
-                        for j = 1:(data_pts - 1)
+                    for i = 1:(Nx - 1)
+                        for j = 1:(Nx - 1)
                             % set up plot vertices in a closed polygon fashion
                             sample_x = [coords{1,b}(i,j,e),...
                                         coords{1,b}((i + 1),j,e),...
@@ -143,7 +160,7 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
                             % create patch object to fill surface with field contour colors
                             p = patch(sample_x, sample_y, 'k', 'Parent', ax);
                             set(p, 'CData', sample_val, 'FaceColor', 'interp',...
-                                'CDataMapping', 'scaled', 'EdgeColor', 'none');
+                                'EdgeColor', 'none', 'CDataMapping', 'scaled');
                         end
                     end
                 end
@@ -159,7 +176,8 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
             if (strcmp(style, 'surface with edges'))
                 % plot element edges on top of surface
                 for e = 1:num_elems(b)
-                    plot(connectivity{b}(:,1,e), connectivity{b}(:,2,e), 'Color', 'w')
+                    plot([connectivity{b}(:,1,e); connectivity{b}(1,1,e)],... 
+                         [connectivity{b}(:,2,e); connectivity{b}(1,2,e)], 'Color', 'w')
                 end
 
                 % bring nodes plot to front of edges
@@ -173,14 +191,19 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
         for b = 1:num_blocks
             if (contours)
                 for e = 1:num_elems(b)
-                    nodeIDs = transpose(eleblk{b}(e,1:3:end));
+                    sample_val = [subfld{1,b}(1:end,1,e);
+                                  transpose(subfld{1,b}(end,2:end,e)); 
+                                  flip(subfld{1,b}(1:(end - 1),end,e));
+                                  flip(transpose(subfld{1,b}(1,2:(end - 1),e)))];
+                    
                     p = patch(connectivity{b}(:,1,e), connectivity{b}(:,2,e), 'k', 'Parent', ax);
-                    set(p, 'CData', [fld(nodeIDs); fld(nodeIDs(1))], 'FaceColor', 'none',...
+                    set(p, 'CData', sample_val, 'FaceColor', 'none',...
                         'CDataMapping', 'scaled', 'EdgeColor', 'interp');
                 end
             else
                 for e = 1:num_elems(b)
-                    plot(connectivity{b}(:,1,e), connectivity{b}(:,2,e), 'Color', 'w')
+                    plot([connectivity{b}(:,1,e); connectivity{b}(1,1,e)],... 
+                         [connectivity{b}(:,2,e); connectivity{b}(1,2,e)], 'Color', 'w')
                 end
             end
         end
@@ -219,7 +242,7 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
     for i = 10:20 % minum of 10 increments and a maximum of 20
         for m = [5, 2, 1] % some order of magnitude of a multiple 5 is best, 2 is okay, and 1 not best
             % test a grid spacing and see how close it gets to an integer division (nice and clean)
-            commdom = m * 10^(sign(log10(extents(smax,4) / i)) * floor(abs(log10(extents(smax,4) / i)) + 2));
+            commdom = m * 10^(sign(log10(extents(smax,4) / i)) * floor(abs(log10(extents(smax,4) / i))) - 2);
             remainder = abs(extents(smax,4) - round(extents(smax,4) / i / commdom) * commdom * i);
 
             % attempt to find a number of divisions that comes closest to covering entire extent

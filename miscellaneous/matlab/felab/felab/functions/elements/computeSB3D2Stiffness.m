@@ -42,7 +42,7 @@ function [k, idx] = computeSB3D2Stiffness(mesh, isActiveDof, E, nu, A, Iyy, Izz,
         %/ compute unit normal of beam longitudinal axis
         nx = (mesh(e,6:8) - mesh(e,2:4)) / norm(mesh(e,6:8) - mesh(e,2:4));
         
-        %/ get nodal coordinates in natural system
+        %/ get nodal coordinates in local system
         x = [nx, zeros(1,3); zeros(1,3), nx] * transpose([mesh(e,2:4), mesh(e,6:8)]);
         
         %/ compute a default unit normal for local y-axis or use input if provided
