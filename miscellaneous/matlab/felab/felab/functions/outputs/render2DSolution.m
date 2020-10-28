@@ -1,14 +1,4 @@
-function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, Q, varargin)
-    %%% edges need to be colored too, but when the option is 'surface with edges', don't color them
-    %%% make sure uncolored edges render on top of the colored surface and that they dont blend
-    %%% for 'wireframe', don't show nodes for this option. Do show them, uncolored, for surface & edges
-    %%% 'wirframe' lines should be a bit thicker than in 'surface with edges' tho
-    %%% 'points' is only nodes, and they need to be colored, and they probably should be FAT fat
-    %%% one plot style could be 'undeformed', just dges and nodes uncolored in original positions
-
-    %%% if the number of nodes is only 2, then 'wireframe', 'surface', and 'surface with edges' all
-    %%% produce the same result: a colored line with uncolored nodes. 'points' is the same
-    
+function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, Q, varargin)   
     %// this assumes that input is a cell array of element blocks - convert to cell if not
     if (~iscell(eleblk)), eleblk = {eleblk}; end
     if (~iscell(eletype)), eletype = {eletype}; end
@@ -51,22 +41,48 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
     end
     
     %// this process could potentially take more than a few moments, so let user know its working
+    if (sum(num_elems) * Nx > 2e3)
+        warning(['Plot generation may take awhile for large numbers of interpolation points ',... 
+                 'to evaluate and plot. Consider inputting a smaller ''SamplesPerEdge'' value. ',...
+                 'Note that linear elements need few samples per edge, say, no more than five.'])
+        fprintf('\n')
+    end
     fprintf('Generating plot... ')
-
+    
+    %// set position of DOF to retrieve from global index for contours on point plots
+    comp = [];
+    if (strcmp(component, 'disp_mag'))
+        comp = [1, 2];
+    elseif (strcmp(component, 'disp_x'))
+        comp = 1;
+    elseif (strcmp(component, 'disp_y'))
+        comp = 2;
+    elseif (strcmp(component, 'rot_z'))
+        if (all(ismember(eletype{:}, {'B2D2', 'SB2D2'})))
+            comp = 3;
+        else
+            error(['The field component for contour plots may not be ''rot_z'' unless the mesh ',...
+                   'uses standard beam elements exclusively, i.e., B2D2 and SB2D2.']);
+        end
+    end
+    
     %// retrieve nodal values and displace original mesh
     displaced = zeros(num_nodes, 2);
     fld = zeros(num_nodes, 1);
     for i = 1:num_nodes
         %/ determine DOF positions in global displacement index
-        idx = num_dofs * (i - 1) + [1; 2];
+        idx = num_dofs * (i - 1) + transpose(1:num_dofs);
         real_idx = idx - real_idx_diff(idx);
 
         %/ apply scaled displacements to nodes and get their new positions
-        displaced(i,:) = nodes{i,([1, 2] + 1)} + transpose(scale_factor * Q(real_idx));
+        displaced(i,:) = nodes{i,([1, 2] + 1)} + transpose(scale_factor * Q(real_idx(1:2)));
 
-        %/ get desired nodal displacement value
-        % if magnitude, else, field...
-        fld(i) = norm(Q(real_idx));
+        %/ get desired field value at node
+        if (length(comp) > 1) % faster than strcmp() so thats why handle this check outside loop
+            fld(i) = norm(Q(real_idx(comp)));
+        else
+            fld(i) = Q(real_idx(comp));
+        end
     end
 
     %// interpolate displacement field through elements and get their nodal connectivity
@@ -116,19 +132,37 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
 
     %// Generate a figure window with a nominal plot axes
     figure('Units', 'normalize', 'Position', [0.125, 0.25, 0.75, 0.75])
-    ax = axes('Position', [0.05, 0.05, 0.9, 0.9], 'Layer', 'top');
+    ax = axes('Position', [0.07, 0.07, 0.88, 0.88], 'Layer', 'top');
 
     %/ plot nodes to initialize a plot space
     plt = plot(displaced(:,1), displaced(:,2), 'o', 'MarkerFaceColor', 'w', 'MarkerSize', 2.5,...
                          'MarkerEdgeColor', 'none');
     hold on
     
+    % append note about contour values being unscaled and plot space being scaled
+    plot_scale_note = [];
+    contour_scale_note = [];
+    if (scale_factor ~= 1)
+        plot_scale_note = [' (', num2str(scale_factor), '\bf{\times} displacement)'];
+        contour_scale_note = ' (unscaled)';
+    end
+    
+    % set axes and plot title (TODO: make these properties controllable by input parser)
+    set(ax, 'FontSize', 9)
+    title(['Deformed Mesh', plot_scale_note], 'FontSize', 12)
+    xlabel('X Axis')
+    ylabel('Y Axis')
+    
     % define color mapping system for plot contours
-    cmap = colormap(jet(128)); % might be helpful to know the colormap even if its not used
+    cmap = colormap(jet(256)); % might be helpful to know the colormap even if its not used
     if (contours)
+        % create colot bar and define its limtis
         c = colorbar;
-        ylabel(c, 'Real Displacement Magnitude')
+        ylabel(c, [component, contour_scale_note], 'Interpreter', 'none', 'FontSize', 9)
         clim = [min(fld), max(fld)];
+        if (all(isequal(clim, [0, 0]))) 
+            clim = [0, 1]; % unambigous color bar for case of zero-value field
+        end
         set(ax, 'CLim', clim)
     end
 
@@ -137,54 +171,8 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
         %%% if 2 node element, invoke wirefram plot function, also reapply plt nodes on bottom
         
         for b = 1:num_blocks
-            if (contours) % and not rigid element
-                for e = 1:num_elems(b)
-                    for i = 1:(Nx - 1)
-                        for j = 1:(Nx - 1)
-                            % set up plot vertices in a closed polygon fashion
-                            sample_x = [coords{1,b}(i,j,e),...
-                                        coords{1,b}((i + 1),j,e),...
-                                        coords{1,b}((i + 1),(j + 1),e),...
-                                        coords{1,b}(i,(j + 1),e)];
-
-                            sample_y = [coords{2,b}(i,j,e),...
-                                        coords{2,b}((i + 1),j,e),...
-                                        coords{2,b}((i + 1),(j + 1),e),...
-                                        coords{2,b}(i,(j + 1),e)];
-
-                            sample_val = [subfld{b}(i,j,e),...
-                                          subfld{b}((i + 1),j,e),...
-                                          subfld{b}((i + 1),(j + 1),e),...
-                                          subfld{b}(i,(j + 1),e)];
-
-                            % create patch object to fill surface with field contour colors
-                            p = patch(sample_x, sample_y, 'k', 'Parent', ax);
-                            set(p, 'CData', sample_val, 'FaceColor', 'interp',...
-                                'EdgeColor', 'none', 'CDataMapping', 'scaled');
-                        end
-                    end
-                end
-            else
-                % fill displaced mesh domain with zero-valued colormap index
-                for e = 1:num_elems(b)
-                    fill(connectivity{b}(:,1,e), connectivity{b}(:,2,e), cmap(1,:),...
-                         'EdgeColor', 'none')
-                end
-            end
-
-            % superimpose mesh to surface with edges plot or hide for surface only
-            if (strcmp(style, 'surface with edges'))
-                % plot element edges on top of surface
-                for e = 1:num_elems(b)
-                    plot([connectivity{b}(:,1,e); connectivity{b}(1,1,e)],... 
-                         [connectivity{b}(:,2,e); connectivity{b}(1,2,e)], 'Color', 'w')
-                end
-
-                % bring nodes plot to front of edges
-                uistack(plt, 'top')
-            else
-                set(plt, 'Visible', 'off')
-            end
+            plot2DSurface(ax, plt, cmap, coords(:,b), subfld{b}, connectivity{b}, 'Style', style,...
+                          'Contours', contours) 
         end
     elseif (strcmp(style, 'wireframe'))
         set(plt, 'Visible', 'off')
@@ -261,13 +249,18 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
     % set up grid points in extended space and 10 more points in all directions beyond
     grid = {(round(lims(1,1) / dx) * dx - 10 * dx):dx:(round(lims(1,2) / dx) * dx + 10 * dx);
             (round(lims(2,1) / dx) * dx - 10 * dx):dx:(round(lims(2,2) / dx) * dx + 10 * dx)};
-
+        
     % set properties for axis object
     set(ax, 'XLim', lims(1,:), 'XTick', grid{1}, 'YLim', lims(2,:), 'YTick', grid{2}, 'Layer', 'top')
 
     %/ set gradient background
     bgx = [lims(1,1), lims(1,2), lims(1,2), lims(1,1)]; % coordinates of extended plot space vertices
     bgy = [lims(2,1), lims(2,1), lims(2,2), lims(2,2)];
+    
+    %%% devel - need to position this right
+    wm = text(0, 0, 'This program was developed by Christopher J. Wong [crswong888@gmail.com]',...
+              'Color', 'w');
+    uistack(wm, 'bottom')
 
     % I call this color scheme "Shallow Ocean" lol
     cdata(1,1,:) = [0.173, 0.349, 0.529]; % bottom RGB
@@ -279,7 +272,7 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
     p = patch(bgx, bgy, 'k', 'Parent', ax);
     set(p, 'CData', cdata, 'FaceColor','interp', 'EdgeColor', 'none');
     uistack(p, 'bottom') % Put gradient underneath everything else
-
+    
     %// all done :)
     fprintf('Done.\n\n')
     

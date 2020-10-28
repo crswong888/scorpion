@@ -1,5 +1,5 @@
 function [x, y, field] = fieldCPS4(mesh, num_dofs, real_idx_diff, Q, varargin)
-    %// parse additional for which component to output
+    %// parse additional inputs
     params = inputParser;
     addParameter(params, 'SamplesPerEdge', 10, @(x) ((isnumeric(x)) && (x >= 0)))
     addParameter(params, 'ScaleFactor', 1, @(x) isnumeric(x))
@@ -25,6 +25,18 @@ function [x, y, field] = fieldCPS4(mesh, num_dofs, real_idx_diff, Q, varargin)
     u_idx = [1, 3, 5, 7];
     v_idx = [2, 4, 6, 8];
     
+    %// set position of DOF to retrieve at interpolation points
+    component = valid_component(params.Results.Component);
+    if (strcmp(component, 'disp_mag'))
+        comp = [1, 2];
+    elseif (strcmp(component, 'disp_x'))
+        comp = 1;
+    elseif (strcmp(component, 'disp_y'))
+        comp = 2;
+    elseif (strcmp(component, 'none'))
+        comp = [];
+    end
+    
     %// loop through all elements on block
     for e = 1:num_elems
         %/ global node coordinates
@@ -38,17 +50,22 @@ function [x, y, field] = fieldCPS4(mesh, num_dofs, real_idx_diff, Q, varargin)
         %/ use shape functions to interpolate nodal displacements to specified grid points
         for i = 1:Nx
             for j = 1:Nx
-                % evaluate shape functions and get displacement values
+                % evaluate Lagrange shape functions
                 N = evaluateCPS4ShapeFun(xi(i), eta(j));
-                u = N * q(u_idx);
-                v = N * q(v_idx);
+                
+                % interpolate degrees-of-freedom
+                dofs = [N * q(u_idx); N * q(v_idx)];
 
                 % apply scaled displacements to grid points and get their new positions
-                x(i,j,e) = N * coords(:,1) + scale_factor * u;
-                y(i,j,e) = N * coords(:,2) + scale_factor * v;
+                x(i,j,e) = N * coords(:,1) + scale_factor * dofs(1);
+                y(i,j,e) = N * coords(:,2) + scale_factor * dofs(2);
 
-                %/ get desired nodal displacement value
-                field(i,j,e) = norm([u, v]);
+                %/ store desired field value at interpolation point
+                if (length(comp) > 1)
+                    field(i,j,e) = norm(dofs(comp));
+                else
+                    field(i,j,e) = dofs(comp);
+                end
             end
         end
     end

@@ -1,5 +1,5 @@
 function [x, y, field] = fieldB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
-    %// parse additional for which component to output
+    %// parse additional inputs
     params = inputParser;
     addParameter(params, 'SamplesPerEdge', 10, @(x) ((isnumeric(x)) && (x >= 0)))
     addParameter(params, 'ScaleFactor', 1, @(x) isnumeric(x))
@@ -23,6 +23,20 @@ function [x, y, field] = fieldB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
     q_idx = zeros(6, 1);
     u_idx = [1, 4];
     v_idx = [2, 3, 5, 6];
+    
+    %// set position of DOF to retrieve at interpolation points
+    component = valid_component(params.Results.Component);
+    if (strcmp(component, 'disp_mag'))
+        comp = [1, 2];
+    elseif (strcmp(component, 'disp_x'))
+        comp = 1;
+    elseif (strcmp(component, 'disp_y'))
+        comp = 2;
+    elseif (strcmp(component, 'rot_z'))
+        comp = 3;
+    elseif (strcmp(component, 'none'))
+        comp = [];
+    end
     
     %// loop through all elements on block
     for e = 1:num_elems
@@ -56,14 +70,18 @@ function [x, y, field] = fieldB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
             [H, dH] = evaluateHermiteShapeFun(xi(i), J);
             
             % interpolate degrees-of-freedom and rotate them into global coordinate space
-            dofs = Phi * [N * q(u_idx); H * q(v_idx); dH * q(v_idx)];
+            dofs = Phi * [N * q(u_idx); H * q(v_idx); (1 / J) * dH * q(v_idx)];
             
             % apply scaled displacements to grid points and get their new positions
             x(i,1,e) = N * coords * nx(1) + scale_factor * dofs(1);
             y(i,1,e) = N * coords * nx(2) + scale_factor * dofs(2);
 
-            %/ get desired nodal displacement value
-            field(i,1,e) = norm([dofs(1), dofs(2)]);
+            %/ store desired field value at interpolation point
+            if (length(comp) > 1)
+                field(i,1,e) = norm(dofs(comp));
+            else
+                field(i,1,e) = dofs(comp);
+            end
         end
     end
 end
