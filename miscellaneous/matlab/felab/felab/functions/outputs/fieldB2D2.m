@@ -61,7 +61,7 @@ function [x, y, field] = fieldB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
                         q_idx(u_idx(1)) + 2; 
                         q_idx(u_idx(2)) + 1;
                         q_idx(u_idx(2)) + 2];
-        q = linsolve(L, Q(q_idx - real_idx_diff(q_idx)));
+        q = L * Q(q_idx - real_idx_diff(q_idx));
 
         %/ use shape functions to interpolate nodal displacements to specified grid points
         for i = 1:Nx
@@ -70,7 +70,7 @@ function [x, y, field] = fieldB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
             [H, dH] = evaluateHermiteShapeFun(xi(i), J);
             
             % interpolate degrees-of-freedom and rotate them into global coordinate space
-            dofs = Phi * [N * q(u_idx); H * q(v_idx); (1 / J) * dH * q(v_idx)];
+            dofs = linsolve(Phi, [N * q(u_idx); H * q(v_idx); (1 / J) * dH * q(v_idx)]);
             
             % apply scaled displacements to grid points and get their new positions
             x(i,1,e) = N * coords * nx(1) + scale_factor * dofs(1);

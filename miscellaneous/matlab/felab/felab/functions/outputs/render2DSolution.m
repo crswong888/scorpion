@@ -55,11 +55,11 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
     elseif (strcmp(component, 'disp_y'))
         comp = 2;
     elseif (strcmp(component, 'rot_z'))
-        if (all(ismember(eletype{:}, {'B2D2', 'SB2D2'})))
+        if (all(ismember(eletype{:}, {'B2D2', 'SB2D2', 'RB2D2'})))
             comp = 3;
         else
             error(['The field component for contour plots may not be ''rot_z'' unless the mesh ',...
-                   'uses standard beam elements exclusively, i.e., B2D2 and SB2D2.']);
+                   'uses beam elements exclusively, e.g., B2D2 or SB2D2.']);
         end
     end
     
@@ -89,24 +89,17 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
         connectivity = cell(1, num_blocks);
         for b = 1:num_blocks
             %/ use element shape functions to interpolate nodal displacements through specified grid
-            if (strcmp(eletype{b}, 'B2D2'))
+            if (any(strcmp(eletype{b}, {'B2D2', 'RB2D2'})))
                 [coords{:,b}, subfld{b}] = fieldB2D2(eleblk{b}, num_dofs, real_idx_diff, Q,...
                                                      'SamplesPerEdge', Nx,...
                                                      'ScaleFactor', scale_factor,...
                                                      'Component', component);
                 
             elseif (strcmp(eletype{b}, 'CPS4'))
-                if (~strcmp(component, 'rot_z'))
-                    [coords{:,b}, subfld{b}] = fieldCPS4(eleblk{b}, num_dofs, real_idx_diff, Q,...
-                                                         'SamplesPerEdge', Nx,...
-                                                         'ScaleFactor', scale_factor,...
-                                                         'Component', component);
-                else
-                    [coords{:,b}, subfld{b}] = fieldCPS4(eleblk{b}, num_dofs, real_idx_diff, Q,...
-                                                         'SamplesPerEdge', Nx,...
-                                                         'ScaleFactor', scale_factor,...
-                                                         'Component', 'none');
-                end
+                [coords{:,b}, subfld{b}] = fieldCPS4(eleblk{b}, num_dofs, real_idx_diff, Q,...
+                                                     'SamplesPerEdge', Nx,...
+                                                     'ScaleFactor', scale_factor,...
+                                                     'Component', component);
             elseif (strcmp(eletype{b}, 'SB2D2'))
                 validateRequiredParams(params, 'Omega')
             elseif (strcmp(eletype{b}, 'T2D2'))
