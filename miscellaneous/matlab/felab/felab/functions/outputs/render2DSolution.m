@@ -231,14 +231,15 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
     % set properties for axis object
     set(ax, 'XLim', lim(1,:), 'XTick', grid{1}, 'YLim', lim(2,:), 'YTick', grid{2}, 'Layer', 'top')
 
+    %/ add developer credit watermark to plot space
+    wm_pos = [lim(1,2) - 0.025 * max(range(lim, 2)), lim(2,1) + 0.025 * max(range(lim, 2))];
+    wm = text(ax, 'Position', wm_pos, 'HorizontalAlignment', 'right', 'Color', 'w',...
+              'String', 'Developed by Christopher J. Wong [crswong888@gmail.com]');
+    uistack(wm, 'bottom')
+    
     %/ set gradient background
     bgx = [lim(1,1), lim(1,2), lim(1,2), lim(1,1)]; % coordinates of extended plot space vertices
     bgy = [lim(2,1), lim(2,1), lim(2,2), lim(2,2)];
-    
-    %%% devel - need to position this right
-    wm = text(0, 0, 'This program was developed by Christopher J. Wong [crswong888@gmail.com]',...
-              'Color', 'w');
-    uistack(wm, 'bottom')
 
     % I call this color scheme "Shallow Ocean" lol
     cdata(1,1,:) = [0.173, 0.349, 0.529]; % bottom RGB
