@@ -1,4 +1,4 @@
-function [] = plot2DSurface(ax, plt, cmap, coords, subfld, connectivity, varargin)
+function [] = plot2DSurface(ax, plt, cmap, coords, field, connectivity, varargin)
     %// parse additional inputs which control plot behavior
     params = inputParser;
     addParameter(params, 'Contours', true, @(x) islogical(x))
@@ -7,8 +7,8 @@ function [] = plot2DSurface(ax, plt, cmap, coords, subfld, connectivity, varargi
     parse(params, varargin{:})
     
     %// get dimensions of sample point array
-    Nx = length(subfld(:,1,1));
-    Ny = length(subfld(1,:,1));
+    Nx = length(field(:,1,1));
+    Ny = length(field(1,:,1));
     
     %// plot surface of mesh domain with field contours or a solid color
     if (params.Results.Contours)
@@ -26,10 +26,10 @@ function [] = plot2DSurface(ax, plt, cmap, coords, subfld, connectivity, varargi
                                 coords{2}((i + 1),(j + 1),e),...
                                 coords{2}(i,(j + 1),e)];
 
-                    sample_val = [subfld(i,j,e),...
-                                  subfld((i + 1),j,e),...
-                                  subfld((i + 1),(j + 1),e),...
-                                  subfld(i,(j + 1),e)];
+                    sample_val = [field(i,j,e),...
+                                  field((i + 1),j,e),...
+                                  field((i + 1),(j + 1),e),...
+                                  field(i,(j + 1),e)];
 
                     %/ create patch object to fill surface with field contour colors
                     p = patch(sample_x, sample_y, 'k', 'Parent', ax);
@@ -41,8 +41,7 @@ function [] = plot2DSurface(ax, plt, cmap, coords, subfld, connectivity, varargi
     else
         %/ fill displaced mesh domain with zero-valued colormap index
         for e = 1:length(connectivity(1,1,:))
-            fill(connectivity(:,1,e), connectivity(:,2,e), cmap(1,:),...
-                 'EdgeColor', 'none')
+            fill(connectivity(:,1,e), connectivity(:,2,e), cmap(1,:), 'EdgeColor', 'none')
         end
     end
     
