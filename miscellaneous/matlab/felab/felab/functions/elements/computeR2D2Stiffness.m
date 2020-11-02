@@ -8,10 +8,10 @@ function [k, idx] = computeR2D2Stiffness(mesh, isActiveDof, varargin)
     %// Square Root Rule," described in C. Fellipa (2004), "Introduction to Finite Element Methods."
     %// University of Colorado, Boulder, CO., with max(K(i,j)) = 0.
     params = inputParser;
-    addParameter(params, 'penalty', sqrt(10^digits), @(x) (isnumeric(x) && (x > 0)));
+    addParameter(params, 'Penalty', sqrt(10^digits), @(x) (isnumeric(x) && (x > 0)));
     parse(params, varargin{:});
 
-    %// This function simply invokes computeT2D2Stiffness() using the rigid formulation
-    [k, idx] = computeT2D2Stiffness(mesh, isActiveDof, 'rigid', true,...
-                                    'penalty', params.Results.penalty);
+    %// This function simply invokes computeT2D2Stiffness() using a rigid formulation
+    [k, idx] = computeT2D2Stiffness(mesh, isActiveDof, 'Rigid', true,...
+                                    'Penalty', params.Results.Penalty);
 end
