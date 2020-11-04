@@ -39,6 +39,7 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
     
     %// this process could potentially take more than a few moments, so let user know its working
     if (sum(num_elems) * Nx > 5e3)
+        fprintf('\n')
         warning(['Plot generation may take awhile for large numbers of interpolation points ',... 
                  'to evaluate and plot. Consider inputting a smaller ''SamplesPerEdge'' value. ',...
                  'Note that linear elements need few samples per edge, say, no more than five.'])
@@ -55,11 +56,21 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
     elseif (strcmp(component, 'disp_y'))
         comp = 2;
     elseif (strcmp(component, 'rot_z'))
-        if (all(ismember(eletype{:}, {'B2D2', 'SB2D2', 'RB2D2'})))
+        if (all(ismember(eletype, {'B2D2', 'SB2D2', 'RB2D2'})))
             comp = 3;
+        elseif (any(ismember(eletype, {'B2D2', 'SB2D2', 'RB2D2'})))
+            comp = [];
+            if (strcmp(style, 'points'))
+                fprintf('\n')
+                warning(['The ''rot_z'' degree-of-freedom does not exist on some nodes, so a ',...
+                         'zero-valued (null) contour value will be rendered at all points. ',...
+                         'Try a different plot style to render contours wherever they exist.'])
+                fprintf('\n')
+            end
         else
+            fprintf('\n')
             error(['The field component for contour plots may not be ''rot_z'' unless the mesh ',...
-                   'uses beam elements exclusively, e.g., B2D2 or SB2D2.']);
+                   'uses beam elements, e.g., B2D2 or SB2D2.']);
         end
     end
     
@@ -75,7 +86,7 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
         displaced_nodes(i,:) = nodes{i,([1, 2] + 1)} + transpose(scale_factor * Q(real_idx(1:2)));
 
         %/ get desired field value at node
-        if (length(comp) > 1) % faster than strcmp() so thats why handle this check outside loop
+        if ((length(comp) > 1) || (isempty(comp)))
             fld(i) = norm(Q(real_idx(comp)));
         else
             fld(i) = Q(real_idx(comp));
@@ -95,10 +106,17 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
                                                      'ScaleFactor', scale_factor,...
                                                      'Component', component);
             elseif (strcmp(eletype{b}, 'CPS4'))
-                [coords{:,b}, subfld{b}] = fieldCPS4(eleblk{b}, num_dofs, real_idx_diff, Q,...
-                                                     'SamplesPerEdge', Nx,...
-                                                     'ScaleFactor', scale_factor,...
-                                                     'Component', component);
+                if (~strcmp(component, 'rot_z'))
+                    [coords{:,b}, subfld{b}] = fieldCPS4(eleblk{b}, num_dofs, real_idx_diff, Q,...
+                                                         'SamplesPerEdge', Nx,...
+                                                         'ScaleFactor', scale_factor,...
+                                                         'Component', component);
+                else
+                    [coords{:,b}, subfld{b}] = fieldCPS4(eleblk{b}, num_dofs, real_idx_diff, Q,...
+                                                         'SamplesPerEdge', Nx,...
+                                                         'ScaleFactor', scale_factor,...
+                                                         'Component', 'none');
+                end
             elseif (strcmp(eletype{b}, 'SB2D2'))
                 validateRequiredParams(params, 'Omega')
             elseif (strcmp(eletype{b}, 'T2D2'))
@@ -139,18 +157,38 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
         contour_scale_note = ' (unscaled)';
     end
     
+    %/ define color mapping system for plot contours
+    cmap = colormap(jet(512));
+    clim = [min(fld), max(fld)]; % assume limits are provided by nodal field values
+    
+    % check all interpolated field values in case different from nodal fields
+    if (~strcmp(style, 'points'))
+        for b = 1:num_blocks 
+            subclim = [min(subfld{b}, [], 'all'), max(subfld{b}, [], 'all')];
+
+            % update color map minima if new low found
+            if (subclim(1) < clim(1))
+                clim(1) = subclim(1);
+            end
+
+            % update color map maxima if new high found
+            if (subclim(2) > clim(2))
+                clim(2) = subclim(2);
+            end
+        end
+    end
+    
+    % set unambigous color bar for case of zero-valued field and override contour scale note
+    if (all(isequal(clim, [0, 0]))) 
+        clim = [0, 1];
+        contour_scale_note = ' (null)';
+    end
+    
     %/ set axes and plot title (TODO: make these props controllable by user input parser scheme)
     set(ax, 'FontSize', 9)
     title(plot_title, 'FontSize', 12)
     xlabel('X Axis')
     ylabel('Y Axis')
-    
-    %/ define color mapping system for plot contours
-    cmap = colormap(jet(256));
-    clim = [min(fld), max(fld)];
-    if (all(isequal(clim, [0, 0]))) 
-        clim = [0, 1]; % unambigous color bar for case of zero-value field
-    end
     
     %/ add colorbar if plotting field contours
     if (contours)
@@ -168,6 +206,11 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
                               'Style', style, 'Contours', contours)
             else % 2-noded or less elements cannot use a surface plot - use wireframe
                 plot2DWireframe(ax, plt, subfld{b}, connectivity{b}, 'Contours', contours)
+                
+                % ensure nodes plot is visible for edge style plots
+                if (strcmp(style, 'surface with edges'))
+                    set(plt, 'Visible', 'on')
+                end
             end
         end
     elseif (strcmp(style, 'wireframe'))
