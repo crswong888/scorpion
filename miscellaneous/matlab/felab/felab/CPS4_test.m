@@ -88,6 +88,5 @@ F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 %%% POSTPROCESSING
 %%% ------------------------------------------------------------------------------------------------
 
-render2DSolution(nodes, mesh, 'CPS4', num_dofs, real_idx_diff, Q, 'Component', 'disp_y', 'Contours', true,...
-                 'ScaleFactor', 250, 'SamplesPerEdge', 3, 'Style', 'surface with edges')
-             
+render2DSolution(nodes, mesh, 'CPS4', num_dofs, real_idx_diff, Q, 'Component', 'disp_y',...
+                 'ScaleFactor', 250, 'SamplesPerEdge', 3, 'Style', 'surface')      

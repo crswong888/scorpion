@@ -74,5 +74,5 @@ F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 %%% POSTPROCESSING
 %%% ------------------------------------------------------------------------------------------------
 
-render2DSolution(nodes, mesh, 'B2D2', num_dofs, real_idx_diff, Q, 'Component', 'rot_z', 'Contours', true,...
-                 'ScaleFactor', 50, 'SamplesPerEdge', 30, 'Style', 'wireframe')
+render2DSolution(nodes, mesh, 'B2D2', num_dofs, real_idx_diff, Q, 'Component', 'rot_z',...
+                 'ScaleFactor', 50, 'SamplesPerEdge', 30)

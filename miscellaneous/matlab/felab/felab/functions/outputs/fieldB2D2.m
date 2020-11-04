@@ -69,12 +69,15 @@ function [x, y, field] = fieldB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
             N = evaluateLagrangeShapeFun(xi(i));
             [H, dH] = evaluateHermiteShapeFun(xi(i), J);
             
+            % map position of interpolation point in natural beam space into principal coordinates
+            xy = [mesh(e,2), mesh(e,3)] + (N * coords - coords(1)) * nx;
+            
             % interpolate degrees-of-freedom and rotate them into global coordinate space
             dofs = linsolve(Phi, [N * q(u_idx); H * q(v_idx); (1 / J) * dH * q(v_idx)]);
             
-            % apply scaled displacements to grid points and get their new positions
-            x(i,1,e) = N * coords * nx(1) + scale_factor * dofs(1);
-            y(i,1,e) = N * coords * nx(2) + scale_factor * dofs(2);
+            % apply scaled displacements to grid points and get their new positions      
+            x(i,1,e) = xy(1) + scale_factor * dofs(1);
+            y(i,1,e) = xy(2) + scale_factor * dofs(2);
 
             %/ store desired field value at interpolation point
             if (length(comp) > 1)

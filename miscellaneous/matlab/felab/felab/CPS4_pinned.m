@@ -23,6 +23,9 @@ isActiveDof = logical([1, 1, 0, 0, 0, 1]);
 %// input CPS4 mesh discretization parameters
 Lx = 3.0; Nx = 120; Ly = 0.25; Ny = 10;
 
+%%% devel
+Lx = 3.0; Nx = 48; Ly = 0.25; Ny = 4;
+
 %// generate a QUAD4 mesh
 [nodes1, elems1] = createRectilinearMesh('QUAD4', 'Lx', Lx, 'Nx', Nx, 'Ly', Ly, 'Ny', Ny);
 
@@ -48,7 +51,7 @@ for i = 1:Ny
     elems2(i,2) = i;
     elems2(i,3) = i + 1;
 end
-elems2((Ny + 1):end,2:3) = elems2(1:Ny,2:3) + 11;
+elems2((Ny + 1):end,2:3) = elems2(1:Ny,2:3) + Ny + 1;
 elems2 = array2table(elems2, 'VariableNames', {'ID', 'n1', 'n2'});
 
 %// append penalty stiffness for rigid constraint
@@ -103,5 +106,5 @@ F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 %%% POSTPROCESSING
 %%% ------------------------------------------------------------------------------------------------
 
-%// deflection along length of beam
-plot(Q((2:3:3*Nx+3)-transpose(real_idx_diff(2:3:3*Nx+3))))
+render2DSolution(nodes, {mesh1, mesh2}, {'CPS4', 'RB2D2'}, num_dofs, real_idx_diff, Q,...
+                 'ScaleFactor', 125, 'SamplesPerEdge', 3, 'Style', 'wireframe', 'Component', 'disp_x')
