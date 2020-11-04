@@ -3,7 +3,7 @@
 %%% demonstration of how to use multiple element types in a single model.
 %%%
 %%% The max deflections in accordance with Euler-Bernoulli and Timoshenko Beam theories are 
-%%% 1.6200e-03 m and 1.6544e-03 m, respectively. The max deflection computed here is 1.64720e-03 m
+%%% 1.6200e-03 m and 1.6544e-03 m, respectively. The max deflection computed here is 1.6474e-03 m
 %%% and so the model lines up with the theory. Also, the vertical reactions at each pin are P / 2, 
 %%% and the horizontal reactions are zero, as expected.
 
@@ -22,9 +22,6 @@ isActiveDof = logical([1, 1, 0, 0, 0, 1]);
 
 %// input CPS4 mesh discretization parameters
 Lx = 3.0; Nx = 120; Ly = 0.25; Ny = 10;
-
-%%% devel
-Lx = 3.0; Nx = 48; Ly = 0.25; Ny = 4;
 
 %// generate a QUAD4 mesh
 [nodes1, elems1] = createRectilinearMesh('QUAD4', 'Lx', Lx, 'Nx', Nx, 'Ly', Ly, 'Ny', Ny);
@@ -107,4 +104,4 @@ F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 %%% ------------------------------------------------------------------------------------------------
 
 render2DSolution(nodes, {mesh1, mesh2}, {'CPS4', 'RB2D2'}, num_dofs, real_idx_diff, Q,...
-                 'ScaleFactor', 125, 'SamplesPerEdge', 3)
+                 'Component', 'disp_x', 'Style', 'surface', 'ScaleFactor', 125, 'SamplesPerEdge', 3)

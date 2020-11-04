@@ -22,12 +22,6 @@ isActiveDof = logical([1, 1, 0, 0, 0, 0]);
 %// input mesh discretization parameters
 Lx = 0.2; Nx = 8; Ly = 2.5; Ny = 100;
 
-%%% devel
-
-%%% I might need to seriously increase the load for this problem so I don't have to apply such a
-%%% huge scale factor. Or switch up the mat/geo props so its not so stiff, either or
-Lx = 0.2; Nx = 4; Ly = 2.47371; Ny = 50;
-
 %// element properties
 E = 200e+06; % kPa, Young's modulus of steel
 nu = 0.3; % Poisson's Ratio of steel
@@ -88,5 +82,5 @@ F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 %%% POSTPROCESSING
 %%% ------------------------------------------------------------------------------------------------
 
-render2DSolution(nodes, mesh, 'CPS4', num_dofs, real_idx_diff, Q, 'Component', 'disp_y',...
-                 'ScaleFactor', 250, 'SamplesPerEdge', 3, 'Style', 'surface')      
+render2DSolution(nodes, mesh, 'CPS4', num_dofs, real_idx_diff, Q, 'ScaleFactor', 125,...
+                 'SamplesPerEdge', 3)      
