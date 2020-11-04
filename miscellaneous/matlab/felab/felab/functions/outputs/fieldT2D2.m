@@ -42,14 +42,13 @@ function [x, y, field] = fieldT2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
         nx = (mesh(e,5:6) - mesh(e,2:3)) / norm(mesh(e,5:6) - mesh(e,2:3));
         
         %/ get nodal coordinates in local system
-        L = [nx, zeros(1,2); zeros(1,2), nx];
-        coords = L * transpose([mesh(e,2:3), mesh(e,5:6)]);
+        coords = [nx, zeros(1,2); zeros(1,2), nx] * transpose([mesh(e,2:3), mesh(e,5:6)]);
         
         %/ retrieve nodal displacements from global index
         q_idx(u_idx) = num_dofs * (transpose(mesh(e,[1, 4])) - 1) + 1;
         q_idx(v_idx) = q_idx(u_idx) + 1;
-        q = L * Q(q_idx - real_idx_diff(q_idx));
-
+        q = Q(q_idx - real_idx_diff(q_idx));
+        
         %/ use shape functions to interpolate nodal displacements to specified grid points
         for i = 1:Nx
             % evaluate Lagrange shape functions
@@ -58,14 +57,15 @@ function [x, y, field] = fieldT2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
             % map position of interpolation point in natural space into principal coordinates
             xy = [mesh(e,2), mesh(e,3)] + (N * coords - coords(1)) * nx;
             
-            % interpolate degrees-of-freedom and rotate them into global coordinate space
-            dofs = N * q * nx;
+            % interpolate horizontal and vertical components of uniaxial DOFs isoparametrically
+            dofs(1) = N * q(u_idx);
+            dofs(2) = N * q(v_idx);
             
             % apply scaled displacements to grid points and get their new positions      
             x(i,1,e) = xy(1) + scale_factor * dofs(1);
             y(i,1,e) = xy(2) + scale_factor * dofs(2);
 
-            %/ store desired field value at interpolation point
+            % store desired field value at interpolation point
             if ((length(comp) > 1) || (isempty(comp)))
                 field(i,1,e) = norm(dofs(comp));
             else

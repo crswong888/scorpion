@@ -60,7 +60,7 @@ function [x, y, field] = fieldCPS4(mesh, num_dofs, real_idx_diff, Q, varargin)
                 x(i,j,e) = N * coords(:,1) + scale_factor * dofs(1);
                 y(i,j,e) = N * coords(:,2) + scale_factor * dofs(2);
 
-                %/ store desired field value at interpolation point
+                % store desired field value at interpolation point
                 if ((length(comp) > 1) || (isempty(comp)))
                     field(i,j,e) = norm(dofs(comp));
                 else

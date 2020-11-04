@@ -79,7 +79,7 @@ function [x, y, field] = fieldB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
             x(i,1,e) = xy(1) + scale_factor * dofs(1);
             y(i,1,e) = xy(2) + scale_factor * dofs(2);
 
-            %/ store desired field value at interpolation point
+            % store desired field value at interpolation point
             if ((length(comp) > 1) || (isempty(comp)))
                 field(i,1,e) = norm(dofs(comp));
             else
