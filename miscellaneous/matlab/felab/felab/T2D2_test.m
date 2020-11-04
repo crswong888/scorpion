@@ -69,3 +69,9 @@ F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 
 %// apply the boundary conditions and solve for the displacements and reactions
 [Q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F);
+
+
+%%% POSTPROCESSING
+%%% ------------------------------------------------------------------------------------------------
+
+render2DSolution(nodes, mesh, 'T2D2', num_dofs, real_idx_diff, Q, 'ScaleFactor', 100)

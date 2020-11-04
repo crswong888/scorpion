@@ -15,7 +15,7 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
     addParameter(params, 'Style', 'surface with edges', @(x) any(valid_style(x)))
     addParameter(params, 'Contours', true, @(x) islogical(x))
     addParameter(params, 'ScaleFactor', 1, @(x) isnumeric(x))
-    addParameter(params, 'SamplesPerEdge', 10, @(x) ((isnumeric(x)) && (x > 1)))
+    addParameter(params, 'SamplesPerEdge', 3, @(x) ((isnumeric(x)) && (x > 1)))
     addParameter(params, 'Omega', 0, @(x) ((isnumeric(x)) && (x >= 0))) % for SB2D2 elements only
     parse(params, eletype, varargin{:})
     
@@ -37,16 +37,6 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
         num_local_nodes(b) = length(eleblk{b}(1,2:3:end));
     end
     
-    %// this process could potentially take more than a few moments, so let user know its working
-    if (sum(num_elems) * Nx > 5e3)
-        fprintf('\n')
-        warning(['Plot generation may take awhile for large numbers of interpolation points ',... 
-                 'to evaluate and plot. Consider inputting a smaller ''SamplesPerEdge'' value. ',...
-                 'Note that linear elements need few samples per edge, say, no more than five.'])
-        fprintf('\n')
-    end
-    fprintf('Generating plot... ')
-    
     %// set position of DOF to retrieve from global index for contours on point plots
     comp = [];
     if (strcmp(component, 'disp_mag'))
@@ -61,14 +51,12 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
         elseif (any(ismember(eletype, {'B2D2', 'SB2D2', 'RB2D2'})))
             comp = [];
             if (strcmp(style, 'points'))
-                fprintf('\n')
                 warning(['The ''rot_z'' degree-of-freedom does not exist on some nodes, so a ',...
                          'zero-valued (null) contour value will be rendered at all points. ',...
                          'Try a different plot style to render contours wherever they exist.'])
                 fprintf('\n')
             end
         else
-            fprintf('\n')
             error(['The field component for contour plots may not be ''rot_z'' unless the mesh ',...
                    'uses beam elements, e.g., B2D2 or SB2D2.']);
         end
@@ -92,6 +80,15 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
             fld(i) = Q(real_idx(comp));
         end
     end
+    
+    %// this process could potentially take more than a few moments, so let user know its working
+    if (sum(num_elems) * Nx > 5e3)
+        warning(['Plot generation may take awhile for large numbers of interpolation points. ',...
+                 'Consider inputting a smaller ''SamplesPerEdge'' value. Note that linear ',...
+                 'elements need less samples per edge, say, no more than three (the default).'])
+        fprintf('\n')
+    end
+    fprintf('Generating plot... ')
 
     %// interpolate displacement field through elements and get their nodal connectivity
     if (~strcmp(style, 'points'))
@@ -120,7 +117,17 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
             elseif (strcmp(eletype{b}, 'SB2D2'))
                 validateRequiredParams(params, 'Omega')
             elseif (strcmp(eletype{b}, 'T2D2'))
-                
+                if (~strcmp(component, 'rot_z'))
+                    [coords{:,b}, subfld{b}] = fieldT2D2(eleblk{b}, num_dofs, real_idx_diff, Q,...
+                                                         'SamplesPerEdge', Nx,...
+                                                         'ScaleFactor', scale_factor,...
+                                                         'Component', component);
+                else
+                    [coords{:,b}, subfld{b}] = fieldT2D2(eleblk{b}, num_dofs, real_idx_diff, Q,...
+                                                         'SamplesPerEdge', Nx,...
+                                                         'ScaleFactor', scale_factor,...
+                                                         'Component', 'none');
+                end
             end
 
             %/ get element connectivity lines on each block using interpolated displaced coordinates

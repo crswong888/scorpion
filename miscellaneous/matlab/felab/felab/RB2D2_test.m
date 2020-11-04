@@ -67,4 +67,4 @@ F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 %%% POSTPROCESSING
 %%% ------------------------------------------------------------------------------------------------
 
-render2DSolution(nodes, mesh, 'RB2D2', num_dofs, real_idx_diff, Q)
+render2DSolution(nodes, mesh, 'RB2D2', num_dofs, real_idx_diff, Q, 'SamplesPerEdge', 15)

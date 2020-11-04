@@ -104,4 +104,4 @@ F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 %%% ------------------------------------------------------------------------------------------------
 
 render2DSolution(nodes, {mesh1, mesh2}, {'CPS4', 'RB2D2'}, num_dofs, real_idx_diff, Q,...
-                 'Component', 'disp_x', 'Style', 'surface', 'ScaleFactor', 125, 'SamplesPerEdge', 3)
+                 'Component', 'disp_x', 'Style', 'surface', 'ScaleFactor', 125)
