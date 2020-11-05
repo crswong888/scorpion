@@ -375,12 +375,4 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
     
     %// all done :)
     fprintf('Done.\n\n')
-    
-    %%% devel checks
-%     resolution(1) / resolution(2)
-%     range(lim(1,:)) / range(lim(2,:))
-%     lim(1,2) - extents(1,2)
-%     lim(1,1) - extents(1,1)
-%     lim(2,2) - extents(2,2)
-%     lim(2,1) - extents(2,1)
 end
