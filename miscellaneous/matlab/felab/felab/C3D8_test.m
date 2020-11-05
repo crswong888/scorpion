@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %%% Problem 9.1 from Chandrupatla, "Introduction to Finite Elements in Engineering, 2nd edition"
 %%% This models a cantilevered steel plates subject to a concentrated force at a top corner of the
 %%% free end face. The results for the deflections and reactions match those given in the solution

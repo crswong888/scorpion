@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %%% Test for CPS4 constant plane stress quadrilateral. The model is of a Fixed-Fixed, Slender Column 
 %%% with a lateral concentrated force at its center. The columns cross-sectional dimensions relative 
 %%% to its length are small and loading is transverse so a plane stress formulation is appropriate

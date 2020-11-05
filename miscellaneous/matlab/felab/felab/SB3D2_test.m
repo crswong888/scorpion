@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %%% Test for the SB3D2 Timoshenko space frame element. The model is a simple beam with a
 %%% concentrated force at mid-span. The beam extends in all three spatial directions but the load is
 %%% applied along the transverse normal and induces purely strong-axis bending. The result produced

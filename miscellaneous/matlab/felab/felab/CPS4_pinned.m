@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %%% Similar CPS4_test.m, but models a simply supported beam by constraining the boundaries to remain
 %%% plane using RB2D2 elements, while only pinning the central node. Thus, this is also a
 %%% demonstration of how to use multiple element types in a single model.

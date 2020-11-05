@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %%% Test for the R2D2 rigid link element
 %%% The truss structure forms a 10'x10' equilateral triangle that is pin-supported at 2 of its
 %%% points and a very large load is applied to the apex point. Despite the load being very large (1

@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %%% Test for the B2D2 Euler-Bernoulli plane frame element. The model is a simple beam with a
 %%% concentrated transverse force at mid-span. The result produced here matches the analytical
 %%% solution for the maximumum deflection of 0.5215 cm exactly.

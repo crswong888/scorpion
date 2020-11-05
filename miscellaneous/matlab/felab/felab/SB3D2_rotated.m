@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %%% Same as SB3D2_test.m, but uses the y_orientation property such that the beam rotates 90-degrees
 %%% about the longitudinal axis, which leads to purely weak-axis bending. The result produced here
 %%% matches the analytical solution for the maximumum local deflection of 2.5812 cm exactly.
