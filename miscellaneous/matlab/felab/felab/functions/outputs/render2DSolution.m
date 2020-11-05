@@ -166,12 +166,12 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
     figure('Units', 'normalize', 'Position', [0.125, 0.25, 0.75, 0.75])
     ax = axes('Position', [0.07, 0.07, 0.88, 0.88], 'Layer', 'top');
 
-    %/ plot displaced nodes to initialize a plot space (these might get hidden depending on style)
+    %/ set up invisible plot for displaced nodes to be enabled by style plotters accordingly
     plt = plot(displaced_nodes(:,1), displaced_nodes(:,2), 'o', 'MarkerFaceColor', 'w',...
-               'MarkerSize', 2.5, 'MarkerEdgeColor', 'none');
+               'MarkerSize', 2.5, 'MarkerEdgeColor', 'none', 'Visible', 'off');
     hold on
     
-    %/ setup invisible plot for undeformed (ghost) mesh to be enabled by style plotters accordingly
+    %/ set up invisible plot for undeformed (ghost) mesh to be enabled by style plotters accordingly
     ghstplt{1} = plot([]); % first cell holds nodes plot
     ghstplt{2:(num_blocks + 1)} = plot([]); % initialize cells with empty Line objects
     if (ghost)

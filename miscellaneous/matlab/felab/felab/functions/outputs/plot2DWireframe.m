@@ -7,9 +7,6 @@ function [] = plot2DWireframe(ax, plt, field, connectivity, varargin)
     addParameter(params, 'Contours', true, @(x) islogical(x))
     parse(params, varargin{:})
     
-    %// hide nodes in wireframe plots
-    set(plt, 'Visible', 'off')
-    
     %// if desired, plot undeformed mesh to be superimposed by deformed mesh
     if (params.Results.Ghost)
         validateRequiredParams(params, 'GhostPlot')

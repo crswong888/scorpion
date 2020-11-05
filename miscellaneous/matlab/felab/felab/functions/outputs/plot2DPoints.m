@@ -10,13 +10,12 @@ function [] = plot2DPoints(plt, cmap, clim, field, displaced_nodes, varargin)
     %// if desired, plot undeformed mesh to be superimposed by deformed mesh
     if (params.Results.Ghost)
         validateRequiredParams(params, 'GhostPlot')
-        set(params.Results.GhostPlot, 'Visible', 'on', 'MarkerSize', 4.5)
+        set(params.Results.GhostPlot, 'MarkerSize', 4.5, 'Visible', 'on')
     end
     
     %// render nodes in their displaced configuration
     if (params.Results.Contours)
         %/ if points and contours, interpolate colormap index to indicate nodal field values
-        set(plt, 'Visible', 'off')
         for i = 1:length(displaced_nodes(:,1))
             idx = round(1 + (field(i) - clim(1)) * (length(cmap(:,1)) - 1) / (clim(2) - clim(1)));
             plot(displaced_nodes(i,1), displaced_nodes(i,2), 'o', 'MarkerFaceColor', cmap(idx,:),...
@@ -24,6 +23,6 @@ function [] = plot2DPoints(plt, cmap, clim, field, displaced_nodes, varargin)
         end
     else
         %/ make node plot points bigger
-        set(plt, 'MarkerSize', 4.5)
+        set(plt, 'MarkerSize', 4.5, 'Visible', 'on')
     end
 end

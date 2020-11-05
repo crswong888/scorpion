@@ -79,8 +79,7 @@ function [] = plot2DSurface(ax, plt, cmap, coords, field, connectivity, varargin
         end
 
         %/ bring nodes plot to front of edges
+        set(plt, 'Visible', 'on')
         uistack(plt, 'top')
-    else
-        set(plt, 'Visible', 'off')
     end
 end
