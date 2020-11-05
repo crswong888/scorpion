@@ -10,7 +10,7 @@
 *-prof
 *-devel
 *_out.e
-*.csv
+*_out.csv
 *.nav
 *.log
 *.aux
@@ -209,6 +209,9 @@ python/peacock/tests/postprocessor_tab/TestPostprocessorPluginManager_test_scrip
 !python/peacock/tests/**/input/*.*
 peacock_tmp_diff.exo
 *.e.diff
+
+# MOOSE output files
+**/inputs/**/*.csv
 
 # MATLAB autosave files
 *.asv
