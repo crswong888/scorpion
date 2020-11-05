@@ -99,14 +99,17 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
         end
     end
     
-    %// this process could potentially take more than a few moments, so let user know its working
+    %// issue warning about handling large amounts of data
     if (sum(num_elems) * Nx > 5e3)
         warning(['Plot generation may take awhile for large numbers of interpolation points. ',...
                  'Consider inputting a smaller ''SamplesPerEdge'' value. Note that linear ',...
                  'elements need less samples per edge, say, no more than three (the default).'])
         fprintf('\n')
     end
-    fprintf('Generating plot... ')
+    
+    %// this process may take a few moments, so let user know its working via progress updates
+    fprintf('''render2DSolution()'' progress:\n')
+    fprintf('Initializing field data... ')
 
     %// interpolate displacement field through elements and get their nodal connectivity
     if (~strcmp(style, 'points'))
@@ -161,25 +164,28 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
             end
         end
     end
+    
+    %// progress update
+    fprintf('Generating plot... ')
 
     %// Generate a figure window with a nominal plot axes
     figure('Units', 'normalize', 'Position', [0.125, 0.25, 0.75, 0.75])
     ax = axes('Position', [0.07, 0.07, 0.88, 0.88], 'Layer', 'top');
 
-    %/ set up invisible plot for displaced nodes to be enabled by style plotters accordingly
+    %// set up invisible plot for displaced nodes to be enabled by style plotter accordingly
     plt = plot(displaced_nodes(:,1), displaced_nodes(:,2), 'o', 'MarkerFaceColor', 'w',...
                'MarkerSize', 2.5, 'MarkerEdgeColor', 'none', 'Visible', 'off');
     hold on
     
-    %/ set up invisible plot for undeformed (ghost) mesh to be enabled by style plotters accordingly
+    %// set up invisible plot for undeformed (ghost) mesh to be enabled by style plotter accordingly
     ghstplt(1:(num_blocks + 1)) = {plot([])}; % initialize cells with empty Line objects
     if (ghost)
         surface_color = '#464444';
                       
-        % setup plots for element edges on all blocks
+        %/ setup plots for element edges on all blocks
         if (~strcmp(style, 'points'))
             for b = 1:num_blocks
-                for e = 1:num_elems
+                for e = 1:num_elems(b)
                     idx = eleblk{b}(e,1:3:end);
                     ghstplt{b + 1}(e) = plot([nodes{idx,2}; nodes{idx(1),2}],...
                                              [nodes{idx,3}; nodes{idx(1),3}],...
@@ -188,12 +194,12 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
             end
         end
         
-        % setup plot for nodes (do this second so it renders on top of element edges)
+        %/ setup plot for nodes (do this second so it renders on top of element edges)
         ghstplt{1} = plot(nodes{:,2}, nodes{:,3}, 'o', 'MarkerFaceColor', surface_color,...
                           'MarkerSize', 2.5, 'MarkerEdgeColor', 'none', 'Visible', 'off');
     end
     
-    %/ select plot and colorbar titles based on how field values are scaled
+    %// select plot and colorbar titles based on how field values are scaled
     plot_title = 'Deformed Mesh';
     contour_scale_note = [];
     if (scale_factor == 0) % undeformed mesh with zero-valued field
@@ -204,11 +210,11 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
         contour_scale_note = ' (unscaled)';
     end
     
-    %/ define color mapping system for plot contours
+    %// define color mapping system for plot contours
     cmap = colormap(jet(512));
     clim = [min(fld), max(fld)]; % assume limits are provided by nodal field values
     
-    % check all interpolated field values in case different from nodal fields
+    %/ check all interpolated field values in case different from nodal fields
     if (~strcmp(style, 'points'))
         for b = 1:num_blocks 
             subclim = [min(subfld{b}, [], 'all'), max(subfld{b}, [], 'all')];
@@ -225,19 +231,19 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
         end
     end
     
-    % set unambigous color bar for case of zero-valued field and override contour scale note
+    %/ set unambigous color bar for case of zero-valued field and override contour scale note
     if (all(isequal(clim, [0, 0]))) 
         clim = [0, 1];
         contour_scale_note = ' (null)';
     end
     
-    %/ set axes and plot title (TODO: make these props controllable by user input parser scheme)
+    %// set axes and plot title (TODO: make these props controllable by user input parser scheme)
     set(ax, 'FontSize', 9)
     title(plot_title, 'FontSize', 12)
     xlabel('X Axis')
     ylabel('Y Axis')
     
-    %/ add colorbar if plotting field contours
+    %// add colorbar if plotting field contours
     if (contours)
         % create colot bar and define its limtis
         c = colorbar;
@@ -245,18 +251,19 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
         set(ax, 'CLim', clim)
     end
 
-    %/ loop through mesh blocks and plot each element
+    %// loop through mesh blocks and plot each element
     if (any(strcmp(style, {'surface', 'surface with edges'})))        
         for b = 1:num_blocks
             if (num_local_nodes(b) > 2)
                 plot2DSurface(ax, plt, cmap, coords(:,b), subfld{b}, connectivity{b},...
                               'Ghost', ghost, 'GhostPlot', ghstplt([1, b + 1]),... 
                               'Contours', contours, 'Style', style)
-            else % 2-noded or less elements cannot use a surface plot - use wireframe
+            else
+                %/ 2-noded or less elements cannot use a surface plot - use wireframe
                 plot2DWireframe(ax, plt, subfld{b}, connectivity{b}, 'Ghost', ghost,...
                                 'GhostPlot', ghstplt{b + 1}, 'Contours', contours)
                 
-                % ensure nodes plot is visible for edge style plots
+                %/ ensure nodes plot is visible for edge style plots
                 if (strcmp(style, 'surface with edges'))
                     set(plt, 'Visible', 'on')
                     uistack(plt, 'top')
@@ -276,19 +283,22 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
                      'GhostPlot', ghstplt{1}, 'Contours', contours)
     end
     
-    %/ set up plot space with a 1:1 ratio for both dimensions
+    %// progress update
+    fprintf('Finalizing... ')
+    
+    %// set up plot space with a 1:1 ratio for both dimensions
     set(ax, 'Units', 'pixels');
     resolution = [max(ax.Position(3:4)); min(ax.Position(3:4))]; % current resolution of axes window
     set(ax, 'Units', 'normalize') % convert it back so window scaling continues to work
 
-    % determine spatial extents of displaced mesh
+    %/ determine spatial extents of displaced mesh
     extents = zeros(2, 3);
     extents(:,1) = transpose(min(min(nodes{:,2:3}), min(displaced_nodes)));
     extents(:,2) = transpose(max(max(nodes{:,2:3}), max(displaced_nodes)));
     extents(:,3) = extents(:,2) - extents(:,1);
     [~, smax] = max(extents(:,3)); % dimension with longest extents
 
-    % determine a grid spacing for long dimension that conforms well to extents of displaced domain
+    %/ determine a grid spacing for long dimension that conforms well to extents of displaced domain
     lowest = Inf; % initialize check for smallest non-divisible length of mesh extents
     for i = 10:20 % minum of 10 increments and a maximum of 20
         for m = [5, 2, 1] % some order of magnitude of 5 is best, 2 is okay, and 1 not best
@@ -305,41 +315,41 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
         end
     end
 
-    % offset extents to have uniform empty spacing around displaced mesh domain - preserves scale
+    %/ offset extents to have uniform empty spacing around displaced mesh domain - preserves scale
     offset = abs(((extents(smax,3) + 2 * dx) .* resolution / resolution(smax) - extents(:,3)) / 2);
     offset = max(dx, offset);
     lim(:,1) = extents(:,1) - offset;
     lim(:,2) = extents(:,2) + offset;
 
-    % set up grid points in extended space and 10 more points in all directions beyond
+    %/ set up grid points in extended space and 10 more points in all directions beyond
     grid = {(round(lim(1,1) / dx) * dx - 10 * dx):dx:(round(lim(1,2) / dx) * dx + 10 * dx);
             (round(lim(2,1) / dx) * dx - 10 * dx):dx:(round(lim(2,2) / dx) * dx + 10 * dx)};
         
-    % set properties for axis object
+    %/ set properties for axis object
     set(ax, 'XLim', lim(1,:), 'XTick', grid{1}, 'YLim', lim(2,:), 'YTick', grid{2}, 'Layer', 'top')
 
-    %/ add developer credit watermark to plot space
+    %// add developer credit watermark to plot space
     wm_pos = [lim(1,2) - 0.025 * max(range(lim, 2)), lim(2,1) + 0.025 * max(range(lim, 2))];
     wm = text(ax, 'Position', wm_pos, 'HorizontalAlignment', 'right', 'Color', 'w',...
               'String', 'Developed by Christopher J. Wong [crswong888@gmail.com]');
     uistack(wm, 'bottom')
     
-    %/ set gradient background
+    %// set gradient background
     bgx = [lim(1,1), lim(1,2), lim(1,2), lim(1,1)]; % coordinates of extended plot space vertices
     bgy = [lim(2,1), lim(2,1), lim(2,2), lim(2,2)];
 
-    % I call this color scheme "Shallow Ocean" lol
+    %/ I call this color scheme "Shallow Ocean" lol
     cdata(1,1,:) = [0.173, 0.349, 0.529]; % bottom RGB
     cdata(1,2,:) = [0.173, 0.349, 0.529];
     cdata(1,3,:) = [0.475, 0.647, 0.827]; % top RGB
     cdata(1,4,:) = [0.475, 0.647, 0.827];
 
-    % create a patch object to render gradient
+    %/ create a patch object to render gradient
     p = patch(bgx, bgy, 'k', 'Parent', ax);
     set(p, 'CData', cdata, 'FaceColor','interp', 'EdgeColor', 'none');
     uistack(p, 'bottom') % Put gradient underneath everything else
     
-    %/ indicate ghost mesh using a legend marker if it was plotted
+    %// indicate ghost mesh using a legend marker if it was plotted
     hold off
     if (ghost)
         % create null patch object so that ghost color is clear but line shape/markers are ambigous
