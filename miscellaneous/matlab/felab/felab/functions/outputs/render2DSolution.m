@@ -172,8 +172,7 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
     hold on
     
     %/ set up invisible plot for undeformed (ghost) mesh to be enabled by style plotters accordingly
-    ghstplt{1} = plot([]); % first cell holds nodes plot
-    ghstplt{2:(num_blocks + 1)} = plot([]); % initialize cells with empty Line objects
+    ghstplt(1:(num_blocks + 1)) = {plot([])}; % initialize cells with empty Line objects
     if (ghost)
         surface_color = '#464444';
                       
@@ -339,6 +338,18 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
     p = patch(bgx, bgy, 'k', 'Parent', ax);
     set(p, 'CData', cdata, 'FaceColor','interp', 'EdgeColor', 'none');
     uistack(p, 'bottom') % Put gradient underneath everything else
+    
+    %/ indicate ghost mesh using a legend marker if it was plotted
+    hold off
+    if (ghost)
+        % create null patch object so that ghost color is clear but line shape/markers are ambigous
+        marker = patch(NaN, NaN, 'k', 'parent', ax);
+        set(marker, 'FaceColor', surface_color, 'EdgeColor', 'none')
+        
+        % add legend to northwest corner of plot
+        legend(ax, marker, '\bf{Original Mesh}', 'Location', 'northwest')
+        legend('boxoff')
+    end
     
     %// all done :)
     fprintf('Done.\n\n')
