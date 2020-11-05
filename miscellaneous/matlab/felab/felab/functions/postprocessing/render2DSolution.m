@@ -137,7 +137,7 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
                 end
             elseif (strcmp(eletype{b}, 'SB2D2'))
                 validateRequiredParams(params, 'Omega')
-            elseif (strcmp(eletype{b}, 'T2D2'))
+            elseif (any(strcmp(eletype{b}, {'R2D2', 'T2D2'})))
                 if (~strcmp(component, 'rot_z'))
                     [coords{:,b}, subfld{b}] = fieldT2D2(eleblk{b}, num_dofs, real_idx_diff, Q,...
                                                          'SamplesPerEdge', Nx,...
