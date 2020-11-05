@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function [] = validateRequiredParams(p, varargin)
     %%% This function makes optional parameter objects of Matlab's inputParser class required. This
     %%% is useful for the case where certain additional arguments are needed based on the input for

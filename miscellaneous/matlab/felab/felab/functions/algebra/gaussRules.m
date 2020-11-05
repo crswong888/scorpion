@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function [qps, weights] = gaussRules(num_points)
     if (num_points == 1)
         qps = 0;

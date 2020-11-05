@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function [H, dH, d2H] = evaluateHermiteShapeFun(xi, J)
     %// evaluate Hermite shape functions at natural coordinate 
     H = 1 / 4 * [2 - 3 * xi + xi^3,...

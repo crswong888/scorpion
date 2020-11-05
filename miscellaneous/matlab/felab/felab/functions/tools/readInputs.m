@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function [varargout] = readInputs(file_varnames)
     %%% specify names of variables with handles to file names in a cell array
     %%% - request table output in that order

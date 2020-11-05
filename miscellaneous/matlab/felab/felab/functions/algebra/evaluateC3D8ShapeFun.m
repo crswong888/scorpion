@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function [N, dN] = evaluateC3D8ShapeFun(xi, eta, zeta)  
     %// Use signs of nodal natural coordinates to evaluate shape funcs in a simple condensed format
     %/ nodal coordinates of master element n1, n2, n3, n4, n5, n6, n7, n8

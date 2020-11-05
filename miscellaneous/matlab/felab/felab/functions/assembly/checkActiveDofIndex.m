@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function [num_eqns, real_idx_diff] = checkActiveDofIndex(nodes, num_dofs, idx)
     %// this assumes that input is a cell array of element blocks - convert to cell if not
     if (~iscell(idx))

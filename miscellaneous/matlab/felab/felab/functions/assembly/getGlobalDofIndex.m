@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function idx = getGlobalDofIndex(isLocalDof, isActiveDof, nodes)
     %// establish global system size
     isLocalDof = isLocalDof(isActiveDof); % local dofs need only correspond to active globals

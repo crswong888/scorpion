@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function [k, idx] = computeC3D8Stiffness(mesh, isActiveDof, E, nu)
     %// establish local system size
     isLocalDof = logical([1, 1, 1, 0, 0, 0]); 

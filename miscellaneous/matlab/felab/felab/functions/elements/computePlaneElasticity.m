@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function D = computePlaneElasticity(E, nu, formulation)
     %// parse the formulation input to ensure clarity on wether to use Plane Stress or Plane Strain
     params = inputParser; % create instance to access the inputParser class

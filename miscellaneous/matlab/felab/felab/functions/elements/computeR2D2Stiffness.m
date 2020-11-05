@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function [k, idx] = computeR2D2Stiffness(mesh, isActiveDof, varargin)
     %%% Note: the penalty stiffness should be much larger in magnitude than the largest applied
     %%% forces and the largest member stiffness (e.g., EA/L, EI/L^3, or some D-matrix)

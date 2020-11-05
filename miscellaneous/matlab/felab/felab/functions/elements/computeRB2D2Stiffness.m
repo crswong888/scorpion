@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function [k, idx] = computeRB2D2Stiffness(mesh, isActiveDof, varargin)  
     %// Parse additional argument for penalty stiffness. If not provided - default is to use "The
     %// Square Root Rule," described in C. Fellipa (2004), "Introduction to Finite Element Methods."

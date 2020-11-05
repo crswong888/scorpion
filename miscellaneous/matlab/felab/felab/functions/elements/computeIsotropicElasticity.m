@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function D = computeIsotropicElasticity(E, nu)
     %// compute the stress-strain compatibility matrix for the case of 3D isotropic elasticity
     lambda = E * nu / ((1 + nu) * (1 - 2 * nu)); % Lame's first constant

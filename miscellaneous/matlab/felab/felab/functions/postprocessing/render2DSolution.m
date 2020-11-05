@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, Q, varargin)   
     %// this assumes that input is a cell array of element blocks - convert to cell if not
     if (~iscell(eleblk)), eleblk = {eleblk}; end

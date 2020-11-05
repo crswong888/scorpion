@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function K = assembleGlobalStiffness(num_eqns, real_idx_diff, k, idx)
     %// this assumes that input is a cell array of element blocks - convert to cell if not
     if (~iscell(k)), k = {k}; end

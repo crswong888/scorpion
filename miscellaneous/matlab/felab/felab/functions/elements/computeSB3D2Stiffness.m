@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function [k, idx] = computeSB3D2Stiffness(mesh, isActiveDof, E, nu, A, Iyy, Izz, J, kappa, varargin)    
     %// parse additional arguments for element local y-axis orientation relative to second moments
     params = inputParser;

@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces)
     %// assemble global applied force vector
     F = sparse(num_eqns, 1); % save memory by using sparse storage

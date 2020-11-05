@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% FE Environment for Solid Mechanics %%%
+%%%        By: Christopher Wong        %%%
+%%%        crswong888@gmail.com        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function [Q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F, precision)
     %// condition global stiffness matrix by eliminating rows i & j corresponding to known jth BCs
     K_old = K; F_old = F; % store the old system for later computations
