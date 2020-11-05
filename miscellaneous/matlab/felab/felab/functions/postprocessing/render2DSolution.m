@@ -30,8 +30,8 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
     %/ whether or not to render the undeformed mesh and superimposed the deformed mesh over it
     addParameter(params, 'Ghost', false, @(x) islogical(x))
     
-    %/ ratio of E * I / (kappa * G * A) - for SB2D2 elements only
-    addParameter(params, 'Omega', 0, @(x) ((isnumeric(x)) && (x >= 0))) % for SB2D2 elements only
+    %/ ratio of E * I / (kappa * G * A) on respective blocks - for SB2D2 elements only
+    addParameter(params, 'Omega', 0, @(x) (all(isnumeric(x)) && all(x >= 0)))
     
     %// parse provided inputs
     parse(params, eletype, varargin{:})
@@ -44,6 +44,7 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
     scale_factor = params.Results.ScaleFactor;
     Nx = params.Results.SamplesPerEdge;
     ghost = params.Results.Ghost;
+    Omega = params.Results.Omega;
     
     %// convenience variables
     num_nodes = length(nodes{:,1});
@@ -137,6 +138,11 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
                 end
             elseif (strcmp(eletype{b}, 'SB2D2'))
                 validateRequiredParams(params, 'Omega')
+                [coords{:,b}, subfld{b}] = fieldSB2D2(eleblk{b}, num_dofs, real_idx_diff, Q,...
+                                                      'SamplesPerEdge', Nx,...
+                                                      'ScaleFactor', scale_factor,...
+                                                      'Component', component,...
+                                                      'Omega', Omega(b));
             elseif (any(strcmp(eletype{b}, {'R2D2', 'T2D2'})))
                 if (~strcmp(component, 'rot_z'))
                     [coords{:,b}, subfld{b}] = fieldT2D2(eleblk{b}, num_dofs, real_idx_diff, Q,...
