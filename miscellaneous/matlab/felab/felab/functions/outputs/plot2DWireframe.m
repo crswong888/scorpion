@@ -1,11 +1,20 @@
 function [] = plot2DWireframe(ax, plt, field, connectivity, varargin)
     %// parse additional inputs which control plot behavior
     params = inputParser;
+    addParameter(params, 'Ghost', false, @(x) islogical(x))
+    valid_gp = @(x) validateattributes(x, {'matlab.graphics.chart.primitive.Line'}, {});
+    addParameter(params, 'GhostPlot', [], valid_gp)
     addParameter(params, 'Contours', true, @(x) islogical(x))
     parse(params, varargin{:})
     
     %// hide nodes in wireframe plots
     set(plt, 'Visible', 'off')
+    
+    %// if desired, plot undeformed mesh to be superimposed by deformed mesh
+    if (params.Results.Ghost)
+        validateRequiredParams(params, 'GhostPlot')
+        set(params.Results.GhostPlot, 'Visible', 'on')
+    end
     
     %// draw field contours on element connectivity lines or simply color them white for no contours
     if (params.Results.Contours)

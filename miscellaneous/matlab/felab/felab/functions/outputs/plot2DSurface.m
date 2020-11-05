@@ -1,10 +1,35 @@
 function [] = plot2DSurface(ax, plt, cmap, coords, field, connectivity, varargin)
     %// parse additional inputs which control plot behavior
     params = inputParser;
+    addParameter(params, 'Ghost', false, @(x) islogical(x))
+    valid_gp = @(x) validateattributes(x, {'cell'}, {'numel', 2});
+    addParameter(params, 'GhostPlot', [], valid_gp)
     addParameter(params, 'Contours', true, @(x) islogical(x))
     valid_style = @(x) validatestring(x, {'surface', 'surface with edges'});
     addParameter(params, 'Style', 'surface with edges', @(x) any(valid_style(x)))
     parse(params, varargin{:})
+    
+    %// if desired, plot undeformed mesh to be superimposed by deformed mesh
+    if (params.Results.Ghost)
+        validateRequiredParams(params, 'GhostPlot')
+        ghstplt = params.Results.GhostPlot;
+        
+        %/ fill ghost element surfaces (note: HEX color is #7A7777)
+        for e = 1:length(ghstplt{2})
+            fill(ghstplt{2}(e).XData, ghstplt{2}(e).YData, [0.478, 0.467, 0.467],...
+                 'EdgeColor', 'none');
+        end
+        
+        %/ enable ghost mesh for edge plots
+        if (strcmp(params.Results.Style, 'surface with edges'))
+            set(ghstplt{1}, 'Visible', 'on')
+            set(ghstplt{2}, 'Visible', 'on')
+            
+            % bring ghost mesh to front of surface with nodes on top
+            uistack(ghstplt{2}, 'top')
+            uistack(ghstplt{1}, 'top')
+        end
+    end
     
     %// get dimensions of sample point array
     Nx = length(field(:,1,1));
