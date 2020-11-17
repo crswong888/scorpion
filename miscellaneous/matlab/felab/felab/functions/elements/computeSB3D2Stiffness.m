@@ -58,7 +58,7 @@ function [k, idx] = computeSB3D2Stiffness(mesh, isActiveDof, E, nu, A, Iyy, Izz,
             ny = [-nx(2), nx(1), 0] / norm([-nx(2), nx(1), 0]);
         else
             % verify that y is a unit normal (rounded to nearest 12 decimal points)
-            if (norm(y(valid_idx,:)) ~= 1)
+            if (round(norm(y(valid_idx,:)) / 1e-12) * 1e-12 ~= 1)
                 error(['The ''y_orientation'' property on element %d is not a unit normal. ',...
                        'The vector which defines the local y-axis must be normalized, i.e., ',...
                        'it must satisfy ''norm(y_orientation) == 1'''], e)
