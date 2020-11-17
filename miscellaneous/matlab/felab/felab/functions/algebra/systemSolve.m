@@ -41,7 +41,8 @@ function [Q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F,
 
     %// determine the reaction forces at the supports from the solution
     Reactions = K_old(isBC,:) * Q; 
-    R = table(Reactions, find(isBC));
+    DOF = find(isBC);
+    R = table(Reactions, DOF);
     
     %// report accuracy of solution to terminal
     F_old(isBC,:) = F_old(isBC,:) + Reactions; 

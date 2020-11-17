@@ -3,7 +3,7 @@ format longeng
 fprintf('\n') % Command Window output formatting
 
 %// input nodal rotation and displacement BCs (NaN = not prescribed)
-du0 = [ NaN ; 0 ] ; 
+du0 = [ NaN ; NaN ] ; 
 u0 = [ 0 ; 0 ] ;
 
 %// intitialize variable symbols
