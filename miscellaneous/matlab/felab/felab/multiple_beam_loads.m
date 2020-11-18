@@ -85,4 +85,4 @@ F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 %%% ------------------------------------------------------------------------------------------------
 
 render2DSolution(nodes, mesh, 'B2D2', num_dofs, real_idx_diff, Q, 'ScaleFactor', 25,...
-                 'SamplesPerEdge', 25, 'BeamForceElementID', [1, 1, 2, 2], 'BeamForce', [W, 8, W, 9])
+                 'SamplesPerEdge', 3, 'BeamForceElementID', [1, 2], 'BeamForce', [W, W])

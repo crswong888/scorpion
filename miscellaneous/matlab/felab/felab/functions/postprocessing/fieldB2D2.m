@@ -20,17 +20,17 @@ function [x, y, field] = fieldB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
     %// assert that 'BeamForceElementID' and 'BeamForce' are specified together and of equal length
     validateRequiredParams(params, 'BeamForceElementID', 'BeamForce')
     W_idx = params.Results.BeamForceElementID;
-    W = params.Results.BeamForce;
+    load_funcs = params.Results.BeamForce;
     num_forces = length(W_idx);
-    if (num_forces ~= length(W))
+    if (num_forces ~= length(load_funcs))
         error('The length of ''BeamForceElementID'' must be equal to the length of ''BeamForce''')
     end
     
     %// convert 'BeamForce' to cell array of function handles if it is not
-    if (~iscell(W)), W = num2cell(W); end
+    if (~iscell(load_funcs)), load_funcs = num2cell(load_funcs); end
     for f = 1:num_forces
-        if (~isa(W{f}, 'function_handle'))
-            W{f} = @(x) W{f};
+        if (~isa(load_funcs{f}, 'function_handle'))
+            load_funcs{f} = @(x) load_funcs{f};
         end
     end
     
@@ -51,6 +51,9 @@ function [x, y, field] = fieldB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
     u_idx = [1, 4];
     v_idx = [2, 3, 5, 6];
     
+    %//
+    syms w(s)
+    
     %// set position of DOF to retrieve at interpolation points
     component = valid_component(params.Results.Component);
     if (strcmp(component, 'disp_mag'))
@@ -69,12 +72,13 @@ function [x, y, field] = fieldB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
     for e = 1:num_elems
         %/ compute unit normal of beam longitudinal axis
         nx = (mesh(e,5:6) - mesh(e,2:3)) / norm(mesh(e,5:6) - mesh(e,2:3));
+        ny = [-nx(2), nx(1)];
         
         %/ get nodal coordinates in local system
         coords = [nx, zeros(1,2); zeros(1,2), nx] * transpose([mesh(e,2:3), mesh(e,5:6)]);
         
         %/ assemble Euler rotation matrix
-        Phi = [nx(1), nx(2), 0; -nx(2), nx(1), 0; 0, 0, 1];
+        Phi = [nx, 0; ny, 0; 0, 0, 1];
         L = [Phi, zeros(3, 3); 
              zeros(3, 3), Phi];
         
@@ -91,12 +95,18 @@ function [x, y, field] = fieldB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
         q = L * Q(q_idx - real_idx_diff(q_idx));
         
         %/ 
+        We = load_funcs(ismember(W_idx, e));
         
-        We = W(ismember(W_idx, e));
+        intvals = cellfun(@(f) subs(int(int(int(int(w)))), w, f), We, 'UniformOutput', false);
+        p = @(s) double(sum(cellfun(@(f) f(s), intvals)));
         
-        We{1}(0)
-        We{2}(0)
-
+        check_intvals = intvals{:}
+        
+        intvals = cellfun(@(f) subs(int(int(int(w))), w, f), We, 'UniformOutput', false);
+        dp = @(s) double(sum(cellfun(@(f) f(s), intvals)));
+        
+        pnode = [p(coords(1)); dp(coords(1)); p(coords(2)); dp(coords(2))];
+        
         %/ use shape functions to interpolate nodal displacements to specified grid points
         for i = 1:Nx
             % evaluate Lagrange and Hermite shape functions
@@ -104,10 +114,17 @@ function [x, y, field] = fieldB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
             [H, dH] = evaluateHermiteShapeFun(xi(i), J);
             
             % map position of interpolation point in natural space into principal coordinates
-            xy = [mesh(e,2), mesh(e,3)] + (N * coords - coords(1)) * nx;
+            s = N * coords;
+            xy = [mesh(e,2), mesh(e,3)] + (s - coords(1)) * nx;
             
             % interpolate degrees-of-freedom and rotate them into global coordinate space
-            dofs = linsolve(Phi, [N * q(u_idx); H * q(v_idx); (1 / J) * dH * q(v_idx)]);
+            u = N * q(u_idx);
+            v = p(s) + H * (q(v_idx) - pnode);
+            check_s = s;
+            check_p = p(s) / (20e+03 * 96e+03);
+            theta = dp(s) + dH * (q(v_idx) - pnode) / J;
+            % dofs = linsolve(Phi, [u; v; theta]);
+            dofs = linsolve(Phi, [N * q(u_idx); H * q(v_idx); dH * q(v_idx) / J]);
             
             % apply scaled displacements to grid points and get their new positions      
             x(i,1,e) = xy(1) + scale_factor * dofs(1);
