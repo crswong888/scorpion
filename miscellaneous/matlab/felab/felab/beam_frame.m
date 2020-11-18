@@ -42,8 +42,8 @@ A = 6.8; % in^2, cross-sectional area
 I = 65; % in^4, second moment of area
 
 %// force data, Fx, Fy, Mz, x, y
+P = 3000; % lb, concentrated load
 W = -500 / 12; % lb/in, uniformly distributed load
-P = 3000;
 force_data = [P, 0, 0, nodes{1,2:3};
               distributeBeamForce(nodes, elements, 1, W)];
 

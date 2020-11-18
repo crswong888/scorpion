@@ -11,8 +11,29 @@ function [x, y, field] = fieldB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
     addParameter(params, 'ScaleFactor', 1, @(x) isnumeric(x))
     valid_component = @(x) validatestring(x, {'disp_x', 'disp_y', 'rot_z', 'disp_mag', 'none'});
     addParameter(params, 'Component', 'disp_mag', @(x) any(valid_component(x)))
+    addParameter(params, 'BeamForceElementID', [])
+    valid_forces = @(x) (isnumeric(x) || isa(x, 'function_handle'));
+    addParameter(params, 'BeamForce', {},...
+                 @(x) all(cellfun(valid_forces, {x})) || all(cellfun(valid_forces, x)));
     parse(params, varargin{:})
 
+    %// assert that 'BeamForceElementID' and 'BeamForce' are specified together and of equal length
+    validateRequiredParams(params, 'BeamForceElementID', 'BeamForce')
+    W_idx = params.Results.BeamForceElementID;
+    W = params.Results.BeamForce;
+    num_forces = length(W_idx);
+    if (num_forces ~= length(W))
+        error('The length of ''BeamForceElementID'' must be equal to the length of ''BeamForce''')
+    end
+    
+    %// convert 'BeamForce' to cell array of function handles if it is not
+    if (~iscell(W)), W = num2cell(W); end
+    for f = 1:num_forces
+        if (~isa(W{f}, 'function_handle'))
+            W{f} = @(x) W{f};
+        end
+    end
+    
     %// initialize element data
     Nx = params.Results.SamplesPerEdge;
     scale_factor = params.Results.ScaleFactor;
@@ -68,6 +89,13 @@ function [x, y, field] = fieldB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
                         q_idx(u_idx(2)) + 1;
                         q_idx(u_idx(2)) + 2];
         q = L * Q(q_idx - real_idx_diff(q_idx));
+        
+        %/ 
+        
+        We = W(ismember(W_idx, e));
+        
+        We{1}(0)
+        We{2}(0)
 
         %/ use shape functions to interpolate nodal displacements to specified grid points
         for i = 1:Nx

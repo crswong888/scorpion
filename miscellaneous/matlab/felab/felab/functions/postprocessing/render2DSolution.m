@@ -39,6 +39,12 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
     %/ ratio of E * I / (kappa * G * A) on respective blocks - for SB2D2 elements only
     addParameter(params, 'Omega', 0, @(x) (all(isnumeric(x)) && all(x >= 0)))
     
+    %/ element ID and value pairs for continuous transverse forces on beam elements
+    addParameter(params, 'BeamForceElementID', [])
+    valid_forces = @(x) (isnumeric(x) || isa(x, 'function_handle'));
+    addParameter(params, 'BeamForce', {},...
+                 @(x) all(cellfun(valid_forces, {x})) || all(cellfun(valid_forces, x)));
+    
     %// parse provided inputs
     parse(params, eletype, varargin{:})
     
@@ -51,6 +57,17 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
     Nx = params.Results.SamplesPerEdge;
     ghost = params.Results.Ghost;
     Omega = params.Results.Omega;
+    W_idx = params.Results.BeamForceElementID;
+    W = params.Results.BeamForce;
+    
+    %// assert that beam force parameters are only specified for meshes with beams
+    if (any(ismember(eletype, {'B2D2', 'SB2D2', 'RB2D2'})))
+        %/ verify that both or neither parameters are specified
+        validateRequiredParams(params, 'BeamForceElementID', 'BeamForce')
+    elseif (any(~ismember({'BeamForceElementID', 'BeamForce'}, params.UsingDefaults)))
+        error(['The parameters, ''BeamForceElementID'' and ''BeamForce'', are only valid for ',...
+               'meshes that contain beam elements.'])
+    end
     
     %// convenience variables
     num_nodes = length(nodes{:,1});
@@ -129,7 +146,9 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
                 [coords{:,b}, subfld{b}] = fieldB2D2(eleblk{b}, num_dofs, real_idx_diff, Q,...
                                                      'SamplesPerEdge', Nx,...
                                                      'ScaleFactor', scale_factor,...
-                                                     'Component', component);
+                                                     'Component', component,...
+                                                     'BeamForceElementID', W_idx,...
+                                                     'BeamForce', W);
             elseif (strcmp(eletype{b}, 'CPS4'))
                 if (~strcmp(component, 'rot_z'))
                     [coords{:,b}, subfld{b}] = fieldCPS4(eleblk{b}, num_dofs, real_idx_diff, Q,...

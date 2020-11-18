@@ -65,39 +65,11 @@ function force_data = distributeBeamForce(nodes, elements, ID, W, varargin)
     %/ compute Jacobian (constant over element)
     J = dN * x;
     
-    %// initialize array of nodal forces
-%     if (num_dims == 2)
-%         nodal_forces = zeros(4, 1);
-%     else
-%         nodal_forces = zeros(8, 1);
-%     end
-    
     %// use numerical integration to handle arbitrary loads (not just constant/monomial/polynomial)
     func = @(xi) W(evaluateLagrangeShapeFun(xi) * x) * transpose(evaluateHermiteShapeFun(xi, J));
     local_forces = J * integral(func, -1, 1, 'ArrayValued', true);
     
-%     select = @(v, i) v(i);
-%     integrand = @(xi) select(func(xi), 2);
-%     select(func(0), 2)
-%     integrand(0)
-%     func(0)
-%     integral(integrand,-1, 1)
-    
-%     nodal_forces = zeros(4,1);
-%     num_pts = 2000;
-%     dxi = 2 / num_pts;
-%     xi = -1;
-%     integrand_old = W(evaluateLagrangeShapeFun(xi) * x) * transpose(evaluateHermiteShapeFun(xi, J));
-%     for i = 1:num_pts
-%         xi = xi + dxi;
-%         integrand = W(evaluateLagrangeShapeFun(xi) * x) * transpose(evaluateHermiteShapeFun(xi, J));
-%         nodal_forces = nodal_forces + dxi * (integrand + integrand_old);
-%         
-%         integrand_old = integrand;
-%     end
-%     
-%     nodal_forces = J / 2 * nodal_forces;
-    
+    %// transform nodal forces into global coordinate system
     if (num_dims == 2)
         F = [local_forces([1, 3]), local_forces([2, 4])] * [nw, 0; 0, 0, 1];
     else
@@ -105,5 +77,6 @@ function force_data = distributeBeamForce(nodes, elements, ID, W, varargin)
         F = [F(1,:), F(2,:); F(3,:), F(4,:)];
     end
     
+    %// set output data array
     force_data = [F, coords];
 end
