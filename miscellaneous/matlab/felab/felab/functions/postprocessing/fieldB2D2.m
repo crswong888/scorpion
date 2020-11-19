@@ -107,12 +107,12 @@ function [x, y, field] = fieldB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
         We = load_funcs(ismember(load_idx, e));
         
         % sum and quadruple-integrate all load functions to get deflection contribution
-        intvals = cellfun(@(f) subs(int(int(int(int(w)))), w, f), We, 'UniformOutput', false);
-        p = @(s) double(sum(cellfun(@(f) f(s), intvals))) / EI;
+        intfunc = cellfun(@(f) subs(int(int(int(int(w)))), w, f), We, 'UniformOutput', false);
+        p = @(s) double(sum(cellfun(@(f) f(s), intfunc))) / EI;
         
         % sum and triple-integrate all load functions to get rotation contribution
-        intvals = cellfun(@(f) subs(int(int(int(w))), w, f), We, 'UniformOutput', false);
-        dp = @(s) double(sum(cellfun(@(f) f(s), intvals))) / EI;
+        intfunc = cellfun(@(f) subs(int(int(int(w))), w, f), We, 'UniformOutput', false);
+        dp = @(s) double(sum(cellfun(@(f) f(s), intfunc))) / EI;
         
         % get nodal values of DOFs which are used to restrict load contributions to between nodes
         pnode = [p(coords(1)); dp(coords(1)); p(coords(2)); dp(coords(2))];

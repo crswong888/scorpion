@@ -103,14 +103,14 @@ function [x, y, field] = fieldSB2D2(mesh, num_dofs, real_idx_diff, Q, EI, kappaG
         We = load_funcs(ismember(load_idx, e));
         
         % sum and quadruple- & double-integrate all load functions to get deflection contribution
-        intvals1 = cellfun(@(f) subs(int(int(int(int(w)))), w, f), We, 'UniformOutput', false);
-        intvals2 = cellfun(@(f) subs(int(int(w)), w, f), We, 'UniformOutput', false);
-        p = @(s) double(sum(cellfun(@(f) f(s), intvals1))) / EI - ... % contribution to flexure
-                 double(sum(cellfun(@(f) f(s), intvals2))) / kappaGA; % contribution to shear
+        intfunc1 = cellfun(@(f) subs(int(int(int(int(w)))), w, f), We, 'UniformOutput', false);
+        intfunc2 = cellfun(@(f) subs(int(int(w)), w, f), We, 'UniformOutput', false);
+        p = @(s) double(sum(cellfun(@(f) f(s), intfunc1))) / EI - ... % contribution to flexure
+                 double(sum(cellfun(@(f) f(s), intfunc2))) / kappaGA; % contribution to shear
         
         % sum and triple-integrate all load functions to get rotation contribution
-        intvals = cellfun(@(f) subs(int(int(int(w))), w, f), We, 'UniformOutput', false);
-        dp = @(s) double(sum(cellfun(@(f) f(s), intvals))) / EI;
+        intfunc1 = cellfun(@(f) subs(int(int(int(w))), w, f), We, 'UniformOutput', false);
+        dp = @(s) double(sum(cellfun(@(f) f(s), intfunc1))) / EI;
         
         % get nodal values of DOFs which are used to restrict load contributions to between nodes
         pnode = [p(coords(1)); dp(coords(1)); p(coords(2)); dp(coords(2))];
@@ -131,22 +131,6 @@ function [x, y, field] = fieldSB2D2(mesh, num_dofs, real_idx_diff, Q, EI, kappaG
             v = p(s) + Hv * (q(v_idx) - pnode);
             theta = dp(s) + Homega * (q(v_idx) - pnode);
             dofs = linsolve(Phi, [u; v; theta]);
-            
-            check_dofs = [v, theta]
-            
-            if (e == 1)
-                S = s + 325;
-                ell = 4 * J;
-                check_conc = [-175 * S / (2 * kappaGA) + 175 / (4 * EI) * ...
-                              (S^3 / 3 - (ell)^2 * S / 4),...
-                              -175 / (4 * EI) * (ell^2 / 4 - S^2)];
-                                 
-                check_dist = [-0.25 * (ell * S - S^2) / (2 * kappaGA) - 0.25 / (12 * EI) * ...
-                              (S^4 / 2 - ell * S^3 + ell^3 * S / 2),...
-                              -0.25 / (24 * EI) * (ell^3 - 6 * ell * S^2 + 4 * S^3)];                              
-                                
-                check_analytical = check_conc + check_dist
-            end
             
             % apply scaled displacements to grid points and get their new positions      
             x(i,1,e) = xy(1) + scale_factor * dofs(1);

@@ -21,8 +21,8 @@ isActiveDof = logical([1, 1, 0, 0, 0, 1]);
 
 %// node table (coordinates in centimeters)
 ID = [1; 2; 3];
-x = [-325; 0; 325];
-y = [0; 0; 0];
+x = [-125; 0; 125];
+y = [-300; 0; 300];
 nodes = table(ID, x, y);
 clear ID x y
 
@@ -35,15 +35,13 @@ clear ID n1 n2
 
 %// element properties
 E = 20e+03; % kN/cm/cm, Young's modulus
-nu = 0.3; % Poisson's ratio
 A = 720; % cm^2, cross-sectional area
 I = 96e+03; % cm^4, second moment of area
-kappa = 10 * (1 + nu) / (12 + 11 * nu); % Timoshenko shear coefficient (rectangles)
 
 %// force data, Fx, Fy, Mz, x, y
-P = -175; % kN, concentrated load
+P = 175; % kN, concentrated load
 W = -0.25; % kN/cm, uniformly distributed load
-force_data = [0, P, 0, nodes{2,2:3};
+force_data = [P * 12 / 13, -P * 5 / 13, 0, nodes{2,2:3};
               distributeBeamForce(nodes, elements, 1, W);
               distributeBeamForce(nodes, elements, 2, W)];
 
@@ -64,25 +62,25 @@ mesh = generateMesh(nodes, elements);
 %// generate tables storing nodal forces and restraints
 [forces, supports] = generateBCs(nodes, force_data, support_data, isActiveDof);
 
-%// compute Timoshenko beam local stiffness matrix
-[k, k_idx] = computeSB2D2Stiffness(mesh, isActiveDof, E, nu, A, I, kappa);
+%// compute beam local stiffness matrix
+[k, k_idx] = computeB2D2Stiffness(mesh, isActiveDof, E, A, I);
 
 %// determine wether a global dof is truly active based on element stiffness contributions
 [num_eqns, real_idx_diff] = checkActiveDofIndex(nodes, num_dofs, k_idx);
 
-%// assemble the global stiffness matrix
+%// assemble global stiffness matrix
 K = assembleGlobalStiffness(num_eqns, real_idx_diff, k, k_idx);
 
-%// compute global force vector
+%// assemble global force vector
 F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 
-%// apply the boundary conditions and solve for the displacements and reactions
+%// apply boundary conditions and solve for the displacements and reactions
 [Q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F);
 
 
 %%% POSTPROCESSING
 %%% ------------------------------------------------------------------------------------------------
 
-render2DSolution(nodes, mesh, 'SB2D2', num_dofs, real_idx_diff, Q, 'ScaleFactor', 25,... 
-                 'SamplesPerEdge', 25, 'BeamForceElementID', [1, 2], 'BeamForce', [W, W],... 
-                 'FlexRigidity', E * I, 'ShearRigidity', kappa * E / (2 + 2 * nu) * A)
+render2DSolution(nodes, mesh, 'B2D2', num_dofs, real_idx_diff, Q, 'Component', 'disp_y',...
+                 'ScaleFactor', 25, 'SamplesPerEdge', 6, 'Ghost', true,...
+                 'BeamForceElementID', [1, 2], 'BeamForce', [W, W], 'FlexRigidity', E * I)
