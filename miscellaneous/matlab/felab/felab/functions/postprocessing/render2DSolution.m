@@ -43,10 +43,11 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
                  @(x) all(cellfun(valid_forces, {x})) || all(cellfun(valid_forces, x)));
              
     %/ product of Young's Modulus and Moment of Intertia on beam element blocks
-    addParameter(params, 'FlexRigidity', 1, @(x) (all(isnumeric(x)) && all(x > 0)))
+    valid_rigidity = @(x) (all(isnumeric(x)) && all(x > 0));
+    addParameter(params, 'FlexRigidity', ones(1, length(eleblk)), valid_rigidity)
     
     %/ product of Timoshenko shear coefficient, Young's Modulus, and area on SB2D2 blocks
-    addParameter(params, 'ShearRigidity', 1, @(x) (all(isnumeric(x)) && all(x > 0)))
+    addParameter(params, 'ShearRigidity', ones(1, length(eleblk)), valid_rigidity)
     
     %// parse provided inputs
     parse(params, eletype, varargin{:})
