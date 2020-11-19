@@ -83,4 +83,5 @@ F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 %%% ------------------------------------------------------------------------------------------------
 
 render2DSolution(nodes, mesh, 'SB2D2', num_dofs, real_idx_diff, Q, 'Component', 'disp_y',...
-                 'ScaleFactor', 50, 'SamplesPerEdge', 15, 'Omega', I * (2 + 2 * nu) / (kappa * A))
+                 'ScaleFactor', 50, 'SamplesPerEdge', 15, 'FlexRigidity', E * I,...
+                 'ShearRigidity', kappa * E / (2 + 2 * nu) * A)

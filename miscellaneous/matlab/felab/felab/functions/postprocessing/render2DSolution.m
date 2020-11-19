@@ -43,10 +43,10 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
                  @(x) all(cellfun(valid_forces, {x})) || all(cellfun(valid_forces, x)));
              
     %/ product of Young's Modulus and Moment of Intertia on beam element blocks
-    addParameter(params, 'FlexRigidity', 1, @(x) (all(isnumeric(x)) && all(x >= 0)))
+    addParameter(params, 'FlexRigidity', 1, @(x) (all(isnumeric(x)) && all(x > 0)))
     
     %/ product of Timoshenko shear coefficient, Young's Modulus, and area on SB2D2 blocks
-    addParameter(params, 'ShearRigidity', 1, @(x) (all(isnumeric(x)) && all(x >= 0)))
+    addParameter(params, 'ShearRigidity', 1, @(x) (all(isnumeric(x)) && all(x > 0)))
     
     %// parse provided inputs
     parse(params, eletype, varargin{:})
@@ -168,12 +168,15 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
                                                          'Component', 'none');
                 end
             elseif (strcmp(eletype{b}, 'SB2D2'))
-                validateRequiredParams(params, 'FlexRigidity', 'ShearRigidity')
+                validateRequiredParams(params, 'FlexRigidity')
+                validateRequiredParams(params, 'ShearRigidity')
                 [coords{:,b}, subfld{b}] = fieldSB2D2(eleblk{b}, num_dofs, real_idx_diff, Q,...
+                                                      EI(b), kappaGA(b),...
                                                       'SamplesPerEdge', Nx,...
                                                       'ScaleFactor', scale_factor,...
-                                                      'Component', component,...
-                                                      'Omega', Omega(b));
+                                                      'BeamForceElementID', W_idx,...
+                                                      'BeamForce', W,...                                                      
+                                                      'Component', component);
             elseif (any(strcmp(eletype{b}, {'R2D2', 'T2D2'})))
                 if (~strcmp(component, 'rot_z'))
                     [coords{:,b}, subfld{b}] = fieldT2D2(eleblk{b}, num_dofs, real_idx_diff, Q,...

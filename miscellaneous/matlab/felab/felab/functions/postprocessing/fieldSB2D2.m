@@ -4,23 +4,51 @@
 %%%        crswong888@gmail.com        %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [x, y, field] = fieldSB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
+function [x, y, field] = fieldSB2D2(mesh, num_dofs, real_idx_diff, Q, EI, kappaGA, varargin)
     %// parse additional inputs
     params = inputParser;
     addParameter(params, 'SamplesPerEdge', 10, @(x) ((isnumeric(x)) && (x >= 0)))
     addParameter(params, 'ScaleFactor', 1, @(x) isnumeric(x))
     valid_component = @(x) validatestring(x, {'disp_x', 'disp_y', 'rot_z', 'disp_mag', 'none'});
     addParameter(params, 'Component', 'disp_mag', @(x) any(valid_component(x)))
-    addParameter(params, 'Omega', 0, @(x) ((isnumeric(x)) && (x >= 0)))
+    addParameter(params, 'BeamForceElementID', [])
+    valid_forces = @(x) (isnumeric(x) || isa(x, 'function_handle'));
+    addParameter(params, 'BeamForce', {},...
+                 @(x) all(cellfun(valid_forces, {x})) || all(cellfun(valid_forces, x)));
     parse(params, varargin{:})
 
-    %// initialize element data
+    %// simplify pointer syntax
     Nx = params.Results.SamplesPerEdge;
     scale_factor = params.Results.ScaleFactor;
+    load_idx = params.Results.BeamForceElementID;
+    load_funcs = params.Results.BeamForce;
+    
+    %// assert that 'BeamForceElementID' and 'BeamForce' are specified together
+    validateRequiredParams(params, 'BeamForceElementID', 'BeamForce')
+    
+    %/ additional parsing required if distributed forces provided
+    if (all(~ismember({'BeamForceElementID', 'BeamForceID'}, params.UsingDefaults)))
+        % assert that parameters are of equal length
+        if (length(load_idx) ~= length(load_funcs))
+            error(['The length of ''BeamForceElementID'' must be equal to the length of ',...
+                   '''BeamForce''.'])
+        end
+        
+        % convert 'BeamForce' to cell array of function handles if it is not
+        if (~iscell(load_funcs)), load_funcs = num2cell(load_funcs); end
+        for f = 1:length(load_idx)
+            if (~isa(load_funcs{f}, 'function_handle'))
+                load_funcs{f} = @(x) load_funcs{f};
+            end
+        end
+    end
+    
+    %// initialize element data
     num_elems = length(mesh(:,1));
     x = zeros(Nx, 1, num_elems);
     y = zeros(Nx, 1, num_elems);
     field = zeros(Nx, 1, num_elems);
+    Omega = EI / kappaGA; % ratio of flexural to shear rigidity needed for IIE shape funs
 
     %// set up element interpolation grid in natural coordinate system
     dxi = 2 / (Nx - 1);
@@ -46,6 +74,7 @@ function [x, y, field] = fieldSB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
     end
     
     %// loop through all elements on block
+    syms w(s) % this is needed as a null placeholder for symbolic integration of distributed loads
     for e = 1:num_elems
         %/ compute unit normal of beam longitudinal axis
         nx = (mesh(e,5:6) - mesh(e,2:3)) / norm(mesh(e,5:6) - mesh(e,2:3));
@@ -54,8 +83,8 @@ function [x, y, field] = fieldSB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
         coords = [nx, zeros(1,2); zeros(1,2), nx] * transpose([mesh(e,2:3), mesh(e,5:6)]);
         
         %/ assemble Euler rotation matrix
-        Phi = [nx(1), nx(2), 0; -nx(2), nx(1), 0; 0, 0, 1];
-        L = [Phi, zeros(3, 3); 
+        Phi = [nx, 0; -nx(2), nx(1), 0; 0, 0, 1];
+        L = [Phi, zeros(3, 3);
              zeros(3, 3), Phi];
         
         %/ compute Jacobian (constant over element)
@@ -69,19 +98,55 @@ function [x, y, field] = fieldSB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
                         q_idx(u_idx(2)) + 1;
                         q_idx(u_idx(2)) + 2];
         q = L * Q(q_idx - real_idx_diff(q_idx));
+        
+        %/ compute deflection due to continuous forces, if any, to superpose onto IIE shape funs
+        We = load_funcs(ismember(load_idx, e));
+        
+        % sum and quadruple- & double-integrate all load functions to get deflection contribution
+        intvals1 = cellfun(@(f) subs(int(int(int(int(w)))), w, f), We, 'UniformOutput', false);
+        intvals2 = cellfun(@(f) subs(int(int(w)), w, f), We, 'UniformOutput', false);
+        p = @(s) double(sum(cellfun(@(f) f(s), intvals1))) / EI - ... % contribution to flexure
+                 double(sum(cellfun(@(f) f(s), intvals2))) / kappaGA; % contribution to shear
+        
+        % sum and triple-integrate all load functions to get rotation contribution
+        intvals = cellfun(@(f) subs(int(int(int(w))), w, f), We, 'UniformOutput', false);
+        dp = @(s) double(sum(cellfun(@(f) f(s), intvals))) / EI;
+        
+        % get nodal values of DOFs which are used to restrict load contributions to between nodes
+        pnode = [p(coords(1)); dp(coords(1)); p(coords(2)); dp(coords(2))];
 
         %/ use shape functions to interpolate nodal displacements to specified grid points
         for i = 1:Nx
             % evaluate Lagrange and interdependent shape functions
             N = evaluateLagrangeShapeFun(xi(i));
-            Hv = evaluateInterdependentShapeFun(xi(i), J, params.Results.Omega, 'uy');
-            Homega = evaluateInterdependentShapeFun(xi(i), J, params.Results.Omega, 'rz');
+            Hv = evaluateInterdependentShapeFun(xi(i), J, Omega, 'uy');
+            Homega = evaluateInterdependentShapeFun(xi(i), J, Omega, 'rz');
             
             % map position of interpolation point in natural space into principal coordinates
-            xy = [mesh(e,2), mesh(e,3)] + (N * coords - coords(1)) * nx;
+            s = N * coords;
+            xy = [mesh(e,2), mesh(e,3)] + (s - coords(1)) * nx;
             
             % interpolate degrees-of-freedom and rotate them into global coordinate space
-            dofs = linsolve(Phi, [N * q(u_idx); Hv * q(v_idx); Homega * q(v_idx)]);
+            u = N * q(u_idx);
+            v = p(s) + Hv * (q(v_idx) - pnode);
+            theta = dp(s) + Homega * (q(v_idx) - pnode);
+            dofs = linsolve(Phi, [u; v; theta]);
+            
+            check_dofs = [v, theta]
+            
+            if (e == 1)
+                S = s + 325;
+                ell = 4 * J;
+                check_conc = [-175 * S / (2 * kappaGA) + 175 / (4 * EI) * ...
+                              (S^3 / 3 - (ell)^2 * S / 4),...
+                              -175 / (4 * EI) * (ell^2 / 4 - S^2)];
+                                 
+                check_dist = [-0.25 * (ell * S - S^2) / (2 * kappaGA) - 0.25 / (12 * EI) * ...
+                              (S^4 / 2 - ell * S^3 + ell^3 * S / 2),...
+                              -0.25 / (24 * EI) * (ell^3 - 6 * ell * S^2 + 4 * S^3)];                              
+                                
+                check_analytical = check_conc + check_dist
+            end
             
             % apply scaled displacements to grid points and get their new positions      
             x(i,1,e) = xy(1) + scale_factor * dofs(1);

@@ -45,7 +45,7 @@ function [Q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F,
     R = table(Reactions, DOF);
     
     %// report accuracy of solution to terminal
-    F_old(isBC,:) = F_old(isBC,:) + Reactions; 
+    F_old(isBC,:) = Reactions; 
     res = norm(K_old * Q - F_old) / norm(F_old);
     fprintf('Solve procedure complete! The system relative residual is %g.\n\n', res)
     

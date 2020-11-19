@@ -15,10 +15,10 @@ function [x, y, field] = fieldB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
     valid_forces = @(x) (isnumeric(x) || isa(x, 'function_handle'));
     addParameter(params, 'BeamForce', {},...
                  @(x) all(cellfun(valid_forces, {x})) || all(cellfun(valid_forces, x)));
-    addParameter(params, 'FlexRigidity', 1, @(x) ((isnumeric(x)) && (x >= 0)))
+    addParameter(params, 'FlexRigidity', 1, @(x) ((isnumeric(x)) && (x > 0)))
     parse(params, varargin{:})
 
-    %/ simplify pointer syntax
+    %// simplify pointer syntax
     Nx = params.Results.SamplesPerEdge;
     scale_factor = params.Results.ScaleFactor;
     load_idx = params.Results.BeamForceElementID;
@@ -82,14 +82,13 @@ function [x, y, field] = fieldB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
     for e = 1:num_elems
         %/ compute unit normal of beam longitudinal axis
         nx = (mesh(e,5:6) - mesh(e,2:3)) / norm(mesh(e,5:6) - mesh(e,2:3));
-        ny = [-nx(2), nx(1)];
         
         %/ get nodal coordinates in local system
         coords = [nx, zeros(1,2); zeros(1,2), nx] * transpose([mesh(e,2:3), mesh(e,5:6)]);
         
         %/ assemble Euler rotation matrix
-        Phi = [nx, 0; ny, 0; 0, 0, 1];
-        L = [Phi, zeros(3, 3); 
+        Phi = [nx, 0; -nx(2), nx(1), 0; 0, 0, 1];
+        L = [Phi, zeros(3, 3);
              zeros(3, 3), Phi];
         
         %/ compute Jacobian (constant over element)
