@@ -15,33 +15,45 @@ function [x, y, field] = fieldB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
     valid_forces = @(x) (isnumeric(x) || isa(x, 'function_handle'));
     addParameter(params, 'BeamForce', {},...
                  @(x) all(cellfun(valid_forces, {x})) || all(cellfun(valid_forces, x)));
+    addParameter(params, 'FlexRigidity', 1, @(x) ((isnumeric(x)) && (x >= 0)))
     parse(params, varargin{:})
 
-    %// assert that 'BeamForceElementID' and 'BeamForce' are specified together and of equal length
-    validateRequiredParams(params, 'BeamForceElementID', 'BeamForce')
-    W_idx = params.Results.BeamForceElementID;
-    load_funcs = params.Results.BeamForce;
-    num_forces = length(W_idx);
-    if (num_forces ~= length(load_funcs))
-        error('The length of ''BeamForceElementID'' must be equal to the length of ''BeamForce''')
-    end
-    
-    %// convert 'BeamForce' to cell array of function handles if it is not
-    if (~iscell(load_funcs)), load_funcs = num2cell(load_funcs); end
-    for f = 1:num_forces
-        if (~isa(load_funcs{f}, 'function_handle'))
-            load_funcs{f} = @(x) load_funcs{f};
-        end
-    end
-    
-    %// initialize element data
+    %/ simplify pointer syntax
     Nx = params.Results.SamplesPerEdge;
     scale_factor = params.Results.ScaleFactor;
+    load_idx = params.Results.BeamForceElementID;
+    load_funcs = params.Results.BeamForce;
+    EI = params.Results.FlexRigidity;
+    
+    %// assert that 'BeamForceElementID' and 'BeamForce' are specified together
+    validateRequiredParams(params, 'BeamForceElementID', 'BeamForce')
+    
+    %/ additional parsing required if distributed forces provided
+    if (all(~ismember({'BeamForceElementID', 'BeamForceID'}, params.UsingDefaults)))
+        % require 'FlexRigidity' param needed for interpolating distributed load DOF contributions
+        validateRequiredParams(params, 'FlexRigidity')
+        
+        % assert that parameters are of equal length
+        if (length(load_idx) ~= length(load_funcs))
+            error(['The length of ''BeamForceElementID'' must be equal to the length of ',...
+                   '''BeamForce''.'])
+        end
+        
+        % convert 'BeamForce' to cell array of function handles if it is not
+        if (~iscell(load_funcs)), load_funcs = num2cell(load_funcs); end
+        for f = 1:length(load_idx)
+            if (~isa(load_funcs{f}, 'function_handle'))
+                load_funcs{f} = @(x) load_funcs{f};
+            end
+        end
+    end
+
+    %// initialize element data
     num_elems = length(mesh(:,1));
     x = zeros(Nx, 1, num_elems);
     y = zeros(Nx, 1, num_elems);
     field = zeros(Nx, 1, num_elems);
-
+    
     %// set up element interpolation grid in natural coordinate system
     dxi = 2 / (Nx - 1);
     xi = -1:dxi:1;
@@ -50,9 +62,6 @@ function [x, y, field] = fieldB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
     q_idx = zeros(6, 1);
     u_idx = [1, 4];
     v_idx = [2, 3, 5, 6];
-    
-    %//
-    syms w(s)
     
     %// set position of DOF to retrieve at interpolation points
     component = valid_component(params.Results.Component);
@@ -69,6 +78,7 @@ function [x, y, field] = fieldB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
     end
     
     %// loop through all elements on block
+    syms w(s) % this is needed as a null placeholder for symbolic integration of distributed loads
     for e = 1:num_elems
         %/ compute unit normal of beam longitudinal axis
         nx = (mesh(e,5:6) - mesh(e,2:3)) / norm(mesh(e,5:6) - mesh(e,2:3));
@@ -94,17 +104,18 @@ function [x, y, field] = fieldB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
                         q_idx(u_idx(2)) + 2];
         q = L * Q(q_idx - real_idx_diff(q_idx));
         
-        %/ 
-        We = load_funcs(ismember(W_idx, e));
+        %/ compute deflection due to continuous forces, if any, to superpose onto Hermite shape funs
+        We = load_funcs(ismember(load_idx, e));
         
+        % sum and quadruple-integrate all load functions to get deflection contribution
         intvals = cellfun(@(f) subs(int(int(int(int(w)))), w, f), We, 'UniformOutput', false);
-        p = @(s) double(sum(cellfun(@(f) f(s), intvals)));
+        p = @(s) double(sum(cellfun(@(f) f(s), intvals))) / EI;
         
-        check_intvals = intvals{:}
-        
+        % sum and triple-integrate all load functions to get rotation contribution
         intvals = cellfun(@(f) subs(int(int(int(w))), w, f), We, 'UniformOutput', false);
-        dp = @(s) double(sum(cellfun(@(f) f(s), intvals)));
+        dp = @(s) double(sum(cellfun(@(f) f(s), intvals))) / EI;
         
+        % get nodal values of DOFs which are used to restrict load contributions to between nodes
         pnode = [p(coords(1)); dp(coords(1)); p(coords(2)); dp(coords(2))];
         
         %/ use shape functions to interpolate nodal displacements to specified grid points
@@ -120,11 +131,8 @@ function [x, y, field] = fieldB2D2(mesh, num_dofs, real_idx_diff, Q, varargin)
             % interpolate degrees-of-freedom and rotate them into global coordinate space
             u = N * q(u_idx);
             v = p(s) + H * (q(v_idx) - pnode);
-            check_s = s;
-            check_p = p(s) / (20e+03 * 96e+03);
             theta = dp(s) + dH * (q(v_idx) - pnode) / J;
-            % dofs = linsolve(Phi, [u; v; theta]);
-            dofs = linsolve(Phi, [N * q(u_idx); H * q(v_idx); dH * q(v_idx) / J]);
+            dofs = linsolve(Phi, [u; v; theta]);
             
             % apply scaled displacements to grid points and get their new positions      
             x(i,1,e) = xy(1) + scale_factor * dofs(1);

@@ -4,10 +4,12 @@
 %%%        crswong888@gmail.com        %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%% Example 8.2 from Chandrupatla, "Introduction to Finite Elements in Engineering, 2nd edition"
-%%% This solves a fixed portal frame structure subject to a lateral concentrated force and a
-%%% transverse uniformly distributed force at the second level. The results for the deflections
-%%% and rotations match those given by Chandrupatla
+%%% This is a model of simple beam similar to the one in 'B2D2_test.m', but, in addition to the
+%%% concentrated force, there is a uniformly distributed load along the entire span. The result 
+%%% produced here matches the analytical solution for the maximumum deflection of 0.8241 cm exactly.
+%%% Also, the displacement interpolations used for plotting are analytically exact every real point 
+%%% in the mesh space, since the deflection due to a continuous transverse force is superposed onto
+%%% the standard Hermite interpolation between nodes
 
 clear all %#ok<CLALL>
 format longeng
@@ -71,18 +73,19 @@ mesh = generateMesh(nodes, elements);
 %// determine wether a global dof is truly active based on element stiffness contributions
 [num_eqns, real_idx_diff] = checkActiveDofIndex(nodes, num_dofs, k_idx);
 
-%// assemble the global stiffness matrix
+%// assemble global stiffness matrix
 K = assembleGlobalStiffness(num_eqns, real_idx_diff, k, k_idx);
 
-%// compute global force vector
+%// assemble global force vector
 F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 
-%// apply the boundary conditions and solve for the displacements and reactions
+%// apply boundary conditions and solve for the displacements and reactions
 [Q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F);
 
 
 %%% POSTPROCESSING
 %%% ------------------------------------------------------------------------------------------------
 
-render2DSolution(nodes, mesh, 'B2D2', num_dofs, real_idx_diff, Q, 'ScaleFactor', 25,...
-                 'SamplesPerEdge', 3, 'BeamForceElementID', [1, 2], 'BeamForce', [W, W])
+render2DSolution(nodes, mesh, 'B2D2', num_dofs, real_idx_diff, Q, 'Component', 'disp_y',...
+                 'ScaleFactor', 25, 'SamplesPerEdge', 25, 'BeamForceElementID', [1, 2],...
+                 'BeamForce', [W, W], 'FlexRigidity', E * I)

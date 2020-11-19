@@ -33,17 +33,20 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
     %/ number of sample points along element edges to linearly interpolate field values at
     addParameter(params, 'SamplesPerEdge', 3, @(x) ((isnumeric(x)) && (x > 1)))
     
-    %/ whether or not to render the undeformed mesh and superimposed the deformed mesh over it
+    %/ whether or not to render undeformed mesh and superimpose deformed mesh over it
     addParameter(params, 'Ghost', false, @(x) islogical(x))
-    
-    %/ ratio of E * I / (kappa * G * A) on respective blocks - for SB2D2 elements only
-    addParameter(params, 'Omega', 0, @(x) (all(isnumeric(x)) && all(x >= 0)))
     
     %/ element ID and value pairs for continuous transverse forces on beam elements
     addParameter(params, 'BeamForceElementID', [])
     valid_forces = @(x) (isnumeric(x) || isa(x, 'function_handle'));
     addParameter(params, 'BeamForce', {},...
                  @(x) all(cellfun(valid_forces, {x})) || all(cellfun(valid_forces, x)));
+             
+    %/ product of Young's Modulus and Moment of Intertia on beam element blocks
+    addParameter(params, 'FlexRigidity', 1, @(x) (all(isnumeric(x)) && all(x >= 0)))
+    
+    %/ product of Timoshenko shear coefficient, Young's Modulus, and area on SB2D2 blocks
+    addParameter(params, 'ShearRigidity', 1, @(x) (all(isnumeric(x)) && all(x >= 0)))
     
     %// parse provided inputs
     parse(params, eletype, varargin{:})
@@ -56,17 +59,19 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
     scale_factor = params.Results.ScaleFactor;
     Nx = params.Results.SamplesPerEdge;
     ghost = params.Results.Ghost;
-    Omega = params.Results.Omega;
     W_idx = params.Results.BeamForceElementID;
     W = params.Results.BeamForce;
+    EI = params.Results.FlexRigidity;
+    kappaGA = params.Results.ShearRigidity;
     
     %// assert that beam force parameters are only specified for meshes with beams
-    if (any(ismember(eletype, {'B2D2', 'SB2D2', 'RB2D2'})))
+    if (any(ismember(eletype, {'B2D2', 'SB2D2'})))
         %/ verify that both or neither parameters are specified
         validateRequiredParams(params, 'BeamForceElementID', 'BeamForce')
-    elseif (any(~ismember({'BeamForceElementID', 'BeamForce'}, params.UsingDefaults)))
-        error(['The parameters, ''BeamForceElementID'' and ''BeamForce'', are only valid for ',...
-               'meshes that contain beam elements.'])
+    elseif (any(~ismember({'BeamForceElementID', 'BeamForce', 'FlexRigidity', 'ShearRigidity'},...
+                          params.UsingDefaults)))
+        error(['The parameters, ''BeamForceElementID'', ''BeamForce'', ''FlexRigidity'', and ',...
+               '''ShearRigidity'' are only valid for meshes that have standard 2D beam elements.'])
     end
     
     %// convenience variables
@@ -148,7 +153,8 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
                                                      'ScaleFactor', scale_factor,...
                                                      'Component', component,...
                                                      'BeamForceElementID', W_idx,...
-                                                     'BeamForce', W);
+                                                     'BeamForce', W,...
+                                                     'FlexRigidity', EI(b));
             elseif (strcmp(eletype{b}, 'CPS4'))
                 if (~strcmp(component, 'rot_z'))
                     [coords{:,b}, subfld{b}] = fieldCPS4(eleblk{b}, num_dofs, real_idx_diff, Q,...
@@ -162,7 +168,7 @@ function [] = render2DSolution(nodes, eleblk, eletype, num_dofs, real_idx_diff, 
                                                          'Component', 'none');
                 end
             elseif (strcmp(eletype{b}, 'SB2D2'))
-                validateRequiredParams(params, 'Omega')
+                validateRequiredParams(params, 'FlexRigidity', 'ShearRigidity')
                 [coords{:,b}, subfld{b}] = fieldSB2D2(eleblk{b}, num_dofs, real_idx_diff, Q,...
                                                       'SamplesPerEdge', Nx,...
                                                       'ScaleFactor', scale_factor,...
