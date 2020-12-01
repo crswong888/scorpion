@@ -5,11 +5,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function [forces, supports] = generateBCs(nodes, force_data, support_data, isActiveDof, tol)
-    %%% TODO: this is kind of a horrible way to do all of this - make it better
-    
-    %%% Ultimately, the only reason this function is useful is for the case where the mesh is huge
-    %%% and someone has no idea what their BC node IDs are, but knows their coordinates
-                                      
     %// sort the nodal coordinate data in ascending x and y order
     nodes = table2array(nodes); % convert to normal array to increase search performance
     num_nodes = length(nodes(:,1));

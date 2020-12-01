@@ -4,7 +4,7 @@
 %%%        crswong888@gmail.com        %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [k, idx] = computeT2D2Stiffness(mesh, isActiveDof, varargin)
+function [k, idx] = computeT3D2Stiffness(mesh, isActiveDof, varargin)
     %// parse additional arguments for standard or rigid link element stiffness
     params = inputParser;
     addParameter(params, 'Rigid', false, @(x) islogical(x))
@@ -14,7 +14,7 @@ function [k, idx] = computeT2D2Stiffness(mesh, isActiveDof, varargin)
     parse(params, varargin{:})
 
     %// establish local system size
-    isLocalDof = logical([1, 1, 0, 0, 0, 0]); 
+    isLocalDof = logical([1, 1, 1, 0, 0, 0]);
     num_eqns = 2 * length(isLocalDof(isLocalDof));
     
     %// establish Gauss quadrature rule
@@ -37,11 +37,11 @@ function [k, idx] = computeT2D2Stiffness(mesh, isActiveDof, varargin)
     idx = zeros(length(mesh(:,1)), num_eqns); 
     for e = 1:length(mesh(:,1))        
         %/ compute unit normal of truss longitudinal axis
-        nx = (mesh(e,5:6) - mesh(e,2:3)) / norm(mesh(e,5:6) - mesh(e,2:3));
+        nx = (mesh(e,6:8) - mesh(e,2:4)) / norm(mesh(e,6:8) - mesh(e,2:4));
         
         %/ get nodal coordinates in local system
-        L = [nx, zeros(1,2); zeros(1,2), nx];
-        x = L * transpose([mesh(e,2:3), mesh(e,5:6)]);
+        L = [nx, zeros(1,3); zeros(1,3), nx];
+        x = L * transpose([mesh(e,2:4), mesh(e,6:8)]);
         
         %/ evaluate derivative of Lagrange shape functions (constant polynomial)
         [~, dN] = evaluateLagrangeShapeFun(xi);
@@ -62,6 +62,6 @@ function [k, idx] = computeT2D2Stiffness(mesh, isActiveDof, varargin)
         k(:,:,e) = transpose(L) * k_bar * L;
         
         %/ determine system indices
-        idx(e,:) = getGlobalDofIndex(isLocalDof, isActiveDof, mesh(e,[1, 4]));
+        idx(e,:) = getGlobalDofIndex(isLocalDof, isActiveDof, mesh(e,[1, 5]));
     end
 end
