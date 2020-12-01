@@ -93,16 +93,16 @@ mesh2 = generateMesh(nodes, blocks{2});
 [k1, k1_idx] = computeCPS4Stiffness(mesh1, isActiveDof, E, nu, t);
 [k2, k2_idx] = computeRB2D2Stiffness(mesh2, isActiveDof, 'penalty', penalty);
 
-%// determine wether a global dof is truly active based on element stiffness contributions
+%// determine size of global system of equations and index offsets for active DOFs
 [num_eqns, real_idx_diff] = checkActiveDofIndex(nodes, num_dofs, {k1_idx, k2_idx});
 
-%// assemble the global stiffness matrix
+%// assemble global stiffness matrix
 K = assembleGlobalStiffness(num_eqns, real_idx_diff, {k1, k2}, {k1_idx, k2_idx});
 
-%// compute global force vector
+%// assemble global force vector
 F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 
-%// apply the boundary conditions and solve for the displacements and reactions
+%// apply boundary conditions and solve for displacements and reactions
 [Q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F, 1e-08);
 
 

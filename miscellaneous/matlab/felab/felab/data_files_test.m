@@ -56,16 +56,16 @@ mesh = generateMesh(nodes, elements);
 %// compute beam local stiffness matrix
 [k, k_idx] = computeB2D2Stiffness(mesh, isActiveDof, E, A, I);
 
-%// determine wether a global dof is truly active based on element stiffness contributions
+%// determine size of global system of equations and index offsets for active DOFs
 [num_eqns, real_idx_diff] = checkActiveDofIndex(nodes, num_dofs, k_idx);
 
-%// assemble the global stiffness matrix
+%// assemble global stiffness matrix
 K = assembleGlobalStiffness(num_eqns, real_idx_diff, k, k_idx);
 
-%// compute global force vector
+%// assemble global force vector
 F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 
-%// apply the boundary conditions and solve for the displacements and reactions
+%// apply boundary conditions and solve for displacements and reactions
 [Q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F);
 
 

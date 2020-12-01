@@ -68,7 +68,7 @@ k_idx = cell(1, 3);
 for b = 1:3
     %/ convert element-node connectivity info and properties to numeric arrays
     mesh{b} = generateMesh(nodes, elems{b});
-    
+
     %/ compute truss element local stiffness matrix
     [k{b}, k_idx{b}] = computeT3D2Stiffness(mesh{b}, isActiveDof, E, A(b));
 end

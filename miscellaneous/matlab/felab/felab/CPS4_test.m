@@ -37,7 +37,7 @@ t = 0.1; % m, thickness of cross-section
 [nodes, elements] = createRectilinearMesh('QUAD4', 'Lx', Lx, 'Nx', Nx, 'Ly', Ly, 'Ny', Ny);
 
 %// input concentrated force data = dof magnitude and coordinates
-P = 100; % kN, the concentrated force to be distributed along the nodeset
+P = 100; % kN, concentrated force to be distributed along midspan nodeset
 force_data = zeros(Nx + 1, 4);
 force_data(1,1) = P / Nx / 2; 
 force_data(end,1) = force_data(1,1);
@@ -72,16 +72,16 @@ mesh = generateMesh(nodes, elements);
 %// compute plane stress QUAD4 element local stiffness matrix
 [k, k_idx] = computeCPS4Stiffness(mesh, isActiveDof, E, nu, t);
 
-%// determine wether a global dof is truly active based on element stiffness contributions
+%// determine size of global system of equations and index offsets for active DOFs
 [num_eqns, real_idx_diff] = checkActiveDofIndex(nodes, num_dofs, k_idx);
 
-%// assemble the global stiffness matrix
+%// assemble global stiffness matrix
 K = assembleGlobalStiffness(num_eqns, real_idx_diff, k, k_idx);
 
-%// compute global force vector
+%// assemble global force vector
 F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 
-%// apply the boundary conditions and solve for the displacements and reactions
+%// apply boundary conditions and solve for displacements and reactions
 [Q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F);
 
 

@@ -26,7 +26,7 @@ addpath(genpath('functions'))
 %// input boolean of active degrees of freedom, dof = ux, uy, uz, rx, ry, rz
 isActiveDof = logical([1, 1, 1, 0, 0, 0]);
 
-%// input the mesh discretization parameters (length in inches)
+%// input mesh discretization parameters (length in inches)
 Lx = 20; Nx = 3; Ly = 2.5; Ny = 1; Lz = 0.5; Nz = 1;
 
 %// element properties
@@ -63,14 +63,14 @@ mesh = generateMesh(nodes, elements);
 %// compute plane stress QUAD4 element local stiffness matrix
 [k, k_idx] = computeC3D8Stiffness(mesh, isActiveDof, E, nu);
 
-%// determine wether a global dof is truly active based on element stiffness contributions
+%// determine size of global system of equations and index offsets for active DOFs
 [num_eqns, real_idx_diff] = checkActiveDofIndex(nodes, num_dofs, k_idx);
 
-%// assemble the global stiffness matrix
+%// assemble global stiffness matrix
 K = assembleGlobalStiffness(num_eqns, real_idx_diff, k, k_idx);
 
-%// compute global force vector
+%// assemble global force vector
 F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 
-%// apply the boundary conditions and solve for the displacements and reactions
+%// apply boundary conditions and solve for displacements and reactions
 [Q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F);

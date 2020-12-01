@@ -47,7 +47,7 @@ W = -500 / 12; % lb/in, uniformly distributed load
 force_data = [P, 0, 0, nodes{1,2:3};
               distributeBeamForce(nodes, elements, 1, W)];
 
-%// input the restrained dof data = logical and coordinates (release = 0, restrain = 1)
+%// input restrained dof data = logical and coordinates (release = 0, restrain = 1)
 support_data = [1, 1, 1, nodes{3,2:3};
                 1, 1, 1, nodes{4,2:3}];
 
@@ -67,16 +67,16 @@ mesh = generateMesh(nodes, elements);
 %// compute beam local stiffness matrix
 [k, k_idx] = computeB2D2Stiffness(mesh, isActiveDof, E, A, I);
 
-%// determine wether a global dof is truly active based on element stiffness contributions
+%// determine size of global system of equations and index offsets for active DOFs
 [num_eqns, real_idx_diff] = checkActiveDofIndex(nodes, num_dofs, k_idx);
 
-%// assemble the global stiffness matrix
+%// assemble global stiffness matrix
 K = assembleGlobalStiffness(num_eqns, real_idx_diff, k, k_idx);
 
-%// compute global force vector
+%// assemble global force vector
 F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 
-%// apply the boundary conditions and solve for the displacements and reactions
+%// apply boundary conditions and solve for displacements and reactions
 [Q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F);
 
 

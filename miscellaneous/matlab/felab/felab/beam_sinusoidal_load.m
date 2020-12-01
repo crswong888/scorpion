@@ -52,7 +52,7 @@ I = 96e+03; % cm^4, second moment of area
 W = @(x) sin(2 * pi * (x + 325) / 325); % kN/cm, 2-cycle sinusoidal loading function on [-325, 325]
 force_data = distributeBeamForce(nodes, elements, 1, W);
 
-%// input the restrained dof data = logical and coordinates (release = 0, restrain = 1)
+%// input restrained dof data = logical and coordinates (release = 0, restrain = 1)
 support_data = [1, 1, 1, nodes{1,2:3}];
 
 
@@ -71,7 +71,7 @@ mesh = generateMesh(nodes, elements);
 %// compute beam local stiffness matrix
 [k, k_idx] = computeB2D2Stiffness(mesh, isActiveDof, E, A, I);
 
-%// determine wether a global dof is truly active based on element stiffness contributions
+%// determine size of global system of equations and index offsets for active DOFs
 [num_eqns, real_idx_diff] = checkActiveDofIndex(nodes, num_dofs, k_idx);
 
 %// assemble global stiffness matrix
@@ -80,7 +80,7 @@ K = assembleGlobalStiffness(num_eqns, real_idx_diff, k, k_idx);
 %// assemble global force vector
 F = assembleGlobalForce(num_dofs, num_eqns, real_idx_diff, forces);
 
-%// apply boundary conditions and solve for the displacements and reactions
+%// apply boundary conditions and solve for displacements and reactions
 [Q, R] = systemSolve(num_dofs, num_eqns, real_idx_diff, supports, K, F);
 
 
