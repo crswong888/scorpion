@@ -18,22 +18,18 @@
 #include "Kernel.h"
 
 // Forward Declarations
-class StressDivergenceSpring;
 template <typename>
 class RankTwoTensorTempl;
 typedef RankTwoTensorTempl<Real> RankTwoTensor;
 
-template <>
-InputParameters validParams<StressDivergenceSpring>();
-
 class StressDivergenceSpring : public Kernel
 {
 public:
+  static InputParameters validParams();
   StressDivergenceSpring(const InputParameters & parameters);
   virtual void computeResidual() override;
   virtual void computeJacobian() override;
-  virtual void computeOffDiagJacobian(MooseVariableFEBase & jvar) override;
-  using Kernel::computeOffDiagJacobian;
+  virtual void computeOffDiagJacobian(unsigned int jvar) override;
 
 protected:
   virtual Real computeQpResidual() override { return 0.0; }
