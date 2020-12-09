@@ -44,15 +44,17 @@ u_initial = 0;
 %// forcing function p(t) (use anonymous function format - can be made piecewise using .* syntax)
 p = @(t) (t < 0.6).*(50 * sin(pi * t / 0.6)) + (0.6 <= t).*(0); % kN
 
-%// angular frequency of p(t) - if zero, it is assumed that p(t) is not a harmonic function
+%// angular frequency of forcing function - set to zero if p(t) is not a harmonic function
 omegaBar = pi / 0.6; % rad/s
 
 %// Newmark-beta method parameters (reccomended: gamma = 1/2 and beta = 1/4 or beta = 1/6)
 gamma = 1 / 2;
 beta = 1 / 4;
 
-%// residual tolerance and max allowable Newton iterations - R_tol is also used for other tolerances
-R_tol = 1e-03;
+%// residual tolerance used for Newton solver and certain other tasks
+R_tol = 1e-03; % should be nearly zero, but large enough to allow small errors
+
+%// max allowable Newton-Raphson iterations
 max_it = 20;
 
 %// string of parameter units = {time, distance, force} (used for data reports - not conversions)
@@ -67,7 +69,7 @@ units = {'s', 'cm', 'kN'};
 
 %// determine a suitable time step size if not specified by user
 if (dt == 0)
-    dt = computeTimeStepSize(omega_n, omegaBar, 'Nonlinear', true);
+    dt = computeTimeStepSize(omega_n, omegaBar, 'Nonlinear', (length(fs(1,:)) > 1));
 end
 
 %// add a static initialization to displacement initial condition

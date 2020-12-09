@@ -8,6 +8,8 @@
 %%% a 'gold/' subdirectory and compares the results. The "gold" files serve as an archive of
 %%% verified results (regression tests) for a given demo input file. This is useful for ensuring
 %%% that everything solves as expected on new machines or after changes to the source code are made.
+%%%
+%%% TODO: these tests ought to tolerate small numerical discrepancies when comparing workspaces
 
 clear all %#ok<CLALL>
 fprintf('\n')
