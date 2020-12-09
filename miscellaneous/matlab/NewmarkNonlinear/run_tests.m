@@ -1,8 +1,8 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% FE Environment for Solid Mechanics %%%
-%%%        By: Christopher Wong        %%%
-%%%        crswong888@gmail.com        %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Newmark-beta Method for Nonlinear SDOF Systems %%%
+%%%              By: Christopher Wong              %%%
+%%%              crswong888@gmail.com              %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%% This script runs all '.m' scripts in the current directory with a corresponding '.mat' file in
 %%% a 'gold/' subdirectory and compares the results. The "gold" files serve as an archive of
@@ -11,6 +11,7 @@
 
 clear all %#ok<CLALL>
 fprintf('\n')
+
 
 %// report notation for test results
 fprintf('Testing scripts against "gold" files (''OK'' = passed, ''NG'' = failed)\n')
