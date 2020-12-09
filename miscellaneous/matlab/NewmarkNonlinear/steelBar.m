@@ -61,20 +61,8 @@ units = {'s', 'cm', 'kN'};
 %%% SOURCE COMPUTATIONS
 %%% ------------------------------------------------------------------------------------------------
 
-%// assert that backbone curve does not begin at (0, 0)
-if (all(fs(:,1) == [0; 0]))
-    error(['The first abscissa-oridnate pair of the supplied backbone curve data is ',...
-           '''[0; 0]''. Please provide some other point in the upper positive quadrant.'])
-end
-
-%// compute elastic stiffness
-ke = fs(2,1) / fs(1,1);
-
-%// compute natural frequency of elastic system
-omega_n = sqrt(ke / m);
-
-%// compute damping constant (assumed to be constant even if plastic)
-c = 2 * xi * m * omega_n;
+%// compute natural angular frequency, damping coefficient, and elastic stiffness
+[omega_n, c, ke] = computeDynamicConstants(m, xi, fs);
 
 %// determine a suitable time step size if not specified by user
 if (dt == 0)
