@@ -16,16 +16,17 @@ function [s, n] = generate1DGridPoints(start_position, end_position, ds)
     %// fill grid points with interval values
     if (length >= 0) 
         for i = 2:n 
-            s(i) = s(i-1) + ds; 
+            s(i) = round(s(i-1) / ds) * ds + ds; 
         end
     else
         for i = 2:n
-            s(i) = s(i-1) - ds; 
+            s(i) = round(s(i-1) / ds) * ds - ds; 
         end
     end
     
-    %// in case end_position is not divisible by specified ds, fill s(n) with that value
+    %// in case length is not divisible by specified ds, fill s(n + 1) with that value
     if (s(n) ~= end_position)
-        s(n) = end_position; % shift last grid point back to final value
+        s(n + 1) = end_position;
+        n = n + 1;
     end
 end
