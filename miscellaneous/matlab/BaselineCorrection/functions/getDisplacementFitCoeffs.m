@@ -1,10 +1,10 @@
 %%% This function solves the linear normal equation for the polynomial coefficents of the least
-%%% squares velocity using LU decomposition. Both 'accel' and 'vel' must be transformed into natural
-%%% time 'tau' and the Jacobian map 'J' of real time onto 'tau' must also be provided.
+%%% squares displacement using LU decomposition. Both 'accel' and 'vel' must be transformed into
+%%% natural time 'tau' and the Jacobian map 'J' of real time onto 'tau' must also be provided.
 %%%
 %%% By: Christopher Wong | crswong888@gmail.com
 
-function C = getVelocityFitCoeffs(order, tau, J, accel, vel, beta, varargin)
+function C = getDisplacementFitCoeffs(order, tau, disp, varargin)
     %// parse additional input for enforcing relative normal tolerance on solution
     params = inputParser;
     addOptional(params, 'TOL', 1e-04, @(x) isnumeric(x) && (0 < x) && (x < 1));
@@ -20,7 +20,7 @@ function C = getVelocityFitCoeffs(order, tau, J, accel, vel, beta, varargin)
     K = zeros(num_coeffs, num_coeffs);
     for k = 1:num_coeffs
         for j = 1:num_coeffs
-            K(k,j) = (j + 1) / (k + j + 1);
+            K(k,j) = 1 / (k + j + 3);
         end
     end
     
@@ -28,14 +28,13 @@ function C = getVelocityFitCoeffs(order, tau, J, accel, vel, beta, varargin)
     I = zeros(num_coeffs, 1);
     for i = 1:(length(tau) - 1)
         for k = 1:num_coeffs
-            d2u_old = tau(i)^k * accel(i) + k * tau(i)^(k - 1) * vel(i);
-            d2u = tau(i + 1)^k * accel(i + 1) + k * tau(i + 1)^(k - 1) * vel(i + 1);
-            du_old = tau(i)^k * vel(i);
+            u_old = tau(i)^(k + 1) * disp(i);
+            u = tau(i + 1)^(k + 1) * disp(i + 1);
             
-            I(k) = I(k) + newmarkBetaIntegrate(tau(i + 1) - tau(i), d2u_old, d2u, du_old, 0, beta);
+            %%% note: newmarkGammaIntegrate() with 'gamma = 0.5' reduces to trapezoidal rule
+            I(k) = I(k) + newmarkGammaIntegrate(tau(i + 1) - tau(i), u_old, u, 0, 0.5);
         end
     end
-    I = J * I; % apply jacobian to map polynomials to natural coordinates ($\tau \in [0, 1]$)
     
     %// solve $\mathbf{K} \cdot C = I$ using LU factorization with row-reordering permutation matrix
     warning('off', 'MATLAB:singularMatrix')
@@ -51,11 +50,11 @@ function C = getVelocityFitCoeffs(order, tau, J, accel, vel, beta, varargin)
     warning('on', 'MATLAB:nearlySingularMatrix')
     if ((any(isnan(C))) || (R > params.Results.TOL))
         error(['LU decomposition was unsuccesful at solving for the coefficients of the least ',...
-               'squares velocity. This is most likely because the requested polynomial order ',...
-               'is too high.\n\nThe reciprocal condition number for the normal equation matrix ',...
-               'is %g and the relative residual is %g.'], rcond(K), R)
+               'squares displacement. This is most likely because the requested polynomial ',...
+               'order is too high.\n\nThe reciprocal condition number for the normal equation ',...
+               'matrix is %g and the relative residual is %g.'], rcond(K), R)
     end
     
     %/ report accuracy of solution
-    fprintf('Determined least squares velocity with relative residual: %g.\n\n', R)
+    fprintf('Determined least squares displacement with relative residual: %g.\n\n', R)
 end

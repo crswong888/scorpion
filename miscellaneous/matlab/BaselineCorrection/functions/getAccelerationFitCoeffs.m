@@ -7,11 +7,11 @@
 function C = getAccelerationFitCoeffs(order, tau, J, accel, gamma, varargin)
     %// parse additional input for enforcing relative normal tolerance on solution
     params = inputParser;
-    addOptional(params, 'TOL', 1e-04, @(x) (isnumeric(x) && (0 < x) && (x < 1)));
+    addOptional(params, 'TOL', 1e-04, @(x) isnumeric(x) && (0 < x) && (x < 1));
     parse(params, varargin{:})
 
-    %// assert that polynomial order is non-negative
-    if (order < 0)
+    %// assert that polynomial order is a natural number
+    if ((order < 0) || (floor(order) ~= order))
         error('The polynomial order must be an integer greater than or equal to zero.')
     end
     
@@ -27,12 +27,11 @@ function C = getAccelerationFitCoeffs(order, tau, J, accel, gamma, varargin)
     %// compute vector of integrals on right-hand side of linear normal equation
     I = zeros(num_coeffs, 1);
     for i = 1:(length(tau) - 1)
-        dt = tau(i + 1) - tau(i);
         for k = 1:num_coeffs
             d2u_old = tau(i)^(k - 1) * accel(i);
             d2u = tau(i + 1)^(k - 1) * accel(i + 1);
             
-            I(k) = I(k) + newmarkGammaIntegrate(dt, d2u_old, d2u, 0, gamma);
+            I(k) = I(k) + newmarkGammaIntegrate(tau(i + 1) - tau(i), d2u_old, d2u, 0, gamma);
         end
     end
     I = J * J * I; % apply jacobian to map polynomials to natural coordinates ($\tau \in [0, 1]$)
