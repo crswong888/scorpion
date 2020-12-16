@@ -41,13 +41,16 @@ function [adj_accel, adj_vel, adj_disp, vel, disp] = baselineCorrection(t, accel
                'for at least one of these parameters.'])
     end
 
-    %// computed unadjusted (nominal) velocity displacement time histories
+    %// computed unadjusted (nominal) velocity and displacement
     vel = zeros(1, N);
     disp = zeros(1, N);
     for i = 1:(N - 1)
         dt = t(i + 1) - t(i);
-        vel(i + 1) = newmarkGammaIntegrate(dt, accel(i), accel(i + 1), vel(i), gamma);
-        disp(i + 1) = newmarkBetaIntegrate(dt, accel(i), accel(i + 1), vel(i), disp(i), beta);
+        
+        %/ integrate using Newmark-beta rule
+        vel(i + 1) = vel(i) + (1 - gamma) * dt * accel(i) + gamma * dt * accel(i + 1);
+        disp(i + 1) = disp(i) + dt * vel(i) + (0.5 - beta) * dt * dt * accel(i)...
+                      + beta * dt * dt * accel(i + 1);
     end
 
     %// initialize adjusted time histories with nominal ones
