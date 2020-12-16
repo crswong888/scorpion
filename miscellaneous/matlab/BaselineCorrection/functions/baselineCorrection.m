@@ -10,9 +10,9 @@ function [adj_accel, adj_disp, adj_vel, vel, disp] = baselineCorrection(t, accel
     addParameter(params, 'Beta', 0.25, @(x) isnumeric(x) && (0 <= x) && (x <= 0.5))
     
     %/
-    addParameter(params, 'AccelFitOrder', [], @(x) (x >= 0) && (floor(x) == x))
-    addParameter(params, 'VelFitOrder', [], @(x) (x >= 0) && (floor(x) == x))
-    addParameter(params, 'DispFitOrder', [], @(x) (x >= 0) && (floor(x) == x))
+    addParameter(params, 'AccelFitOrder', [], @(x) isempty(x) || ((x >= 0) && (floor(x) == x)))
+    addParameter(params, 'VelFitOrder', [], @(x) isempty(x) || ((x >= 0) && (floor(x) == x)))
+    addParameter(params, 'DispFitOrder', [], @(x) isempty(x) || ((x >= 0) && (floor(x) == x)))
     
     %/
     addParameter(params, 'ResidualTol', 1e-04, @(x) isnumeric(x) && (0 < x) && (x < 1))
