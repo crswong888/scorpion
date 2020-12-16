@@ -1,7 +1,7 @@
 %%%
 
 
-function [adj_accel, adj_disp, adj_vel, vel, disp] = baselineCorrection(t, accel, varargin)
+function [adj_accel, adj_vel, adj_disp, vel, disp] = baselineCorrection(t, accel, varargin)
     %// object for additional inputs which control correction procedure
     params = inputParser;
     
@@ -61,7 +61,7 @@ function [adj_accel, adj_disp, adj_vel, vel, disp] = baselineCorrection(t, accel
 
     %// adjust time histories with acceleration fit, if desired
     if (~isempty(accel_fit_order))
-        coeffs = getAccelerationFitCoeffs(accel_fit_order, tau, J, adj_accel, gamma, TOL);
+        coeffs = getAccelerationFitCoeffs(accel_fit_order, tau, J, adj_accel, TOL);
 
         for i = 1:N
             pfit = evaluatePolynomials(coeffs, tau(i), J);
@@ -74,7 +74,7 @@ function [adj_accel, adj_disp, adj_vel, vel, disp] = baselineCorrection(t, accel
 
     %// adjust with velocity fit
     if (~isempty(vel_fit_order))
-        coeffs = getVelocityFitCoeffs(vel_fit_order, tau, J, adj_accel, adj_vel, beta, TOL);
+        coeffs = getVelocityFitCoeffs(vel_fit_order, tau, J, adj_vel, TOL);
 
         for i = 1:N
             pfit = evaluatePolynomials(coeffs, tau(i), J);

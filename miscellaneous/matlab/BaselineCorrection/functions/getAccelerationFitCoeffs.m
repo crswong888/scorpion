@@ -4,7 +4,7 @@
 %%%
 %%% By: Christopher Wong | crswong888@gmail.com
 
-function C = getAccelerationFitCoeffs(order, tau, J, accel, gamma, varargin)
+function C = getAccelerationFitCoeffs(order, tau, J, accel, varargin)
     %// parse additional input for enforcing relative normal tolerance on solution
     params = inputParser;
     addOptional(params, 'TOL', 1e-04, @(x) isnumeric(x) && (0 < x) && (x < 1));
@@ -31,10 +31,10 @@ function C = getAccelerationFitCoeffs(order, tau, J, accel, gamma, varargin)
             d2u_old = tau(i)^(k - 1) * accel(i);
             d2u = tau(i + 1)^(k - 1) * accel(i + 1);
             
-            I(k) = I(k) + newmarkGammaIntegrate(tau(i + 1) - tau(i), d2u_old, d2u, 0, gamma);
+            I(k) = I(k) + (tau(i + 1) - tau(i)) * (d2u_old + d2u); % trapezoidal rule
         end
     end
-    I = J * J * I; % apply jacobian to map polynomials to natural coordinates ($\tau \in [0, 1]$)
+    I = J * J * 0.5 * I; % apply jacobian to map polynomials to natural time
     
     %// solve $\mathbf{K} \cdot C = I$ using LU factorization with row-reordering permutation matrix
     warning('off', 'MATLAB:singularMatrix')

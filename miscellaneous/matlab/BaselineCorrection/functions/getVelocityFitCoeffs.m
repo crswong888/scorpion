@@ -4,7 +4,7 @@
 %%%
 %%% By: Christopher Wong | crswong888@gmail.com
 
-function C = getVelocityFitCoeffs(order, tau, J, accel, vel, beta, varargin)
+function C = getVelocityFitCoeffs(order, tau, J, vel, varargin)
     %// parse additional input for enforcing relative normal tolerance on solution
     params = inputParser;
     addOptional(params, 'TOL', 1e-04, @(x) isnumeric(x) && (0 < x) && (x < 1));
@@ -28,14 +28,13 @@ function C = getVelocityFitCoeffs(order, tau, J, accel, vel, beta, varargin)
     I = zeros(num_coeffs, 1);
     for i = 1:(length(tau) - 1)
         for k = 1:num_coeffs
-            d2u_old = tau(i)^k * accel(i) + k * tau(i)^(k - 1) * vel(i);
-            d2u = tau(i + 1)^k * accel(i + 1) + k * tau(i + 1)^(k - 1) * vel(i + 1);
             du_old = tau(i)^k * vel(i);
+            du = tau(i + 1)^k * vel(i + 1);
             
-            I(k) = I(k) + newmarkBetaIntegrate(tau(i + 1) - tau(i), d2u_old, d2u, du_old, 0, beta);
+            I(k) = I(k) + (tau(i + 1) - tau(i)) * (du_old + du); % trapezoidal rule
         end
     end
-    I = J * I; % apply jacobian to map polynomials to natural coordinates ($\tau \in [0, 1]$)
+    I = J * 0.5 * I; % apply jacobian to map polynomials to natural time
     
     %// solve $\mathbf{K} \cdot C = I$ using LU factorization with row-reordering permutation matrix
     warning('off', 'MATLAB:singularMatrix')

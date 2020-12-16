@@ -31,10 +31,10 @@ function C = getDisplacementFitCoeffs(order, tau, disp, varargin)
             u_old = tau(i)^(k + 1) * disp(i);
             u = tau(i + 1)^(k + 1) * disp(i + 1);
             
-            %%% note: newmarkGammaIntegrate() with 'gamma = 0.5' reduces to trapezoidal rule
-            I(k) = I(k) + newmarkGammaIntegrate(tau(i + 1) - tau(i), u_old, u, 0, 0.5);
+            I(k) = I(k) + (tau(i + 1) - tau(i)) * (u_old + u); % trapezoidal rule
         end
     end
+    I = 0.5 * I;
     
     %// solve $\mathbf{K} \cdot C = I$ using LU factorization with row-reordering permutation matrix
     warning('off', 'MATLAB:singularMatrix')
