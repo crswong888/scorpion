@@ -35,10 +35,10 @@ function [accel, vel, disp] = baselineCorrection(t, accel, varargin)
     %// assert that at least squares correction will be applied
     if (isempty([accel_fit_order, vel_fit_order, disp_fit_order]))
         error(['No values were input for parameters ''AccelFitOrder'', ''VelFitOrder'', nor ',...
-               '''DispFitOrder''. Please specify an integer values greater than or equal to ',...
-               'for at least one of these parameters.'])
+               '''DispFitOrder''. Please specify an integer value greater than or equal to ',...
+               'zero for at least one of these parameters.'])
     end
-
+    
     %// compute unadjusted (nominal) velocity and displacement
     [vel, disp] = newmarkIntegrate(t, accel, params.Results.Gamma, params.Results.Beta);
 
@@ -48,7 +48,7 @@ function [accel, vel, disp] = baselineCorrection(t, accel, varargin)
 
     %// adjust time histories with acceleration fit, if desired
     if (~isempty(accel_fit_order))
-        coeffs = getAccelerationFitCoeffs(accel_fit_order, tau, J, accel, TOL);
+        coeffs = fitTimeSeries(accel_fit_order, 'acceleration', tau, J * J, accel, TOL);
 
         for i = 1:N
             pfit = evaluatePolynomials(coeffs, tau(i), J);
@@ -61,7 +61,7 @@ function [accel, vel, disp] = baselineCorrection(t, accel, varargin)
 
     %// adjust with velocity fit
     if (~isempty(vel_fit_order))
-        coeffs = getVelocityFitCoeffs(vel_fit_order, tau, J, vel, TOL);
+        coeffs = fitTimeSeries(vel_fit_order, 'velocity', tau, J, vel, TOL);
 
         for i = 1:N
             pfit = evaluatePolynomials(coeffs, tau(i), J);
@@ -74,7 +74,7 @@ function [accel, vel, disp] = baselineCorrection(t, accel, varargin)
 
     %// adjust with displacement fit
     if (~isempty(disp_fit_order))
-        coeffs = getDisplacementFitCoeffs(disp_fit_order, tau, disp, TOL);
+        coeffs = fitTimeSeries(disp_fit_order, 'displacement', tau, 1, disp, TOL);
 
         for i = 1:N
             pfit = evaluatePolynomials(coeffs, tau(i), J);
