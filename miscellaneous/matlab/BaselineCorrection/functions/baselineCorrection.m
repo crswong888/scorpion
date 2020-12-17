@@ -1,7 +1,7 @@
 %%%
 
 
-function [adj_accel, adj_vel, adj_disp, vel, disp] = baselineCorrection(t, accel, varargin)
+function [accel, vel, disp] = baselineCorrection(t, accel, varargin)
     %// object for additional inputs which control correction procedure
     params = inputParser;
     
@@ -21,8 +21,6 @@ function [adj_accel, adj_vel, adj_disp, vel, disp] = baselineCorrection(t, accel
     parse(params, varargin{:})
     
     %/ simplify pointer syntax
-    gamma = params.Results.Gamma;
-    beta = params.Results.Beta;
     accel_fit_order = params.Results.AccelFitOrder;
     vel_fit_order = params.Results.VelFitOrder;
     disp_fit_order = params.Results.DispFitOrder;
@@ -41,22 +39,8 @@ function [adj_accel, adj_vel, adj_disp, vel, disp] = baselineCorrection(t, accel
                'for at least one of these parameters.'])
     end
 
-    %// computed unadjusted (nominal) velocity and displacement
-    vel = zeros(1, N);
-    disp = zeros(1, N);
-    for i = 1:(N - 1)
-        dt = t(i + 1) - t(i);
-        
-        %/ integrate using Newmark-beta rule
-        vel(i + 1) = vel(i) + (1 - gamma) * dt * accel(i) + gamma * dt * accel(i + 1);
-        disp(i + 1) = disp(i) + dt * vel(i) + (0.5 - beta) * dt * dt * accel(i)...
-                      + beta * dt * dt * accel(i + 1);
-    end
-
-    %// initialize adjusted time histories with nominal ones
-    adj_accel = accel;
-    adj_vel = vel;
-    adj_disp = disp;
+    %// compute unadjusted (nominal) velocity and displacement
+    [vel, disp] = newmarkIntegrate(t, accel, params.Results.Gamma, params.Results.Beta);
 
     %// compute Jacobian and map time onto natural time $\tau \in [0, 1]$
     J = range(t);
@@ -64,40 +48,40 @@ function [adj_accel, adj_vel, adj_disp, vel, disp] = baselineCorrection(t, accel
 
     %// adjust time histories with acceleration fit, if desired
     if (~isempty(accel_fit_order))
-        coeffs = getAccelerationFitCoeffs(accel_fit_order, tau, J, adj_accel, TOL);
+        coeffs = getAccelerationFitCoeffs(accel_fit_order, tau, J, accel, TOL);
 
         for i = 1:N
             pfit = evaluatePolynomials(coeffs, tau(i), J);
 
-            adj_accel(i) = adj_accel(i) - pfit(1);
-            adj_vel(i) = adj_vel(i) - pfit(2);
-            adj_disp(i) = adj_disp(i) - pfit(3);
+            accel(i) = accel(i) - pfit(1);
+            vel(i) = vel(i) - pfit(2);
+            disp(i) = disp(i) - pfit(3);
         end
     end
 
     %// adjust with velocity fit
     if (~isempty(vel_fit_order))
-        coeffs = getVelocityFitCoeffs(vel_fit_order, tau, J, adj_vel, TOL);
+        coeffs = getVelocityFitCoeffs(vel_fit_order, tau, J, vel, TOL);
 
         for i = 1:N
             pfit = evaluatePolynomials(coeffs, tau(i), J);
 
-            adj_accel(i) = adj_accel(i) - pfit(1);
-            adj_vel(i) = adj_vel(i) - pfit(2);
-            adj_disp(i) = adj_disp(i) - pfit(3);
+            accel(i) = accel(i) - pfit(1);
+            vel(i) = vel(i) - pfit(2);
+            disp(i) = disp(i) - pfit(3);
         end
     end
 
     %// adjust with displacement fit
     if (~isempty(disp_fit_order))
-        coeffs = getDisplacementFitCoeffs(disp_fit_order, tau, adj_disp, TOL);
+        coeffs = getDisplacementFitCoeffs(disp_fit_order, tau, disp, TOL);
 
         for i = 1:N
             pfit = evaluatePolynomials(coeffs, tau(i), J);
 
-            adj_accel(i) = adj_accel(i) - pfit(1);
-            adj_vel(i) = adj_vel(i) - pfit(2);
-            adj_disp(i) = adj_disp(i) - pfit(3);
+            accel(i) = accel(i) - pfit(1);
+            vel(i) = vel(i) - pfit(2);
+            disp(i) = disp(i) - pfit(3);
         end
     end
 end
