@@ -22,8 +22,11 @@ accel_func = @(t) -250 * pi * pi * sin(50 * pi * t);
 [nom_DR, nom_AR] = computeDriftRatio(time, accel, disp);
 
 %// apply least squares baseline correction and output adjusted time histories
-[adj_accel, adj_vel, adj_disp] = baselineCorrection(time, accel, 'AccelFitOrder', 9,...
-                                    'VelFitOrder', 9, 'DispFitOrder', 7, 'ResidualTol', 1e-06);
+[adj_accel, adj_vel, adj_disp] = baselineCorrection(time, accel, 'AccelFitOrder', 12,...
+                                    'VelFitOrder', 11, 'DispFitOrder', 9);
 
 %// ideally, DR < 0.05 and |AR - 1| < 0.05
-[adj_DR, adj_AR] = computeDriftRatio(time, accel, adj_disp);
+[DR, AR] = computeDriftRatio(time, accel, adj_disp);
+
+%//
+plotTimeSeries(time, [adj_accel; adj_disp; adj_accel])

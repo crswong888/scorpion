@@ -1,4 +1,6 @@
 %%%
+%%%
+%%% By: Christopher Wong | crswong888@gmail.com
 
 
 function [accel, vel, disp] = baselineCorrection(t, accel, varargin)
