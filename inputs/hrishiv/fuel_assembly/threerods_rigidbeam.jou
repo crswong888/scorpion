@@ -1,0 +1,325 @@
+reset
+
+#{s1 = 48.133}
+#{s2 = 571.22}
+#{m1 = s1 + (s2-s1)/2} 
+#{s3 = 1093.19}
+#{m2 = s2 + (s3-s2)/2} 
+#{s4 = 1615.16}
+#{m3 = s3 + (s4-s3)/2} 
+#{s5 = 2137.13}
+#{m4 = s4 + (s5-s4)/2} 
+#{s6 = 2659.1}
+#{m5 = s5 + (s6-s5)/2} 
+#{s7 = 3181.07}
+#{m6 = s6 + (s7-s6)/2} 
+#{s8 = 3801.49}
+#{m7 = s7 + (s8-s7)/2} 
+
+create curve location 0 0 0 location {s1-13.2} 0 0
+create curve location {s1-13.2} 0 0 location {s1} 0 0
+create curve location {s1} 0 0 location {s1+13.2} 0 0
+create curve location {s1+13.2} 0 0 location {m1} 0 0
+create curve location {m1} 0 0 location {s2-23} 0 0
+create curve location {s2-23} 0 0 location {s2} 0 0
+create curve location {s2} 0 0 location {s2+23} 0 0
+create curve location {s2+23} 0 0 location {m2} 0 0
+create curve location {m2} 0 0 location {s3-23} 0 0
+create curve location {s3-23} 0 0 location {s3} 0 0
+create curve location {s3} 0 0 location {s3+23} 0 0
+create curve location {s3+23} 0 0 location {m3} 0 0
+create curve location {m3} 0 0 location {s4-23} 0 0
+create curve location {s4-23} 0 0 location {s4} 0 0
+create curve location {s4} 0 0 location {s4+23} 0 0
+create curve location {s4+23} 0 0 location {m4} 0 0
+create curve location {m4} 0 0 location {s5-23} 0 0
+create curve location {s5-23} 0 0 location {s5} 0 0
+create curve location {s5} 0 0 location {s5+23} 0 0
+create curve location {s5+23} 0 0 location {m5} 0 0
+create curve location {m5} 0 0 location {s6-23} 0 0
+create curve location {s6-23} 0 0 location {s6} 0 0
+create curve location {s6} 0 0 location {s6+23} 0 0
+create curve location {s6+23} 0 0 location {m6} 0 0
+create curve location {m6} 0 0 location {s7-23} 0 0
+create curve location {s7-23} 0 0 location {s7} 0 0
+create curve location {s7} 0 0 location {s7+23} 0 0
+create curve location {s7+23} 0 0 location {m7} 0 0
+create curve location {m7} 0 0 location {s8-13.2} 0 0
+create curve location {s8-13.2} 0 0 location {s8} 0 0
+create curve location {s8} 0 0 location {s8+13.2} 0 0
+create curve location {s8+13.2} 0 0 location 3832.83 0 0
+
+
+
+
+##
+curve 1 to 32 copy move y -12.6 repeat 2
+##
+
+
+create vertex {s1-16.5} 6.3 -6.3
+create vertex {s1-16.5} 6.3 6.3
+create vertex {s1+16.5} 6.3 -6.3
+create vertex {s1+16.5} 6.3 6.3
+
+##
+create surface vertex 193 194 196 195
+##
+
+webcut body 1  with general plane xy
+webcut body 1 2 with general plane yz move x {s1} y 0 z 0
+
+##
+body 1 2 3 4 copy move y -12.6 repeat 3
+##
+
+merge all
+
+webcut body 1 to 16 with general plane yz move x {s1-13.2} y 0 z 0
+webcut body 1 to 16 with general plane yz move x {s1+13.2} y 0 z 0
+
+body 1 to 32 copy move x {s8-s1}
+
+group "s1xzplane" add body 1 to 64
+
+merge all
+
+create surface vertex 194 202 210 220
+create surface vertex  202 210 211 196
+
+webcut body 65 66 with general plane xz
+body 65 to 68 copy move z -12.6
+body 65 to 72 copy move y -12.6 repeat 2
+webcut body 65 to 88 with general plane yz move x {s1-13.2} y 0 z 0
+webcut body 65 to 88 with general plane yz move x {s1+13.2} y 0 z 0
+
+body 65 to 112 copy move x {s8-s1}
+
+merge all
+group "s1xyplane" add body 65 to 160
+
+
+create vertex {s2-28.5} 6.3 -6.3
+create vertex {s2-28.5} 6.3 6.3
+create vertex {s2+28.5} 6.3 -6.3
+create vertex {s2+28.5} 6.3 6.3
+
+create surface vertex 805 806 808 807
+webcut body 161  with general plane xy
+webcut body 161 162 with general plane yz move x {s2} y 0 z 0
+body 161 162 163 164 copy move y -12.6 repeat 3
+merge all
+
+webcut body 161 to 176 with general plane yz move x {s2-23} y 0 z 0
+webcut body 161 to 176 with general plane yz move x {s2+23} y 0 z 0
+
+merge all
+
+body 161 to 192 copy move x {s3-s2}
+body 161 to 192 copy move x {s4-s2}
+body 161 to 192  copy move x {s5-s2}
+body 161 to 192 copy move x {s6-s2}
+body 161 to 192 copy move x {s7-s2}
+
+merge all
+group "s2xzplane" add body 161 to 352
+
+
+create surface vertex 806 814 822 832 
+create surface vertex  814 822 823 808
+webcut body 353 354 with general plane xz
+webcut body 353 to 356 with general plane yz move x {s2-23} y 0 z 0
+webcut body 353 to 356 with general plane yz move x {s2+23} y 0 z 0
+body 353 to 360 copy move z -12.6
+body 353 to 368 copy move y -12.6 repeat 2
+
+body 353 to 400 copy move x {s3-s2}
+body 353 to 400  copy move x {s4-s2}
+body 353 to 400   copy move x {s5-s2}
+body 353 to 400  copy move x {s6-s2}
+body 353 to 400  copy move x {s7-s2}
+
+merge all
+group "s2xyplane" add body 353 to 640
+
+create curve vertex 66 534
+create curve vertex 70 581
+
+curve 2589 2590 copy move y -12.6 
+curve 2589 to 2592 copy move x {s8-s1}
+group "dimplehor1" add curve 2589 to 2596
+
+create curve vertex 66 265
+create curve vertex 70 297
+
+curve 2597 2598 copy move y -12.6 
+curve 2597 to 2600 copy move x {s8-s1}
+group "dimplever1" add curve 2597 to 2604
+
+create curve vertex 68 470
+
+curve 2605 copy move y -12.6 
+curve 2605 2606 copy move x {s8-s1}
+group "springhor1" add curve 2605 to 2608
+
+create curve vertex 68 225
+
+curve 2609 copy move y -12.6 
+curve 2609 2610 copy move x {s8-s1}
+group "springver1" add curve 2609 to 2612
+
+create curve vertex 74 877
+create curve vertex 78 909
+
+curve 2613 2614 copy move y -12.6 
+curve 2613 to 2616 copy move x {s3-s2}
+curve 2613 to 2616 copy move x {s4-s2}
+curve 2613 to 2616 copy move x {s5-s2}
+curve 2613 to 2616 copy move x {s6-s2}
+curve 2613 to 2616 copy move x {s7-s2}
+group "dimplever2" add curve 2613 to 2636
+
+create curve vertex 74 1298
+create curve vertex 78 1301
+
+curve 2637 2638 copy move y -12.6 
+curve 2637 to 2640 copy move x {s3-s2}
+curve 2637 to 2640 copy move x {s4-s2}
+curve 2637 to 2640 copy move x {s5-s2}
+curve 2637 to 2640 copy move x {s6-s2}
+curve 2637 to 2640 copy move x {s7-s2}
+group "dimplehor2" add curve 2637 to 2660
+
+
+create curve vertex 76 837
+
+curve 2661 copy move y -12.6 
+curve 2661 2662 copy move x {s3-s2}
+curve 2661 2662 copy move x {s4-s2}
+curve 2661 2662 copy move x {s5-s2}
+curve 2661 2662 copy move x {s6-s2}
+curve 2661 2662 copy move x {s7-s2}
+group "springver2" add curve 2661 to 2672
+
+create curve vertex 76 1331
+
+curve 2673 copy move y -12.6 
+curve 2673 2674 copy move x {s3-s2}
+curve 2673 2674 copy move x {s4-s2}
+curve 2673 2674 copy move x {s5-s2}
+curve 2673 2674 copy move x {s6-s2}
+curve 2673 2674 copy move x {s7-s2}
+group "springhor2" add curve 2673 to 2684
+
+create curve vertex 4 430
+create curve vertex 4 438
+curve 2685 2686 copy move x 13.2 
+curve 2685 2686 copy move x -13.2 
+curve 2685 to 2690 copy move x {s8-s1}
+create curve vertex 12 1267
+create curve vertex 12 1242
+curve 2697 2698 copy move x 23
+curve 2697 2698 copy move x -23
+curve 2697 to 2702 copy move x {s3-s2}
+curve 2697 to 2702 copy move x {s4-s2}
+curve 2697 to 2702 copy move x {s5-s2}
+curve 2697 to 2702 copy move x {s6-s2}
+curve 2697 to 2702 copy move x {s7-s2}
+group "rigidbeamhor" add curve 2685 to 2732
+
+merge all
+
+### create vertical rigid beams
+create curve vertex 4 201
+create curve vertex 4 209
+curve 2733 2734 copy move x 13.2 
+curve 2733 2734 copy move x -13.2 
+curve 2733 to 2738 copy move x {s8-s1}
+create curve vertex 12 813
+create curve vertex 12 821
+curve 2745 2746 copy move x 23
+curve 2745 2746 copy move x -23
+curve 2745 to 2750 copy move x {s3-s2}
+curve 2745 to 2750 copy move x {s4-s2}
+curve 2745 to 2750 copy move x {s5-s2}
+curve 2745 to 2750 copy move x {s6-s2}
+curve 2745 to 2750 copy move x {s7-s2}
+group "rigidbeamver" add curve 2733 to 2780
+###
+
+create curve location -28.5 0 0 location 0 0 0
+create curve location 3832.83 0 0 location 3861.33 0 0      ####curve 2781 and 2782 control rods extending portion
+merge all
+
+
+merge all
+create curve vertex 8 72
+curve 2783 copy move y -12.6
+curve 2783 2784 copy move x {m2-m1}
+curve 2783 2784 copy move x {m3-m1}
+curve 2783 2784 copy move x {m4-m1}
+curve 2783 2784 copy move x {m5-m1}
+curve 2783 2784 copy move x {m6-m1}
+curve 2783 2784 copy move x {m7-m1}
+
+group "con_tact_spring" add curve 2783 to 2796
+
+create curve location {m1} -25.2 0 location {m1} -32 0
+curve 2797 copy move x {m2-m1}
+curve 2797 copy move x {m3-m1}
+curve 2797 copy move x {m4-m1}
+curve 2797 copy move x {m5-m1}
+curve 2797 copy move x {m6-m1}
+curve 2797 copy move x {m7-m1}
+group "con_tact_spring2" add curve 2797 to 2803
+
+merge all
+
+group "controlrod" add curve 1 to 32 2781 2782
+group "fuelrod" add curve 33 to 96
+
+
+group controlrod size 10
+group controlrod scheme equal
+mesh group controlrod
+
+group fuelrod size 10
+group fuelrod scheme equal
+mesh group fuelrod
+
+
+group "spacergrids" add surface all
+group spacergrids interval 1
+mesh group spacergrids
+
+group dimplehor1 dimplever1 springhor1 springver1 dimplehor2 dimplever2 springhor2 springver2 con_tact_spring con_tact_spring2 rigidbeamhor rigidbeamver interval 1
+mesh group dimplehor1 dimplever1 springhor1 springver1 dimplehor2 dimplever2 springhor2 springver2 con_tact_spring con_tact_spring2 rigidbeamhor rigidbeamver
+
+block 1 add group controlrod
+block 2 add group fuelrod
+block 3 add group s1xzplane   #inconel spacer grid xz plane
+block 4 add group s1xyplane   #inconel spacer grid xy plane
+block 5 add group s2xzplane #zircaloy spacer grid xz plane
+block 6 add group s2xyplane #zircaloy spacer grid xy plane
+block 7 add group dimplehor1 #inconel dimple xz plane
+block 8 add group dimplever1 #inconel dimple xy plane
+block 9 add group springhor1 #inconel spring xz plane
+block 10 add group springver1 #inconel spring xy plane
+block 11 add group dimplehor2 #zircaloy dimple xz plane
+block 12 add group dimplever2 #zircaloy dimple xy plane
+block 13 add group springhor2 #zircaloyl spring xz plane
+block 14 add group springver2 #zircaloyl spring xy plane
+block 15 add group rigidbeamhor #rigid beam xzplane
+block 16 add group rigidbeamver #rigid beam xyplane
+block 17 add group con_tact_spring  #midsprings
+block 17 add group con_tact_spring2  #midsprings at bottom
+
+
+
+nodeset 100 add vertex 2769   #control rod end 1
+nodeset 101 add vertex 2772   #control rod end 2
+nodeset 102 add vertex 65 129 128 192 #fuel rod ends
+nodeset 103 add surface all #all spacer grid nodes
+nodeset 104 add vertex 2802 2804 2806 2808 2810 2812 2814 # midsprings nodes at bottom
+nodeset 105 add vertex 1002    #spacergrid 4 top
+nodeset 106 add vertex 32    # almost center
