@@ -3,19 +3,16 @@
 %%% By: Christopher Wong | crswong888@gmail.com
 
 
-%%% need warning that time and all series equal length
-%%% this would probably be a good time to use validate attributes to ensure row vectors
-%%%
-%%% need a clear figures option (default is yes clear)
-%%%
-%%% titles not required, default plot title is series 1, 2, ...
-%%%
 %%% multilayout plot only uses 1 title
-%%%
-%%% fontsize and fontname can definitely be their own params (run on mac to test fontname)
 %%%
 %%% probably need to find way to switch back and forth on 'ActivePositionProperty' and 
 %%% 'PositionConstraint' depending on current matlab version
+%%%
+%%% format 'separate' or 'layout', if layout - max number or series is 5
+%%%
+%%% possibly include an 'abscissa' and 'ordinates' parameter for using separate data sizes, in which
+%%% case, the t and series params must be made optional, but then required if no abscissa-ordinates,
+%%% also if abscissa-ordinates, make them mutually dependent
 
 
 function [] = plotTimeSeries(t, series, varargin)
@@ -24,19 +21,42 @@ function [] = plotTimeSeries(t, series, varargin)
     
     %/ series must be a row vector equal in length to 't' - provide multiple by concatenating rows
     N = length(t);
+    num_plots = length(series(:,1));
     valid_series = @(x) validateattributes(x, {'numeric'}, {'ncols', N});
     addRequired(params, 'Series', valid_series)
     
+    %/ cell array of plot titles and axis labels for each 'series' - use 'none' to hide titles
+    valid_titles = @(x) ischar(x) || isstring(x);
+    addParameter(params, 'Title', [], @(x) (length(string(x)) == num_plots) && (valid_titles(x)... 
+                 || (iscell(x) && all(cellfun(valid_titles, x)))))
+    
     %/ font to use on plot axes and title test
-    addParameter(params, 'FontName', 'Helvetica')
+    valid_font = @(x) ischar(x) || (isstring(x) && (length(x) == 1));
+    addParameter(params, 'FontName', 'Helvetica', valid_font)
+    addParameter(params, 'FontSize', 10, @(x) isnumeric(x) && (x > 0));
+    
+    %/ wether or not to close all currently open plots before generating new ones
+    addParameter(params, 'ClearFigures', false, @(x) islogical(x));
     
     %// parse provided inputs
     parse(params, series, varargin{:})
     
+    %/ simplify pointer syntax
+    plot_titles = string(params.Results.Title);
+    ftname = params.Results.FontName;
+    ftsize = params.Results.FontSize;
     
-    %%% this will be handled by a parameter
-    %close all
+    %//
+    if (isempty(plot_titles))
+        for p = 1:num_plots
+            plot_titles(p) = ['Time Series ', num2str(p)];
+        end
+    end
     
+    %// clear plot objects, if desired
+    if (params.Results.ClearFigures)
+        close all
+    end
     
     %//
     res = get(0, 'ScreenSize');
@@ -45,15 +65,15 @@ function [] = plotTimeSeries(t, series, varargin)
     
     %//
     m = [0.01, 0.02]; % minimum vertical and horizontal tight space margins
-    for p = 1:1%length(series(:,1))
+    for p = 1:num_plots
         %/
         figure('OuterPosition', pos);      
-        plot(t, series(p,:))
+        plot(t, series(p,:), 'Color', [0, 0, 0], 'LineWidth', 1)
         hold on
         
         %/
-        set(gca, 'FontName', 'Helvetica', 'FontSize', 10);
-        th = title('This Is A Plot', 'Units', 'normalized', 'FontUnits', 'normalized');
+        set(gca, 'FontName', ftname, 'FontSize', ftsize);
+        th = title(plot_titles(p), 'Units', 'normalized', 'FontUnits', 'normalized');
         tset = [th.Position + [0, m(2) / 2, 0], th.FontSize]; 
         set(th, 'Position', tset(1:3), 'Units', 'data', 'FontUnits', 'points');
         xlabel('X Axis')

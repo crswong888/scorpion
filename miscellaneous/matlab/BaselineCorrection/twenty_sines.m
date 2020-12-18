@@ -29,4 +29,14 @@ accel_func = @(t) -250 * pi * pi * sin(50 * pi * t);
 [DR, AR] = computeDriftRatio(time, accel, adj_disp);
 
 %//
-plotTimeSeries(time, [adj_accel; adj_disp; adj_accel])
+catseries = [adj_accel; adj_vel; adj_disp];
+plot_titles = {'Adjusted Acceleration Time History';
+               'Adjusted Velocity Time History';
+               'Adjusted Displacement Time History'};
+
+plotTimeSeries(time, catseries, 'Title', plot_titles)
+
+
+%%% plot original acceleration by itself
+%%% plot adjusted time histories in layout format
+%%% plot adjusted vs displaced in superimposed format (maybe do this on chichi)
