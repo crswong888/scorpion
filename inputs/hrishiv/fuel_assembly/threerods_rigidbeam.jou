@@ -2,19 +2,19 @@ reset
 
 #{s1 = 48.133}
 #{s2 = 571.22}
-#{m1 = s1 + (s2-s1)/2} 
+#{m1 = s1 + (s2-s1)/2}
 #{s3 = 1093.19}
-#{m2 = s2 + (s3-s2)/2} 
+#{m2 = s2 + (s3-s2)/2}
 #{s4 = 1615.16}
-#{m3 = s3 + (s4-s3)/2} 
+#{m3 = s3 + (s4-s3)/2}
 #{s5 = 2137.13}
-#{m4 = s4 + (s5-s4)/2} 
+#{m4 = s4 + (s5-s4)/2}
 #{s6 = 2659.1}
-#{m5 = s5 + (s6-s5)/2} 
+#{m5 = s5 + (s6-s5)/2}
 #{s7 = 3181.07}
-#{m6 = s6 + (s7-s6)/2} 
+#{m6 = s6 + (s7-s6)/2}
 #{s8 = 3801.49}
-#{m7 = s7 + (s8-s7)/2} 
+#{m7 = s7 + (s8-s7)/2}
 
 create curve location 0 0 0 location {s1-13.2} 0 0
 create curve location {s1-13.2} 0 0 location {s1} 0 0
@@ -73,6 +73,7 @@ webcut body 1 2 with general plane yz move x {s1} y 0 z 0
 body 1 2 3 4 copy move y -12.6 repeat 3
 ##
 
+imprint body all with vertex all
 merge all
 
 webcut body 1 to 16 with general plane yz move x {s1-13.2} y 0 z 0
@@ -82,6 +83,7 @@ body 1 to 32 copy move x {s8-s1}
 
 group "s1xzplane" add body 1 to 64
 
+imprint body all with vertex all
 merge all
 
 create surface vertex 194 202 210 220
@@ -95,6 +97,7 @@ webcut body 65 to 88 with general plane yz move x {s1+13.2} y 0 z 0
 
 body 65 to 112 copy move x {s8-s1}
 
+imprint body all with vertex all
 merge all
 group "s1xyplane" add body 65 to 160
 
@@ -108,11 +111,14 @@ create surface vertex 805 806 808 807
 webcut body 161  with general plane xy
 webcut body 161 162 with general plane yz move x {s2} y 0 z 0
 body 161 162 163 164 copy move y -12.6 repeat 3
+
+imprint body all with vertex all
 merge all
 
 webcut body 161 to 176 with general plane yz move x {s2-23} y 0 z 0
 webcut body 161 to 176 with general plane yz move x {s2+23} y 0 z 0
 
+imprint body all with vertex all
 merge all
 
 body 161 to 192 copy move x {s3-s2}
@@ -121,11 +127,12 @@ body 161 to 192  copy move x {s5-s2}
 body 161 to 192 copy move x {s6-s2}
 body 161 to 192 copy move x {s7-s2}
 
+imprint body all with vertex all
 merge all
 group "s2xzplane" add body 161 to 352
 
 
-create surface vertex 806 814 822 832 
+create surface vertex 806 814 822 832
 create surface vertex  814 822 823 808
 webcut body 353 354 with general plane xz
 webcut body 353 to 356 with general plane yz move x {s2-23} y 0 z 0
@@ -139,39 +146,40 @@ body 353 to 400   copy move x {s5-s2}
 body 353 to 400  copy move x {s6-s2}
 body 353 to 400  copy move x {s7-s2}
 
+imprint body all with vertex all
 merge all
 group "s2xyplane" add body 353 to 640
 
 create curve vertex 66 534
 create curve vertex 70 581
 
-curve 2589 2590 copy move y -12.6 
+curve 2589 2590 copy move y -12.6
 curve 2589 to 2592 copy move x {s8-s1}
 group "dimplehor1" add curve 2589 to 2596
 
 create curve vertex 66 265
 create curve vertex 70 297
 
-curve 2597 2598 copy move y -12.6 
+curve 2597 2598 copy move y -12.6
 curve 2597 to 2600 copy move x {s8-s1}
 group "dimplever1" add curve 2597 to 2604
 
 create curve vertex 68 470
 
-curve 2605 copy move y -12.6 
+curve 2605 copy move y -12.6
 curve 2605 2606 copy move x {s8-s1}
 group "springhor1" add curve 2605 to 2608
 
 create curve vertex 68 225
 
-curve 2609 copy move y -12.6 
+curve 2609 copy move y -12.6
 curve 2609 2610 copy move x {s8-s1}
 group "springver1" add curve 2609 to 2612
 
 create curve vertex 74 877
 create curve vertex 78 909
 
-curve 2613 2614 copy move y -12.6 
+curve 2613 2614 copy move y -12.6
 curve 2613 to 2616 copy move x {s3-s2}
 curve 2613 to 2616 copy move x {s4-s2}
 curve 2613 to 2616 copy move x {s5-s2}
@@ -182,7 +190,7 @@ group "dimplever2" add curve 2613 to 2636
 create curve vertex 74 1298
 create curve vertex 78 1301
 
-curve 2637 2638 copy move y -12.6 
+curve 2637 2638 copy move y -12.6
 curve 2637 to 2640 copy move x {s3-s2}
 curve 2637 to 2640 copy move x {s4-s2}
 curve 2637 to 2640 copy move x {s5-s2}
@@ -193,7 +201,7 @@ group "dimplehor2" add curve 2637 to 2660
 
 create curve vertex 76 837
 
-curve 2661 copy move y -12.6 
+curve 2661 copy move y -12.6
 curve 2661 2662 copy move x {s3-s2}
 curve 2661 2662 copy move x {s4-s2}
 curve 2661 2662 copy move x {s5-s2}
@@ -203,7 +211,7 @@ group "springver2" add curve 2661 to 2672
 
 create curve vertex 76 1331
 
-curve 2673 copy move y -12.6 
+curve 2673 copy move y -12.6
 curve 2673 2674 copy move x {s3-s2}
 curve 2673 2674 copy move x {s4-s2}
 curve 2673 2674 copy move x {s5-s2}
@@ -213,8 +221,8 @@ group "springhor2" add curve 2673 to 2684
 
 create curve vertex 4 430
 create curve vertex 4 438
-curve 2685 2686 copy move x 13.2 
-curve 2685 2686 copy move x -13.2 
+curve 2685 2686 copy move x 13.2
+curve 2685 2686 copy move x -13.2
 curve 2685 to 2690 copy move x {s8-s1}
 create curve vertex 12 1267
 create curve vertex 12 1242
@@ -232,8 +240,8 @@ merge all
 ### create vertical rigid beams
 create curve vertex 4 201
 create curve vertex 4 209
-curve 2733 2734 copy move x 13.2 
-curve 2733 2734 copy move x -13.2 
+curve 2733 2734 copy move x 13.2
+curve 2733 2734 copy move x -13.2
 curve 2733 to 2738 copy move x {s8-s1}
 create curve vertex 12 813
 create curve vertex 12 821
@@ -288,9 +296,13 @@ group fuelrod scheme equal
 mesh group fuelrod
 
 
-group "spacergrids" add surface all
-group spacergrids interval 1
-mesh group spacergrids
+#group "spacergrids" add surface all
+#group spacergrids interval 1
+#mesh group spacergrids
+#
+group s1xzplane s1xyplane s2xzplane s2xyplane interval 1
+mesh group s1xzplane s1xyplane s2xzplane s2xyplane
+
 
 group dimplehor1 dimplever1 springhor1 springver1 dimplehor2 dimplever2 springhor2 springver2 con_tact_spring con_tact_spring2 rigidbeamhor rigidbeamver interval 1
 mesh group dimplehor1 dimplever1 springhor1 springver1 dimplehor2 dimplever2 springhor2 springver2 con_tact_spring con_tact_spring2 rigidbeamhor rigidbeamver
@@ -323,3 +335,11 @@ nodeset 103 add surface all #all spacer grid nodes
 nodeset 104 add vertex 2802 2804 2806 2808 2810 2812 2814 # midsprings nodes at bottom
 nodeset 105 add vertex 1002    #spacergrid 4 top
 nodeset 106 add vertex 32    # almost center
+
+
+block 1 2 7 8 9 10 11 12 13 14 15 16 17 element type beam2
+block 3 4 5 6 element type shell4
+
+
+# export exodus
+export mesh '~/projects/scorpion/inputs/hrishiv/fuel_assembly/threerods_rigidbeam.e' overwrite
