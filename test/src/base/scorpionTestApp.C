@@ -13,30 +13,32 @@
 #include "MooseSyntax.h"
 #include "ModulesApp.h"
 
-template <>
 InputParameters
-validParams<scorpionTestApp>()
+scorpionTestApp::validParams()
 {
-  InputParameters params = validParams<MooseApp>();
+  InputParameters params = scorpionApp::validParams();
   return params;
 }
-
-registerKnownLabel("scorpionTestApp");
 
 scorpionTestApp::scorpionTestApp(InputParameters parameters) : MooseApp(parameters)
 {
   scorpionTestApp::registerAll(
-    _factory, _action_factory, _syntax, getParam<bool>("allow_test_objects"));
+      _factory, _action_factory, _syntax, getParam<bool>("allow_test_objects"));
 }
 
 scorpionTestApp::~scorpionTestApp() {}
 
-// External entry point for dynamic application loading
-extern "C" void
-scorpionTestApp__registerApps()
+void
+scorpionTestApp::registerAll(Factory & f, ActionFactory & af, Syntax & s, bool use_test_objs)
 {
-  scorpionTestApp::registerApps();
+  scorpionApp::registerAll(f, af, s);
+  if (use_test_objs)
+  {
+    Registry::registerObjectsTo(f, {"scorpionTestApp"});
+    Registry::registerActionsTo(af, {"scorpionTestApp"});
+  }
 }
+
 void
 scorpionTestApp::registerApps()
 {
@@ -44,22 +46,17 @@ scorpionTestApp::registerApps()
   registerApp(scorpionTestApp);
 }
 
-// External entry point for object registration
+/***************************************************************************************************
+ *********************** Dynamic Library Entry Points - DO NOT MODIFY ******************************
+ **************************************************************************************************/
+// External entry point for dynamic application loading
 extern "C" void
-scorpionApp__registerAll(Factory & factory, ActionFactory & action_factory, Syntax & syntax)
+scorpionTestApp__registerAll(Factory & f, ActionFactory & af, Syntax & s)
 {
-  scorpionTestApp::registerAll(factory, action_factory, syntax);
+  scorpionTestApp::registerAll(f, af, s);
 }
-void
-scorpionTestApp::registerAll(Factory & factory,
-                          ActionFactory & action_factory,
-                          Syntax & syntax,
-                          bool use_test_objs)
+extern "C" void
+scorpionTestApp__registerApps()
 {
-  scorpionApp::registerAll(factory, action_factory, syntax);
-  if (use_test_objs)
-  {
-    Registry::registerObjectsTo(factory, {"scorpionTestApp"});
-    Registry::registerActionsTo(action_factory, {"scorpionTestApp"});
-  }
+  scorpionTestApp::registerApps();
 }

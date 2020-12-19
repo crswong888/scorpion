@@ -6,24 +6,19 @@
 //*
 //* Licensed under LGPL 2.1, please see LICENSE for details
 //* https://www.gnu.org/licenses/lgpl-2.1.html
-#ifndef SCORPIONAPP_H
-#define SCORPIONAPP_H
+
+#pragma once
 
 #include "MooseApp.h"
-
-class scorpionApp;
-
-template <>
-InputParameters validParams<scorpionApp>();
 
 class scorpionApp : public MooseApp
 {
 public:
+  static InputParameters validParams();
+
   scorpionApp(InputParameters parameters);
   virtual ~scorpionApp();
 
   static void registerApps();
-  static void registerAll(Factory & factory, ActionFactory & action_factory, Syntax & syntax);
+  static void registerAll(Factory & f, ActionFactory & af, Syntax & s);
 };
-
-#endif /* SCORPIONAPP_H */

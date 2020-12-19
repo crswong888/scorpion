@@ -1,17 +1,21 @@
 #include "scorpionApp.h"
+#include "Moose.h"
 #include "AppFactory.h"
 #include "ModulesApp.h"
 #include "MooseSyntax.h"
 
-template <>
 InputParameters
-validParams<scorpionApp>()
+scorpionApp::validParams()
 {
-  InputParameters params = validParams<MooseApp>();
+  InputParameters params = MooseApp::validParams();
+
+  // Do not use legacy DirichletBC, that is, set DirichletBC default for preset = true
+  params.set<bool>("use_legacy_dirichlet_bc") = false;
+
+  params.set<bool>("use_legacy_material_output") = false;
+
   return params;
 }
-
-registerKnownLabel("scorpionApp");
 
 scorpionApp::scorpionApp(InputParameters parameters) : MooseApp(parameters)
 {
@@ -20,32 +24,34 @@ scorpionApp::scorpionApp(InputParameters parameters) : MooseApp(parameters)
 
 scorpionApp::~scorpionApp() {}
 
-// External entry point for dynamic application loading
-extern "C" void
-scorpionApp__registerApps()
+void
+scorpionApp::registerAll(Factory & f, ActionFactory & af, Syntax & s)
 {
-  scorpionApp::registerApps();
+  ModulesApp::registerAll(f, af, s);
+  Registry::registerObjectsTo(f, {"scorpionApp"});
+  Registry::registerActionsTo(af, {"scorpionApp"});
+
+  /* register custom execute flags, action syntax, etc. here */
+  s.registerActionSyntax("EmptyAction", "BCs/PresetLSBLCAcceleration");
+  s.registerActionSyntax("PresetLSBLCAccelerationAction", "BCs/PresetLSBLCAcceleration/*");
 }
+
 void
 scorpionApp::registerApps()
 {
   registerApp(scorpionApp);
 }
 
-// External entry point for object registration
+/***************************************************************************************************
+ *********************** Dynamic Library Entry Points - DO NOT MODIFY ******************************
+ **************************************************************************************************/
 extern "C" void
-scorpionApp__registerAll(Factory & factory, ActionFactory & action_factory, Syntax & syntax)
+scorpionApp__registerAll(Factory & f, ActionFactory & af, Syntax & s)
 {
-  scorpionApp::registerAll(factory, action_factory, syntax);
+  scorpionApp::registerAll(f, af, s);
 }
-void
-scorpionApp::registerAll(Factory & factory, ActionFactory & action_factory, Syntax & syntax)
+extern "C" void
+scorpionApp__registerApps()
 {
-  Registry::registerObjectsTo(factory, {"scorpionApp"});
-  Registry::registerActionsTo(action_factory, {"scorpionApp"});
-
-  ModulesApp::registerAll(factory, action_factory, syntax);
-
-  syntax.registerActionSyntax("EmptyAction", "BCs/PresetLSBLCAcceleration");
-  syntax.registerActionSyntax("PresetLSBLCAccelerationAction", "BCs/PresetLSBLCAcceleration/*");
+  scorpionApp::registerApps();
 }

@@ -6,27 +6,19 @@
 //*
 //* Licensed under LGPL 2.1, please see LICENSE for details
 //* https://www.gnu.org/licenses/lgpl-2.1.html
-#ifndef SCORPIONTESTAPP_H
-#define SCORPIONTESTAPP_H
+
+#pragma once
 
 #include "MooseApp.h"
-
-class scorpionTestApp;
-
-template <>
-InputParameters validParams<scorpionTestApp>();
 
 class scorpionTestApp : public MooseApp
 {
 public:
+  static InputParameters validParams();
+
   scorpionTestApp(InputParameters parameters);
   virtual ~scorpionTestApp();
 
   static void registerApps();
-  static void registerAll(Factory & factory,
-                          ActionFactory & action_factory,
-                          Syntax & syntax,
-                          bool use_test_objs = false);
+  static void registerAll(Factory & f, ActionFactory & af, Syntax & s, bool use_test_objs = false);
 };
-
-#endif /* SCORPIONTESTAPP_H */
