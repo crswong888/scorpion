@@ -312,7 +312,8 @@
   []
   [linear_spring_ver]
     type = LinearSpring
-    block = '8 10 12 14 16 17 18'
+    block = 'dimplever1 springver1 dimplever2 springver2 rigidbeamver contact_spring1
+             contact_spring2'
     y_orientation = '0.0 0.0 1.0'
     kx = 126.0
     ky = 126.0

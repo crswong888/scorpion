@@ -68,42 +68,42 @@
   [spring_disp_x]
     type = StressDivergenceSpring
     block = 'dimplehor1 dimplever1 springhor1 springver1 dimplehor2 dimplever2 springhor2 springver2
-             rigidbeamhor rigidbeamver contact_spring1 contact_spring2'
+             contact_spring1 contact_spring2'
     component = 0
     variable = disp_x
   []
   [spring_disp_y]
     type = StressDivergenceSpring
     block = 'dimplehor1 dimplever1 springhor1 springver1 dimplehor2 dimplever2 springhor2 springver2
-             rigidbeamhor rigidbeamver contact_spring1 contact_spring2'
+             contact_spring1 contact_spring2'
     component = 1
     variable = disp_y
   []
   [spring_disp_z]
     type = StressDivergenceSpring
     block = 'dimplehor1 dimplever1 springhor1 springver1 dimplehor2 dimplever2 springhor2 springver2
-             rigidbeamhor rigidbeamver contact_spring1 contact_spring2'
+             contact_spring1 contact_spring2'
     component = 2
     variable = disp_z
   []
   [spring_rot_x]
     type = StressDivergenceSpring
     block = 'dimplehor1 dimplever1 springhor1 springver1 dimplehor2 dimplever2 springhor2 springver2
-             rigidbeamhor rigidbeamver contact_spring1 contact_spring2'
+             contact_spring1 contact_spring2'
     component = 3
     variable = rot_x
   []
   [spring_rot_y]
     type = StressDivergenceSpring
     block = 'dimplehor1 dimplever1 springhor1 springver1 dimplehor2 dimplever2 springhor2 springver2
-             rigidbeamhor rigidbeamver contact_spring1 contact_spring2'
+             contact_spring1 contact_spring2'
     component = 4
     variable = rot_y
   []
   [spring_rot_z]
     type = StressDivergenceSpring
     block = 'dimplehor1 dimplever1 springhor1 springver1 dimplehor2 dimplever2 springhor2 springver2
-             rigidbeamhor rigidbeamver contact_spring1 contact_spring2'
+             contact_spring1 contact_spring2'
     component = 5
     variable = rot_z
   []
@@ -149,6 +149,43 @@
     variable = rot_z
     through_thickness_order = SECOND
   []
+  [rigid_stress_x]
+    type = StressDivergenceBeam
+    block = 'rigidbeamhor rigidbeamver'
+    component = 0
+    variable = disp_x
+  []
+  [rigid_stress_y]
+    type = StressDivergenceBeam
+    block = 'rigidbeamhor rigidbeamver'
+    component = 1
+    variable = disp_y
+  []
+  [rigid_stress_z]
+    type = StressDivergenceBeam
+    block = 'rigidbeamhor rigidbeamver'
+    component = 2
+    variable = disp_z
+  []
+  [rigid_stress_rx]
+    type = StressDivergenceBeam
+    block = 'rigidbeamhor rigidbeamver'
+    component = 3
+    variable = rot_x
+  []
+  [rigid_stress_ry]
+    type = StressDivergenceBeam
+    block = 'rigidbeamhor rigidbeamver'
+    component = 4
+    variable = rot_y
+  []
+  [rigid_stress_rz]
+    type = StressDivergenceBeam
+    block = 'rigidbeamhor rigidbeamver'
+    component = 5
+    variable = rot_z
+  []
+[]
 
   # Wondering why we are using 'use_displaced_mesh = true' here if small strain
   #
@@ -302,7 +339,7 @@
   #   thickness = 0.1
   #   eta = 0.0
   # []
-[]
+# []
 
 [AuxKernels]
   [accel_x]
@@ -450,11 +487,11 @@
   []
   [stress_beams]
     type = ComputeBeamResultants
-    block = 'controlrod fuelrod'
+    block = 'controlrod fuelrod rigidbeamhor rigidbeamver'
   []
   [linear_spring_hor]
     type = LinearSpring
-    block = 'dimplehor1 springhor1 dimplehor2 springhor2 rigidbeamhor'
+    block = 'dimplehor1 springhor1 dimplehor2 springhor2'
     y_orientation = '1.0 0.0 0.0'
     kx = 126.0
     ky = 126.0
@@ -465,7 +502,7 @@
   []
   [linear_spring_ver]
     type = LinearSpring
-    block = '8 10 12 14 16 17 18'
+    block = 'dimplever1 springver1 dimplever2 springver2 contact_spring1 contact_spring2'
     y_orientation = '0.0 0.0 1.0'
     kx = 126.0
     ky = 126.0
@@ -505,6 +542,10 @@
     block = 's1xzplane s1xyplane s2xzplane s2xyplane'
     prop_names = density
     prop_values = 7.86e-6
+  []
+  [rigid_strain]
+    type = ComputeRigidBeamStrain
+    block = 'rigidbeamhor rigidbeamver'
   []
 []
 
@@ -569,7 +610,7 @@
   type = Transient
   solve_type = NEWTON
   scheme = explicit-euler
-  end_time = 2
+  end_time = 0.01
   dt = 0.005
   l_max_its = 250
   timestep_tolerance = 1e-08 # this is needed so that solver doesn't fail on very last time step
