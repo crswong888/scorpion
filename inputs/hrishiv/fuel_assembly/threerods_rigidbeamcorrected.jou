@@ -2,19 +2,19 @@ reset
 
 #{s1 = 48.133}
 #{s2 = 571.22}
-#{m1 = s1 + (s2-s1)/2} 
+#{m1 = s1 + (s2-s1)/2}
 #{s3 = 1093.19}
-#{m2 = s2 + (s3-s2)/2} 
+#{m2 = s2 + (s3-s2)/2}
 #{s4 = 1615.16}
-#{m3 = s3 + (s4-s3)/2} 
+#{m3 = s3 + (s4-s3)/2}
 #{s5 = 2137.13}
-#{m4 = s4 + (s5-s4)/2} 
+#{m4 = s4 + (s5-s4)/2}
 #{s6 = 2659.1}
-#{m5 = s5 + (s6-s5)/2} 
+#{m5 = s5 + (s6-s5)/2}
 #{s7 = 3181.07}
-#{m6 = s6 + (s7-s6)/2} 
+#{m6 = s6 + (s7-s6)/2}
 #{s8 = 3801.49}
-#{m7 = s7 + (s8-s7)/2} 
+#{m7 = s7 + (s8-s7)/2}
 
 create curve location 0 0 0 location {s1-13.2} 0 0
 create curve location {s1-13.2} 0 0 location {s1} 0 0
@@ -80,7 +80,7 @@ webcut body 1 to 16 with general plane yz move x {s1+13.2} y 0 z 0
 
 body 1 to 32 copy move x {s8-s1}
 
-group "s1xzplane" add surface 24 41 35 20 36 40 49 51 21 23 47 50 45 22 27 34 31 39 25 37 48 32 26 29 33 38 42 46 43 44 30 28 58 60 64 75 77 74 80 68 81 78 76 67 82 70 57 56 69 55 53 59 61 63 65 54 52 72 71 79 73 66 62 83 
+group "s1xzplane" add surface 24 41 35 20 36 40 49 51 21 23 47 50 45 22 27 34 31 39 25 37 48 32 26 29 33 38 42 46 43 44 30 28 58 60 64 75 77 74 80 68 81 78 76 67 82 70 57 56 69 55 53 59 61 63 65 54 52 72 71 79 73 66 62 83
 
 merge all
 
@@ -125,7 +125,7 @@ merge all
 group "s2xzplane"  add surface 239 240 251 255 236 262 264 266 258 257 267 268 269 270 233 271 231 244 256 333 334 234 260 265 272 232 225 273 274 250 230 242 247 248 254 235 227 226 259 228 229 252 237 243 241 238 245 246 261 253 249 263 295 290 296 286 288 307 291 308 298 309 310 314 297 284 302 301 316 319 320 303 324 330 305 323 292 325 293 280 300 311 313 315 321 327 317 328 304 281 283 306 312 318 282 279 299 326 329 331 332 285 322 278 294 287 289 395 392 406 399 403 408 415 402 393 397 400 410 390 391 407 404 409 413 411 414 394 396 401 398 405 416 412 350 373 358 380 371 387 348 375 378 346 381 349 382 383 379 384 385 388 389 361 345 367 377 386 360 338 356 343 357 339 359 364 337 342 351 344 341 355 366 368 340 369 347 362 336 335 365 353 370 363 372 374 352 354 376 275 277 276
 
 
-create surface vertex 806 814 822 832 
+create surface vertex 806 814 822 832
 create surface vertex  814 822 823 808
 webcut body 353 354 with general plane xz
 webcut body 353 to 356 with general plane yz move x {s2-23} y 0 z 0
@@ -146,33 +146,33 @@ group "s2xyplane"  add surface 506 533 488 500 537 501 512 513 517 489 527 519 5
 create curve vertex 66 534
 create curve vertex 70 581
 
-curve 2589 2590 copy move y -12.6 
+curve 2589 2590 copy move y -12.6
 curve 2589 to 2592 copy move x {s8-s1}
 group "dimplehor1" add curve 2589 to 2596
 
 create curve vertex 66 265
 create curve vertex 70 297
 
-curve 2597 2598 copy move y -12.6 
+curve 2597 2598 copy move y -12.6
 curve 2597 to 2600 copy move x {s8-s1}
 group "dimplever1" add curve 2597 to 2604
 
 create curve vertex 68 470
 
-curve 2605 copy move y -12.6 
+curve 2605 copy move y -12.6
 curve 2605 2606 copy move x {s8-s1}
 group "springhor1" add curve 2605 to 2608
 
 create curve vertex 68 225
 
-curve 2609 copy move y -12.6 
+curve 2609 copy move y -12.6
 curve 2609 2610 copy move x {s8-s1}
 group "springver1" add curve 2609 to 2612
 
 create curve vertex 74 877
 create curve vertex 78 909
 
-curve 2613 2614 copy move y -12.6 
+curve 2613 2614 copy move y -12.6
 curve 2613 to 2616 copy move x {s3-s2}
 curve 2613 to 2616 copy move x {s4-s2}
 curve 2613 to 2616 copy move x {s5-s2}
@@ -183,7 +183,7 @@ group "dimplever2" add curve 2613 to 2636
 create curve vertex 74 1298
 create curve vertex 78 1301
 
-curve 2637 2638 copy move y -12.6 
+curve 2637 2638 copy move y -12.6
 curve 2637 to 2640 copy move x {s3-s2}
 curve 2637 to 2640 copy move x {s4-s2}
 curve 2637 to 2640 copy move x {s5-s2}
@@ -194,7 +194,7 @@ group "dimplehor2" add curve 2637 to 2660
 
 create curve vertex 76 837
 
-curve 2661 copy move y -12.6 
+curve 2661 copy move y -12.6
 curve 2661 2662 copy move x {s3-s2}
 curve 2661 2662 copy move x {s4-s2}
 curve 2661 2662 copy move x {s5-s2}
@@ -204,7 +204,7 @@ group "springver2" add curve 2661 to 2672
 
 create curve vertex 76 1331
 
-curve 2673 copy move y -12.6 
+curve 2673 copy move y -12.6
 curve 2673 2674 copy move x {s3-s2}
 curve 2673 2674 copy move x {s4-s2}
 curve 2673 2674 copy move x {s5-s2}
@@ -214,8 +214,8 @@ group "springhor2" add curve 2673 to 2684
 
 create curve vertex 4 430
 create curve vertex 4 438
-curve 2685 2686 copy move x 13.2 
-curve 2685 2686 copy move x -13.2 
+curve 2685 2686 copy move x 13.2
+curve 2685 2686 copy move x -13.2
 curve 2685 to 2690 copy move x {s8-s1}
 create curve vertex 12 1267
 create curve vertex 12 1242
@@ -233,8 +233,8 @@ merge all
 ### create vertical rigid beams
 create curve vertex 4 201
 create curve vertex 4 209
-curve 2733 2734 copy move x 13.2 
-curve 2733 2734 copy move x -13.2 
+curve 2733 2734 copy move x 13.2
+curve 2733 2734 copy move x -13.2
 curve 2733 to 2738 copy move x {s8-s1}
 create curve vertex 12 813
 create curve vertex 12 821
@@ -262,8 +262,9 @@ curve 2783 2784 copy move x {m4-m1}
 curve 2783 2784 copy move x {m5-m1}
 curve 2783 2784 copy move x {m6-m1}
 curve 2783 2784 copy move x {m7-m1}
+group "contact_spring1" add curve 2783 to 2796
 
-group "con_tact_spring" add curve 2783 to 2796
+merge all
 
 create curve location {m1} -25.2 0 location {m1} -32 0
 curve 2797 copy move x {m2-m1}
@@ -272,7 +273,7 @@ curve 2797 copy move x {m4-m1}
 curve 2797 copy move x {m5-m1}
 curve 2797 copy move x {m6-m1}
 curve 2797 copy move x {m7-m1}
-group "con_tact_spring2" add curve 2797 to 2803
+group "contact_spring2" add curve 2797 to 2803
 
 merge all
 
@@ -293,8 +294,8 @@ group "spacergrids" add surface all
 group spacergrids interval 1
 mesh group spacergrids
 
-group dimplehor1 dimplever1 springhor1 springver1 dimplehor2 dimplever2 springhor2 springver2 con_tact_spring con_tact_spring2 rigidbeamhor rigidbeamver interval 1
-mesh group dimplehor1 dimplever1 springhor1 springver1 dimplehor2 dimplever2 springhor2 springver2 con_tact_spring con_tact_spring2 rigidbeamhor rigidbeamver
+group dimplehor1 dimplever1 springhor1 springver1 dimplehor2 dimplever2 springhor2 springver2 contact_spring1 contact_spring2 rigidbeamhor rigidbeamver interval 1
+mesh group dimplehor1 dimplever1 springhor1 springver1 dimplehor2 dimplever2 springhor2 springver2 contact_spring1 contact_spring2 rigidbeamhor rigidbeamver
 
 block 1 add group controlrod
 block 2 add group fuelrod
@@ -312,19 +313,47 @@ block 13 add group springhor2 #zircaloyl spring xz plane
 block 14 add group springver2 #zircaloyl spring xy plane
 block 15 add group rigidbeamhor #rigid beam xzplane
 block 16 add group rigidbeamver #rigid beam xyplane
-block 17 add group con_tact_spring  #midsprings
-block 17 add group con_tact_spring2  #midsprings at bottom
+block 17 add group contact_spring1  #midsprings
+block 18 add group contact_spring2  #midsprings at bottom
 
+block 1 name 'controlrod'
+block 2 name 'fuelrod'
+block 3 name 's1xzplane'
+block 4 name 's1xyplane'
+block 5 name 's2xzplane'
+block 6 name 's2xyplane'
+block 7 name 'dimplehor1'
+block 8 name 'dimplever1'
+block 9 name 'springhor1'
+block 10 name 'springver1'
+block 11 name 'dimplehor2'
+block 12 name 'dimplever2'
+block 13 name 'springhor2'
+block 14 name 'springver2'
+block 15 name 'rigidbeamhor'
+block 16 name 'rigidbeamver'
+block 17 name 'contact_spring1'
+block 18 name 'contact_spring2'
 
 
 nodeset 100 add vertex 2769   #control rod end 1
 nodeset 101 add vertex 2772   #control rod end 2
-nodeset 102 add vertex 65 129 128 192 #fuel rod ends
-nodeset 103 add surface all #all spacer grid nodes
-nodeset 104 add vertex 2802 2804 2806 2808 2810 2812 2814 # midsprings nodes at bottom
-nodeset 105 add vertex 1002    #spacergrid 4 top
-nodeset 106 add vertex 32    # almost center
+nodeset 102 add vertex 65 129 #fuel rod end 1
+nodeset 103 add vertex 128 192 #fuel rod end 2
+nodeset 104 add surface all #all spacer grid nodes
+nodeset 105 add vertex 2802 2804 2806 2808 2810 2812 2814 # midsprings nodes at bottom
+nodeset 106 add vertex 1002    #spacergrid 4 top
+nodeset 107 add vertex 32    # almost center
+
+nodeset 100 name 'control_left'
+nodeset 101 name 'control_right'
+nodeset 102 name 'fuel_left'
+nodeset 103 name 'fuel_right'
+nodeset 104 name 'spacer_grid'
+nodeset 105 name 'spring_bottom'
+nodeset 106 name 'sg4_top'
+nodeset 107 name 'midpoint'
 
 
 # export exodus
-export mesh '~/projects/scorpion/inputs/hrishiv/fuel_assembly/threerods_rigidbeam.e' overwrite
+export mesh '~/projects/scorpion/inputs/hrishiv/fuel_assembly/chrismodelfinal.e' overwrite
