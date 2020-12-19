@@ -324,3 +324,7 @@ nodeset 103 add surface all #all spacer grid nodes
 nodeset 104 add vertex 2802 2804 2806 2808 2810 2812 2814 # midsprings nodes at bottom
 nodeset 105 add vertex 1002    #spacergrid 4 top
 nodeset 106 add vertex 32    # almost center
+
+
+# export exodus
+export mesh '~/projects/scorpion/inputs/hrishiv/fuel_assembly/threerods_rigidbeam.e' overwrite
