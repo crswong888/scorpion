@@ -11,37 +11,56 @@ InputParameters
 BaselineCorrection::validParams()
 {
   InputParameters params = Function::validParams();
+  params.addClassDescription("Applies a baseline correction to an accceleration time history using "
+                             "least squares polynomial fits and outputs adjusted values for the "
+                             "specified kinematic variable.");
 
-  params.addParam<FileName>("data_file",
-      "The name of a CSV file containing raw acceleration time history data.");
-  params.addParam<std::string>("time_name",
+  MooseEnum series_type("acceleration velocity displacement", "acceleration");
+  params.addParam<MooseEnum>(
+      "series_type",
+      series_type,
+      "The kineamtic variable whose corrected time history is to be evaluated. The default is "
+      "'acceleration'.");
+
+  params.addParam<FileName>(
+      "data_file", "The name of a CSV file containing raw acceleration time history data.");
+  params.addParam<std::string>(
+      "time_name",
       "The header name of the column which contains the time values in the data file. If not "
       "specified, they are assumed to be in the first column index.");
-  params.addParam<std::string>("acceleration_name",
+  params.addParam<std::string>(
+      "acceleration_name",
       "The header name for the column which contains the acceleration values in the data file. If "
       "not specified, they are assumed to be in the second column index.");
+
   params.addParam<std::vector<Real>>("time_values", "The time abscissa values.");
   params.addParam<std::vector<Real>>("acceleration_values", "The acceleration ordinate values.");
 
   params.addRequiredParam<Real>("gamma", "The gamma parameter for Newmark time integration.");
   params.addRequiredParam<Real>("beta", "The beta parameter for Newmark time integration.");
 
-  params.addParam<bool>("fit_acceleration", true,
-      "If set to \"true\", the acceleration time history will be adjusted using a polynomial fit "
-      "of the acceleration data.");
-  params.addParam<bool>("fit_velocity", false,
-      "If set to \"true\", the acceleration time history will be adjusted using a polynomial fit "
-      "of the velocity data obtained by integration.");
-  params.addParam<bool>("fit_displacement", false,
-      "If set to \"true\", the acceleration time history will be adjusted using a polynomial fit "
-      "of the displacement data obtained by double-integration.");
-  params.addRequiredRangeCheckedParam<unsigned int>("order", "(0 < order) & (order < 10)",
-      "The order of the polynomial fit(s) used to adjust the nominal time histories (coefficients "
-      "of higher order polynomials can be difficult to compute and the method generally becomes "
-      "unstable when order >= 10).");
+  params.addRangeCheckedParam<unsigned int>(
+      "accel_fit_order",
+      "(0 <= accel_fit_order) & (accel_fit_order < 10)",
+      "If this is provided, the acceleration time history will be adjusted using an nth-order "
+      "polynomial fit of the nominal acceleration data, where n = accel_fit_order (only integer "
+      "values from 0 to 9 are supported).");
+  params.addRangeCheckedParam<unsigned int>(
+      "vel_fit_order",
+      "(0 <= vel_fit_order) & (vel_fit_order < 10)",
+      "If this is provided, the acceleration time history will be adjusted using an nth-order "
+      "polynomial fit of the nominal velocity data, where n = vel_fit_order (only integer values "
+      "from 0 to 9 are supported).");
+  params.addRangeCheckedParam<unsigned int>(
+      "disp_fit_order",
+      "(0 <= disp_fit_order) & (disp_fit_order < 10)",
+      "If this is provided, the acceleration time history will be adjusted using an nth-order "
+      "polynomial fit of the nominal displacement data, where n = disp_fit_order (only integer "
+      "values from 0 to 9 are supported).");
 
-  params.addParam<Real>("scale_factor", 1.0,
-      "A scale factor to be applied to the adjusted acceleration time history.");
+  params.addParam<Real>("scale_factor",
+                        1.0,
+                        "A scale factor to be applied to the adjusted acceleration time history.");
   params.declareControllable("scale_factor");
 
   return params;
@@ -49,12 +68,9 @@ BaselineCorrection::validParams()
 
 BaselineCorrection::BaselineCorrection(const InputParameters & parameters)
   : Function(parameters),
+    _series(getParam<MooseEnum>("series_type")),
     _gamma(getParam<Real>("gamma")),
     _beta(getParam<Real>("beta")),
-    _fit_accel(getParam<bool>("fit_acceleration")),
-    _fit_vel(getParam<bool>("fit_velocity")),
-    _fit_disp(getParam<bool>("fit_displacement")),
-    _order(getParam<unsigned int>("order")),
     _scale_factor(getParam<Real>("scale_factor"))
 {
   // determine data source and check parameter consistency
@@ -76,16 +92,17 @@ BaselineCorrection::BaselineCorrection(const InputParameters & parameters)
                _name,
                ": The length of time and acceleration data must be equal.");
   if (_time.size() == 0 || _accel.size() == 0)
+    mooseError(
+        "In BaselineCorrection ", _name, ": The length of time and acceleration data must be > 0.");
+
+  // check that at lease one least squares fit will be applied
+  if (!isParamValid("accel_fit_order") && !isParamValid("vel_fit_order") &&
+      !isParamValid("disp_fit_order"))
     mooseError("In BaselineCorrection ",
                _name,
-               ": The length of time and acceleration data must be > 0.");
-
-  // ensure that at least one best-fit will be created
-  if (!_fit_accel && !_fit_vel && !_fit_disp)
-    mooseWarning("Warning in " + name() +
-                 ". Computation of a polynomial fit is set to \"false\" for all three "
-                 "kinematic variables. No adjustments will occur and the output will be the "
-                 "raw acceleration time history.");
+               ": No values were input for parameters 'accel_fit_order', 'vel_fit_order', or "
+               "'disp_fit_order'. Please specify an integer value from 0 to 9 for at least one "
+               "of these parameters.");
 
   // apply baseline correction to raw acceleration time history
   applyCorrection();
@@ -93,7 +110,7 @@ BaselineCorrection::BaselineCorrection(const InputParameters & parameters)
   // try building a linear interpolation object
   try
   {
-    _linear_interp = libmesh_make_unique<LinearInterpolation>(_time, _adj_accel);
+    _linear_interp = libmesh_make_unique<LinearInterpolation>(_time, _adj_series);
   }
   catch (std::domain_error & e)
   {
@@ -116,62 +133,78 @@ BaselineCorrection::applyCorrection()
   // Compute unadjusted velocity and displacment time histories
   Real dt;
   std::vector<Real> vel, disp;
-  vel.push_back(0); disp.push_back(0);
+  vel.push_back(0);
+  disp.push_back(0);
   for (unsigned int i = 0; i < index_end; ++i)
   {
-    dt = _time[i+1] - _time[i];
+    dt = _time[i + 1] - _time[i];
 
     vel.push_back(BaselineCorrectionUtils::newmarkGammaIntegrate(
-        _accel[i], _accel[i+1], vel[i], _gamma, dt));
+        _accel[i], _accel[i + 1], vel[i], _gamma, dt));
     disp.push_back(BaselineCorrectionUtils::newmarkBetaIntegrate(
-        _accel[i], _accel[i+1], vel[i], disp[i], _beta, dt));
+        _accel[i], _accel[i + 1], vel[i], disp[i], _beta, dt));
   }
 
-  // initialize polyfits and adjusted time history arrays as the nominal ones
+  // initialize polyfits and adjusted time history arrays with nominal ones
+  unsigned int order;
   DenseVector<Real> coeffs;
-  _adj_accel = _accel;
-  std::vector<Real> p_fit, adj_vel = vel, adj_disp = disp;
+  std::vector<Real> p_fit, adj_accel = _accel, adj_vel = vel, adj_disp = disp;
 
   // adjust time histories with acceleration fit if desired
-  if (_fit_accel)
+  if (isParamValid("accel_fit_order"))
   {
+    order = getParam<unsigned int>("accel_fit_order");
     coeffs = BaselineCorrectionUtils::getAccelerationFitCoeffs(
-      _order, _adj_accel, _time, index_end, _gamma);
+        order, adj_accel, _time, index_end, _gamma);
 
     for (unsigned int i = 0; i <= index_end; ++i)
     {
-      p_fit = BaselineCorrectionUtils::computePolynomials(_order, coeffs, _time[i]);
-      _adj_accel[i] -= p_fit[0];
+      p_fit = BaselineCorrectionUtils::computePolynomials(order, coeffs, _time[i]);
+      adj_accel[i] -= p_fit[0];
       adj_vel[i] -= p_fit[1];
       adj_disp[i] -= p_fit[2];
     }
   }
 
   // adjust with velocity fit
-  if (_fit_vel)
+  if (isParamValid("vel_fit_order"))
   {
+    order = getParam<unsigned int>("vel_fit_order");
     coeffs = BaselineCorrectionUtils::getVelocityFitCoeffs(
-      _order, _adj_accel, adj_vel, _time, index_end, _beta);
+        order, adj_accel, adj_vel, _time, index_end, _beta);
 
     for (unsigned int i = 0; i <= index_end; ++i)
     {
-      p_fit = BaselineCorrectionUtils::computePolynomials(_order, coeffs, _time[i]);
-      _adj_accel[i] -= p_fit[0];
+      p_fit = BaselineCorrectionUtils::computePolynomials(order, coeffs, _time[i]);
+      adj_accel[i] -= p_fit[0];
+      adj_vel[i] -= p_fit[1];
       adj_disp[i] -= p_fit[2];
     }
   }
 
   // adjust with displacement fit
-  if (_fit_disp)
+  if (isParamValid("disp_fit_order"))
   {
-    coeffs = BaselineCorrectionUtils::getDisplacementFitCoeffs(_order, adj_disp, _time, index_end);
+    order = getParam<unsigned int>("disp_fit_order");
+    coeffs = BaselineCorrectionUtils::getDisplacementFitCoeffs(order, adj_disp, _time, index_end);
 
     for (unsigned int i = 0; i <= index_end; ++i)
     {
-      p_fit = BaselineCorrectionUtils::computePolynomials(_order, coeffs, _time[i]);
-      _adj_accel[i] -= p_fit[0];
+      p_fit = BaselineCorrectionUtils::computePolynomials(order, coeffs, _time[i]);
+      adj_accel[i] -= p_fit[0];
+      adj_vel[i] -= p_fit[1];
+      adj_disp[i] -= p_fit[2];
     }
   }
+
+  // copy adjusted values for specified time series to a global variable (would it be faster to set
+  // _adj_series with a std::map that pairs '_series' with 'adj_accel', etc.? Probably not...)
+  if (_series == "acceleration")
+    _adj_series = adj_accel;
+  else if (_series == "velocity")
+    _adj_series = adj_vel;
+  else
+    _adj_series = adj_disp;
 }
 
 void
@@ -189,7 +222,7 @@ BaselineCorrection::buildFromFile()
     mooseError("In BaselineCorrection ",
                _name,
                ": A column header name was specified for the for the time data. Please specify a ",
-               "header for the acceleration data using the 'accelertation_name' parameter.");
+               "header for the acceleration data using the 'acceleration_name' parameter.");
   else if (!time_header && accel_header)
     mooseError("In BaselineCorrection ",
                _name,

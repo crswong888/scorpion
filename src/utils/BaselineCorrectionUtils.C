@@ -1,6 +1,3 @@
-// This code was implemented in collaboration with Christopher J. Wong
-// (chris.wong@utah.edu) from the University of Utah.
-
 // SCORPION includes
 #include "BaselineCorrectionUtils.h"
 
@@ -22,8 +19,7 @@ BaselineCorrectionUtils::newmarkBetaIntegrate(const Real & u_ddot_old,
                                               const Real & beta,
                                               const Real & dt)
 {
-  return u_old + dt * u_dot_old + (0.5 - beta) * dt * dt * u_ddot_old +
-         beta * dt * dt * u_ddot;
+  return u_old + dt * u_dot_old + (0.5 - beta) * dt * dt * u_ddot_old + beta * dt * dt * u_ddot;
 }
 
 DenseVector<Real>
@@ -39,11 +35,12 @@ BaselineCorrectionUtils::getAccelerationFitCoeffs(unsigned int order,
   DenseVector<Real> coeffs(num_rows);
 
   // compute matrix of linear normal equation
-  for (unsigned int row = 0; row < num_rows; ++row) {
+  for (unsigned int row = 0; row < num_rows; ++row)
+  {
     for (unsigned int col = 0; col < num_rows; ++col)
     {
-      mat(row, col) = pow(t[t.size()-1], row + col + 1) * (col * col + 3 * col + 2) /
-                      (row + col + 1);
+      mat(row, col) =
+          pow(t[t.size() - 1], row + col + 1) * (col * col + 3 * col + 2) / (row + col + 1);
     }
   }
 
@@ -51,11 +48,11 @@ BaselineCorrectionUtils::getAccelerationFitCoeffs(unsigned int order,
   Real dt, u_ddot_old, u_ddot;
   for (unsigned int i = 0; i < num_steps; ++i)
   {
-    dt = t[i+1] - t[i];
+    dt = t[i + 1] - t[i];
     for (unsigned int row = 0; row < num_rows; ++row)
     {
       u_ddot_old = pow(t[i], row) * accel[i];
-      u_ddot = pow(t[i+1], row) * accel[i+1];
+      u_ddot = pow(t[i + 1], row) * accel[i + 1];
 
       rhs(row) += newmarkGammaIntegrate(u_ddot_old, u_ddot, 0.0, gamma, dt);
     }
@@ -80,10 +77,11 @@ BaselineCorrectionUtils::getVelocityFitCoeffs(unsigned int order,
   DenseVector<Real> coeffs(num_rows);
 
   // compute matrix of linear normal equation
-  for (unsigned int row = 0; row < num_rows; ++row) {
+  for (unsigned int row = 0; row < num_rows; ++row)
+  {
     for (unsigned int col = 0; col < num_rows; ++col)
     {
-      mat(row, col) = pow(t[t.size()-1], row + col + 3) * (col + 2) / (row + col + 3);
+      mat(row, col) = pow(t[t.size() - 1], row + col + 3) * (col + 2) / (row + col + 3);
     }
   }
 
@@ -91,12 +89,12 @@ BaselineCorrectionUtils::getVelocityFitCoeffs(unsigned int order,
   Real dt, u_ddot_old, u_ddot, u_dot_old;
   for (unsigned int i = 0; i < num_steps; ++i)
   {
-    dt = t[i+1] - t[i];
+    dt = t[i + 1] - t[i];
     for (unsigned int row = 0; row < num_rows; ++row)
     {
       u_dot_old = pow(t[i], row + 1) * vel[i];
       u_ddot_old = pow(t[i], row + 1) * accel[i] + (row + 1) * pow(t[i], row) * vel[i];
-      u_ddot = pow(t[i+1], row + 1) * accel[i+1] + (row + 1) * pow(t[i+1], row) * vel[i+1];
+      u_ddot = pow(t[i + 1], row + 1) * accel[i + 1] + (row + 1) * pow(t[i + 1], row) * vel[i + 1];
 
       rhs(row) += newmarkBetaIntegrate(u_ddot_old, u_ddot, u_dot_old, 0.0, beta, dt);
     }
@@ -119,10 +117,11 @@ BaselineCorrectionUtils::getDisplacementFitCoeffs(unsigned int order,
   DenseVector<Real> coeffs(num_rows);
 
   // computer matrix of linear normal equation
-  for (unsigned int row = 0; row < num_rows; ++row) {
+  for (unsigned int row = 0; row < num_rows; ++row)
+  {
     for (unsigned int col = 0; col < num_rows; ++col)
     {
-      mat(row, col) = pow(t[t.size()-1], row + col + 5) / (row + col + 5);
+      mat(row, col) = pow(t[t.size() - 1], row + col + 5) / (row + col + 5);
     }
   }
 
@@ -130,11 +129,11 @@ BaselineCorrectionUtils::getDisplacementFitCoeffs(unsigned int order,
   Real dt, u_old, u;
   for (unsigned int i = 0; i < num_steps; ++i)
   {
-    dt = t[i+1] - t[i];
+    dt = t[i + 1] - t[i];
     for (unsigned int row = 0; row < num_rows; ++row)
     {
       u_old = pow(t[i], row + 2) * disp[i];
-      u = pow(t[i+1], row + 2) * disp[i+1];
+      u = pow(t[i + 1], row + 2) * disp[i + 1];
 
       // note: newmarkGamma with gamma = 0.5 is trapezoidal rule
       rhs(row) += newmarkGammaIntegrate(u_old, u, 0.0, 0.5, dt);

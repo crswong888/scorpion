@@ -8,8 +8,8 @@
 class BaselineCorrection;
 
 /**
- * Applies a baseline correction to an accceleration time history using least
- * squares polynomial fits and outputs the adjusted acceleration
+ * Applies a baseline correction to an accceleration time history using least squares polynomial
+ * fits and outputs adjusted values for the specified kinematic variable.
  */
 class BaselineCorrection : public Function
 {
@@ -21,36 +21,31 @@ public:
   virtual Real value(Real t, const Point & /*P*/) const override;
 
 protected:
+  /// adjusted time series to evaluate - can be 'acceleration', 'velocity', or 'displacement'
+  const MooseEnum _series;
+
   /// Newmark integration parameters
   const Real & _gamma;
   const Real & _beta;
-
-  /// set which kinematic variables a polynomial fit will be applied to
-  const bool _fit_accel;
-  const bool _fit_vel;
-  const bool _fit_disp;
-
-  /// order used for the least squares polynomial fit
-  const unsigned int _order;
 
   /// acceleration time history variables from input
   std::vector<Real> _time;
   std::vector<Real> _accel;
 
-  /// adjusted (corrected) acceleration ordinates
-  std::vector<Real> _adj_accel;
+  /// vector storing adjusted (corrected) time series values
+  std::vector<Real> _adj_series;
 
-  /// object to output linearly interpolated corrected acceleration ordinates
+  /// linear interpolation object is applied over adjusted acceleration, i.e., AFTER correction
   std::unique_ptr<LinearInterpolation> _linear_interp;
 
-  /// function value scale factor
+  /// function multiplier - final output is 'scale_factor * _linear_interp(_time, _adj_series)'
   const Real & _scale_factor;
 
 private:
-  /// Applies baseline correction to raw acceleration time history
+  /// Applies baseline correction to raw acceleration and copies adjusted ordinates to '_adj_series'
   void applyCorrection();
 
-  /// Reads and builds data from supplied CSV file
+  /// Reads and builds data from supplied file using MooseUtils::DelimitedFileReader()
   void buildFromFile();
 
   /// Builds data from pairs of `time_values` and `acceleration_values'
