@@ -64,18 +64,18 @@ function [] = plotTimeSeries(t, series, varargin)
     aspect = (0.030225 * ftsize + 0.1537) * res(3) * [1, 2 / 5];
     pos = [res(1) + (res(3) - aspect(1)) / 2, res(2) + (res(4) - aspect(2)) / 2, aspect];
     
-    %//
+    %// loop through all input series and plot each one against time
     m = [0.005, 0.02]; % minimum vertical and horizontal tight space margins
     for p = 1:num_plots
-        %/
+        %/ plot series and set axis object font style
         figure('OuterPosition', pos);      
-        plot(t, series(p,:), 'Color', [0, 0, 0], 'LineWidth', 1)
+        plot(t, series(p,:), 'Color', [0, 0, 0],...
+             'LineWidth', linearInterpolation([2, 10, 28], [1, 1, 2], ftsize))
+        linearInterpolation([2, 10, 28], [1, 1, 2], ftsize)
         hold on
-        
-        %/
         set(gca, 'FontName', ftname, 'FontSize', ftsize);
         
-        %/
+        %/ set plot title - shift it up from top plot border by a smidge
         tset = zeros(1, 4);
         if (~strcmp(plot_titles(p), "none"))
             current = plot_titles(p);
@@ -84,10 +84,10 @@ function [] = plotTimeSeries(t, series, varargin)
             end
             th = title(current, 'Units', 'normalized', 'FontUnits', 'normalized');
             tset = [th.Position + [0, m(2) * ftsize / 20, 0], th.FontSize];
-            set(th, 'Position', tset(1:3), 'Units', 'data', 'FontUnits', 'points');
+            set(th, 'Position', tset(1:3), 'FontUnits', 'points'); % not resetting units on purpose
         end
         
-        %/
+        %/ set axis labels if there are ones
         if ((x_label ~= "") && (x_label ~= "none"))
             xlabel(x_label)
         end
@@ -104,7 +104,7 @@ function [] = plotTimeSeries(t, series, varargin)
         shift(3:4) = shift(3:4) - shift(1:2);
         set(gca, 'Position', shift, pos_arg, 'outerposition')
         
-        %/
+        %/ toggle gridlines
         grid on
         grid minor
     end  
