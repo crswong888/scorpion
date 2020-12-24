@@ -5,9 +5,6 @@
 
 %%% multilayout plot only uses 1 title
 %%%
-%%% probably need to find way to switch back and forth on 'ActivePositionProperty' and 
-%%% 'PositionConstraint' depending on current matlab version
-%%%
 %%% format 'separate' or 'layout', if layout - max number or series is 5
 %%%
 %%% possibly include an 'abscissa' and 'ordinates' parameter for using separate data sizes, in which
@@ -26,14 +23,17 @@ function [] = plotTimeSeries(t, series, varargin)
     addRequired(params, 'Series', valid_series)
     
     %/ cell array of plot titles and axis labels for each 'series' - use 'none' to hide titles
-    valid_titles = @(x) ischar(x) || isstring(x);
-    addParameter(params, 'Title', [], @(x) (length(string(x)) == num_plots) && (valid_titles(x)... 
-                 || (iscell(x) && all(cellfun(valid_titles, x)))))
+    valid_title = @(x) ischar(x) || isstring(x);
+    valid_titles = @(x) (length(string(x)) == num_plots) && (valid_title(x)... 
+                        || (iscell(x) && all(cellfun(valid_title, x))));
+    addParameter(params, 'Title', "", valid_titles)
+    addParameter(params, 'XLabel', "Time", valid_title);
+    addParameter(params, 'YLabel', "", valid_titles);
     
     %/ font to use on plot axes and title test
     valid_font = @(x) ischar(x) || (isstring(x) && (length(x) == 1));
     addParameter(params, 'FontName', 'Helvetica', valid_font)
-    addParameter(params, 'FontSize', 10, @(x) isnumeric(x) && (x > 0));
+    addParameter(params, 'FontSize', 10, @(x) isnumeric(x) && (2 <= x) && (x <= 28));
     
     %/ wether or not to close all currently open plots before generating new ones
     addParameter(params, 'ClearFigures', false, @(x) islogical(x));
@@ -42,21 +42,11 @@ function [] = plotTimeSeries(t, series, varargin)
     parse(params, series, varargin{:})
     
     %/ simplify pointer syntax
-    plot_titles = string(params.Results.Title);
+    plot_titles(1:num_plots) = string(params.Results.Title);
+    x_label = string(params.Results.XLabel);
+    y_labels(1:num_plots) = string(params.Results.YLabel);
     ftname = params.Results.FontName;
     ftsize = params.Results.FontSize;
-    
-    %//
-    if (isempty(plot_titles))
-        for p = 1:num_plots
-            plot_titles(p) = ['Time Series ', num2str(p)];
-        end
-    end
-    
-    %// clear plot objects, if desired
-    if (params.Results.ClearFigures)
-        close all
-    end
     
     %// get current matlab version for handling position constraint property (9.8 is 2020a)
     pos_arg = 'PositionConstraint';
@@ -64,9 +54,14 @@ function [] = plotTimeSeries(t, series, varargin)
         pos_arg = 'ActivePositionProperty';
     end
     
-    %//
+    %// clear plot objects, if desired
+    if (params.Results.ClearFigures)
+        close all
+    end
+    
+    %// scale fig window bounds to screen width based on 'FontSize' and use a 5:2 aspect ratio 
     res = get(0, 'ScreenSize');
-    aspect = 9 / 20 * res(3) * [1, 2 / 5];
+    aspect = (0.030225 * ftsize + 0.1537) * res(3) * [1, 2 / 5];
     pos = [res(1) + (res(3) - aspect(1)) / 2, res(2) + (res(4) - aspect(2)) / 2, aspect];
     
     %//
@@ -79,11 +74,26 @@ function [] = plotTimeSeries(t, series, varargin)
         
         %/
         set(gca, 'FontName', ftname, 'FontSize', ftsize);
-        th = title(plot_titles(p), 'Units', 'normalized', 'FontUnits', 'normalized');
-        tset = [th.Position + [0, m(2) / 2, 0], th.FontSize]; 
-        set(th, 'Position', tset(1:3), 'Units', 'data', 'FontUnits', 'points');
-        xlabel('X Axis')
-        ylabel('Y Axis')
+        
+        %/
+        tset = zeros(1, 4);
+        if (~strcmp(plot_titles(p), "none"))
+            current = plot_titles(p);
+            if (current == "")
+                current = ['Time Series ', num2str(p)];
+            end
+            th = title(current, 'Units', 'normalized', 'FontUnits', 'normalized');
+            tset = [th.Position + [0, m(2) * ftsize / 20, 0], th.FontSize];
+            set(th, 'Position', tset(1:3), 'Units', 'data', 'FontUnits', 'points');
+        end
+        
+        %/
+        if ((x_label ~= "") && (x_label ~= "none"))
+            xlabel(x_label)
+        end
+        if ((y_labels(p) ~= "") && (y_labels(p) ~= "none"))
+            ylabel(y_labels(p))
+        end
         
         %/ 'TightInset' is a read-only prop - this attempts to modify it w/o knowing how it works
         axtight = get(gca, 'TightInset');

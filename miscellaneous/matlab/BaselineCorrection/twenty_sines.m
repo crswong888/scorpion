@@ -30,12 +30,16 @@ accel_func = @(t) -250 * pi * pi * sin(50 * pi * t);
 
 %//
 catseries = [adj_accel; adj_vel; adj_disp];
-plot_titles = {'Adjusted Acceleration Time History';
-               'Adjusted Velocity Time History';
-               'Adjusted Displacement Time History'};
+plot_titles = {'Acceleration Time History';
+               'Velocity Time History';
+               'Displacement Time History'};
+           
+y_labels = {'Adjusted Acceleration (m/s^{2})';
+            'Adjusted Velocity (m/s)';
+            'Adjusted Displacement (m)'};
 
-plotTimeSeries(time, catseries, 'Title', plot_titles, 'FontName', 'times new roman')
-%plotTimeSeries(time, adj_vel, 'Title', 'Adjusted Velocity Time History', 'FontName', 'times new roman', 'ClearFigures', true)
+plotTimeSeries(time, catseries, 'Title', plot_titles, 'XLabel', 'Time (s)', 'YLabel', y_labels,... 
+               'FontName', 'times new roman', 'FontSize', 2, 'ClearFigures', true)
 
 
 %%% plot original acceleration by itself
