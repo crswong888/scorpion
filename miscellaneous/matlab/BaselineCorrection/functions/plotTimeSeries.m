@@ -59,21 +59,21 @@ function [] = plotTimeSeries(t, series, varargin)
         close all
     end
     
-    %// scale fig window bounds to screen width based on 'FontSize' and use a 5:2 aspect ratio 
+    %// scale fig window bounds to screen width based on 'FontSize' and use a 20:9 aspect ratio 
     res = get(0, 'ScreenSize');
-    aspect = (0.030225 * ftsize + 0.1537) * res(3) * [1, 2 / 5];
+    aspect = (0.030225 * ftsize + 0.1537) * res(3) * [1, 9 / 20];
     pos = [res(1) + (res(3) - aspect(1)) / 2, res(2) + (res(4) - aspect(2)) / 2, aspect];
+    figure('OuterPosition', pos)
     
     %// loop through all input series and plot each one against time
     m = [0.005, 0.02]; % minimum vertical and horizontal tight space margins
     for p = 1:num_plots
-        %/ plot series and set axis object font style
-        figure('OuterPosition', pos);      
+        %/ create unique axes object in new tab, plot series, and set font style
+        ax = axes(uitab('Title', num2str(p))); %#ok<LAXES>
         plot(t, series(p,:), 'Color', [0, 0, 0],...
              'LineWidth', linearInterpolation([2, 10, 28], [1, 1, 2], ftsize))
-        linearInterpolation([2, 10, 28], [1, 1, 2], ftsize)
         hold on
-        set(gca, 'FontName', ftname, 'FontSize', ftsize);
+        set(ax, 'FontName', ftname, 'FontSize', ftsize);
         
         %/ set plot title - shift it up from top plot border by a smidge
         tset = zeros(1, 4);
@@ -96,13 +96,13 @@ function [] = plotTimeSeries(t, series, varargin)
         end
         
         %/ 'TightInset' is a read-only prop - this attempts to modify it w/o knowing how it works
-        axtight = get(gca, 'TightInset');
+        axtight = get(ax, 'TightInset');
         shift = [max(axtight(1), m(1)) + m(1),...
                  max(axtight(2), m(2)) + m(2),...
                  1 - max(axtight(3), m(1)) - m(1),...
                  1 - max(axtight(4), m(2)) - m(2) - tset(4)];
         shift(3:4) = shift(3:4) - shift(1:2);
-        set(gca, 'Position', shift, pos_arg, 'outerposition')
+        set(ax, 'Position', shift, pos_arg, 'outerposition')
         
         %/ toggle gridlines
         grid on
