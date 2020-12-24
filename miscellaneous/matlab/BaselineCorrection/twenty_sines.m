@@ -34,7 +34,8 @@ plot_titles = {'Adjusted Acceleration Time History';
                'Adjusted Velocity Time History';
                'Adjusted Displacement Time History'};
 
-plotTimeSeries(time, catseries, 'Title', plot_titles)
+plotTimeSeries(time, catseries, 'Title', plot_titles, 'FontName', 'times new roman')
+%plotTimeSeries(time, adj_vel, 'Title', 'Adjusted Velocity Time History', 'FontName', 'times new roman', 'ClearFigures', true)
 
 
 %%% plot original acceleration by itself

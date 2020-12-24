@@ -14,7 +14,8 @@ addpath('functions')
 
 
 %// input acceleration time series
-ramp = cat(1, 0:1:4, [0, 981.0, 0, -981.0, 0] * 34.1910905592076e-003);
+scale_factor = 34.1910905592076e-003; % scales ordinates so that displacement amplitude is 5
+ramp = cat(1, 0:1:4, [0, 981.0, 0, -981.0, 0] * scale_factor);
 time = 0:0.005:4;
 accel = [];
 for i = 1:length(time)

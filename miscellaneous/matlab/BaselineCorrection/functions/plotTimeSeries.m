@@ -58,13 +58,19 @@ function [] = plotTimeSeries(t, series, varargin)
         close all
     end
     
+    %// get current matlab version for handling position constraint property (9.8 is 2020a)
+    pos_arg = 'PositionConstraint';
+    if (verLessThan('matlab', '9.8'))
+        pos_arg = 'ActivePositionProperty';
+    end
+    
     %//
     res = get(0, 'ScreenSize');
     aspect = 9 / 20 * res(3) * [1, 2 / 5];
     pos = [res(1) + (res(3) - aspect(1)) / 2, res(2) + (res(4) - aspect(2)) / 2, aspect];
     
     %//
-    m = [0.01, 0.02]; % minimum vertical and horizontal tight space margins
+    m = [0.005, 0.02]; % minimum vertical and horizontal tight space margins
     for p = 1:num_plots
         %/
         figure('OuterPosition', pos);      
@@ -80,14 +86,13 @@ function [] = plotTimeSeries(t, series, varargin)
         ylabel('Y Axis')
         
         %/ 'TightInset' is a read-only prop - this attempts to modify it w/o knowing how it works
-        axp = get(gca, 'Position');
-        axt = get(gca, 'TightInset');        
-        shift = [max([axp(1) - max(axt(1), m(1)), axt(1), m(1)]) + m(1),...
-                 max([axp(2) - max(axt(2), m(2)), axt(2), m(2)]) + m(2),...
-                 max(axp(1) + axp(3) + min(axt(3), m(1)), 1 - max(axt(3), m(1))) - m(1),...
-                 max(axp(2) + axp(4) + min(axt(4), m(2)), 1 - max(axt(4), m(2))) - m(2) - tset(4)];
+        axtight = get(gca, 'TightInset');
+        shift = [max(axtight(1), m(1)) + m(1),...
+                 max(axtight(2), m(2)) + m(2),...
+                 1 - max(axtight(3), m(1)) - m(1),...
+                 1 - max(axtight(4), m(2)) - m(2) - tset(4)];
         shift(3:4) = shift(3:4) - shift(1:2);
-        set(gca, 'Position', shift, 'ActivePositionProperty', 'outerposition');
+        set(gca, 'Position', shift, pos_arg, 'outerposition')
         
         %/
         grid on
