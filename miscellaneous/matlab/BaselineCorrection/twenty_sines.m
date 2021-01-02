@@ -19,7 +19,7 @@ accel_func = @(t) -250 * pi * pi * sin(50 * pi * t);
 
 %// compute drifting ratio of nominal displacement for comparison to corrected one
 [vel, disp] = newmarkIntegrate(time, accel, 0.5, 0.25);
-[nom_DR, nom_AR] = computeDriftRatio(time, accel, disp);
+[nomDR, nomAR] = computeDriftRatio(time, accel, disp);
 
 %// apply least squares baseline correction and output adjusted time histories
 [adj_accel, adj_vel, adj_disp] = baselineCorrection(time, accel, 'AccelFitOrder', 12,...
@@ -29,17 +29,27 @@ accel_func = @(t) -250 * pi * pi * sin(50 * pi * t);
 [DR, AR] = computeDriftRatio(time, accel, adj_disp);
 
 %//
-catseries = [adj_accel; adj_vel; adj_disp];
-plot_titles = {'Acceleration Time History';
-               'Velocity Time History';
-               ['Displacement Time History (DR = ', num2str(DR), ', AR = ' num2str(AR), ')']};
+catseries = [accel; vel; disp; adj_accel; adj_vel; adj_disp];
+tiles = 1:2;
+
+str = ' Time History';
+plot_titles = {['Acceleration', str];
+               ['Velocity', str];
+               ['Displacement', str, ' (DR = ', num2str(nomDR), ', AR = ' num2str(nomAR), ')'];
+               ['Acceleration', str];
+               ['Velocity', str];
+               ['Displacement', str, ' (DR = ', num2str(DR), ', AR = ' num2str(AR), ')']};
            
-y_labels = {'Adjusted Acceleration (m/s^{2})';
+y_labels = {'Nominal Acceleration (m/s^{2})';
+            'Nominal Velocity (m/s)';
+            'Nominal Displacement (m)';
+            'Adjusted Acceleration (m/s^{2})';
             'Adjusted Velocity (m/s)';
             'Adjusted Displacement (m)'};
 
-plotTimeSeries(time, catseries, 'Title', plot_titles, 'XLabel', 'Time (s)', 'YLabel', y_labels,... 
-               'FontName', 'times new roman', 'FontSize', 12, 'ClearFigures', true)
+plotTimeSeries(time, catseries, 'TiledLayout', tiles, 'Title', plot_titles, 'XLabel', 'Time (s)',...
+               'YLabel', y_labels, 'FontName', 'times new roman', 'FontSize', 12,...
+               'ClearFigures', true)
 
 %%% plot original acceleration by itself
 %%% plot adjusted time histories in layout format
