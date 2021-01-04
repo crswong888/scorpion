@@ -488,6 +488,8 @@
   [stress_beams]
     type = ComputeBeamResultants
     block = 'controlrod fuelrod rigidbeamhor rigidbeamver'
+    outputs = exodus
+    output_properties = 'forces moments'
   []
   [linear_spring_hor]
     type = LinearSpring
@@ -546,6 +548,7 @@
   [rigid_strain]
     type = ComputeRigidBeamStrain
     block = 'rigidbeamhor rigidbeamver'
+    penalty = 1e+07
   []
 []
 
@@ -610,7 +613,7 @@
   type = Transient
   solve_type = NEWTON
   scheme = explicit-euler
-  end_time = 0.01
+  end_time = 2
   dt = 0.005
   l_max_its = 250
   timestep_tolerance = 1e-08 # this is needed so that solver doesn't fail on very last time step
