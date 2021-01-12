@@ -45,22 +45,22 @@
   [accel_z]
   []
   [rot_vel_x]
-    block = 'controlrod fuelrod s1xzplane s1xyplane s2xzplane s2xyplane'
+    block = 'controlrod fuelrod rigidbeamhor rigidbeamver s1xzplane s1xyplane s2xzplane s2xyplane'
   []
   [rot_vel_y]
-    block = 'controlrod fuelrod s1xyplane s2xyplane'
+    block = 'controlrod fuelrod rigidbeamhor rigidbeamver s1xyplane s2xyplane'
   []
   [rot_vel_z]
-    block = 'controlrod fuelrod s1xzplane s2xzplane'
+    block = 'controlrod fuelrod rigidbeamhor rigidbeamver s1xzplane s2xzplane'
   []
   [rot_accel_x]
-    block = 'controlrod fuelrod s1xzplane s1xyplane s2xzplane s2xyplane'
+    block = 'controlrod fuelrod rigidbeamhor rigidbeamver s1xzplane s1xyplane s2xzplane s2xyplane'
   []
   [rot_accel_y]
-    block = 'controlrod fuelrod s1xyplane s2xyplane'
+    block = 'controlrod fuelrod rigidbeamhor rigidbeamver s1xyplane s2xyplane'
   []
   [rot_accel_z]
-    block = 'controlrod fuelrod s1xzplane s2xzplane'
+    block = 'controlrod fuelrod rigidbeamhor rigidbeamver s1xzplane s2xzplane'
   []
 []
 
@@ -394,7 +394,7 @@
     velocity = rot_vel_x
     beta = 0.25
     execute_on = TIMESTEP_END
-    block = 'controlrod fuelrod s1xzplane s1xyplane s2xzplane s2xyplane'
+    block = 'controlrod fuelrod rigidbeamhor rigidbeamver s1xzplane s1xyplane s2xzplane s2xyplane'
   []
   [rot_vel_x]
     type = NewmarkVelAux
@@ -402,7 +402,7 @@
     acceleration = rot_accel_x
     gamma = 0.5
     execute_on = TIMESTEP_END
-    block = 'controlrod fuelrod s1xzplane s1xyplane s2xzplane s2xyplane'
+    block = 'controlrod fuelrod rigidbeamhor rigidbeamver s1xzplane s1xyplane s2xzplane s2xyplane'
   []
   [rot_accel_y]
     type = NewmarkAccelAux
@@ -411,7 +411,7 @@
     velocity = rot_vel_y
     beta = 0.25
     execute_on = TIMESTEP_END
-    block = 'controlrod fuelrod s1xyplane s2xyplane'
+    block = 'controlrod fuelrod rigidbeamhor rigidbeamver s1xyplane s2xyplane'
   []
   [rot_vel_y]
     type = NewmarkVelAux
@@ -419,7 +419,7 @@
     acceleration = rot_accel_y
     gamma = 0.5
     execute_on = TIMESTEP_END
-    block = 'controlrod fuelrod s1xyplane s2xyplane'
+    block = 'controlrod fuelrod rigidbeamhor rigidbeamver s1xyplane s2xyplane'
   []
   [rot_accel_z]
     type = NewmarkAccelAux
@@ -428,7 +428,7 @@
     velocity = rot_vel_z
     beta = 0.25
     execute_on = TIMESTEP_END
-    block = 'controlrod fuelrod s1xzplane s2xzplane'
+    block = 'controlrod fuelrod rigidbeamhor rigidbeamver s1xzplane s2xzplane'
   []
   [rot_vel_z]
     type = NewmarkVelAux
@@ -436,7 +436,7 @@
     acceleration = rot_accel_z
     gamma = 0.5
     execute_on = TIMESTEP_END
-    block = 'controlrod fuelrod s1xzplane s2xzplane'
+    block = 'controlrod fuelrod rigidbeamhor rigidbeamver s1xzplane s2xzplane'
   []
 []
 
