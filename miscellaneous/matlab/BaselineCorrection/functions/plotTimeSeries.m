@@ -29,13 +29,13 @@ function [] = plotTimeSeries(time, series, varargin)
     
     %/
     valid_tiles = @(x) isnumeric(x) && (numel(x) == length(x)) && (1 < length(x))...
-                       && (length(x) < 6) && (max(x) <= num_series);
+                       && (length(x) < 7) && (max(x) <= num_series);
     addParameter(params, 'TiledLayout', [], @(x) valid_tiles(x) || all(cellfun(valid_tiles, x)))
     
     %/ cell array of plot titles and axis labels for each 'series' - use 'none' to hide titles
     valid_title = @(x) ischar(x) || isstring(x);
     valid_titles = @(x) (valid_title(x) || (iscell(x) && all(cellfun(valid_title, x))))...
-                        && (length(string(x)) == num_series);
+                         && (length(string(x)) == num_series);
     addParameter(params, 'Title', "", valid_titles)
     addParameter(params, 'XLabel', "Time", valid_title);
     addParameter(params, 'YLabel', "", valid_titles);
@@ -59,11 +59,11 @@ function [] = plotTimeSeries(time, series, varargin)
     ftname = params.Results.FontName;
     ftsize = params.Results.FontSize;
     
-    %/ convert variables to cells if necessary
+    %/ convert variables to cells if necessary and set number of tilesets to plot
     if (~iscell(tiles)), tiles = {tiles}; end
+    if (~isempty(tiles{1})), num_tiles = length(tiles); else, num_tiles = 0; end
     
     %/ convenience variables
-    num_tiles = length(tiles);
     
     num_plots = num_series; % devel: eventually need to distinguish this based on plot styles
     
@@ -85,17 +85,24 @@ function [] = plotTimeSeries(time, series, varargin)
         close all
     end
     
+    %// get available screen resolution by generating a figure, then maximizing it
+    f = figure('OuterPosition', get(groot, 'ScreenSize')); drawnow
+    res = get(f, 'OuterPosition')
+    
+    %%% this isn't going to work, I need a better way to ensure static figure extents
+
+    
     %// scale fig window bounds to screen width based on 'FontSize' and use a 20:9 aspect ratio
     
     %%% devel: if max(length(tiles)) > 2, use a certain aspect, else, ...
     
-    res = get(0, 'ScreenSize');
+
     %aspect = (0.030225 * ftsize + 0.1537) * res(3) * [1, 9 / 20];
     
-    aspect = (0.030225 * ftsize + 0.1537) * res(3) * [1, 5 / 8]; % devel
+    aspect = (0.030225 * ftsize + 0.1537) * res(3) * [1, max(res(4) / res(3), 0.625)]; % devel
     
     pos = [res(1) + (res(3) - aspect(1)) / 2, res(2) + (res(4) - aspect(2)) / 2, aspect];
-    figure('OuterPosition', pos);
+    set(f, 'OuterPosition', pos);
     
     %// 
     count = 1;
@@ -105,18 +112,23 @@ function [] = plotTimeSeries(time, series, varargin)
         
         %/ create new tab
         current = tiles{t};
-        dims = min(length(current), 3);
-        layout = tiledlayout(uitab('Title', tab(count)), dims, dims, 'Padding', 'none',...
+        num_tiles = length(current);
+        num_rows = min(num_tiles, 3);
+        layout = tiledlayout(uitab('Title', tab(count)), num_rows, 2, 'Padding', 'none',...
                              'TileSpacing', 'none'); 
         
         %/
-        for p = 1:length(current)
-            span = 2;
-            pos = 2 * p - span + 1
+        pos = 0;
+        span = 1;
+        for i = 1:num_tiles
+            pos = pos + span;
+            span = ceil((i + 4) / (2 * (num_tiles - num_rows + 2)));
+            
             ax = nexttile(layout, pos, [1, span]);
-            plot(time, series(current(p),:))
+            
+            plot(time, series(current(i),:))
             hold on
-            set(ax, 'FontName', ftname, 'FontSize', ftsize)
+            set(ax, 'FontName', ftname, 'FontSize', ftsize, 'FontName', ftname, 'FontSize', ftsize)
             
             hold off
         end
@@ -130,7 +142,7 @@ function [] = plotTimeSeries(time, series, varargin)
     for p = indvl(~ismember(indvl, tiles{:})) 
         %%% devel: after geting the size of the fig right for layouts, come back here and try to 
         %%% finesse the same plot ratios (but only for the case of existing tile tabs!)
-        %%%
+        %%% 
         %%% honestly, probably could just used the dimensions of largest tile then center that bish
         %%% in accordance with its outerposition
         

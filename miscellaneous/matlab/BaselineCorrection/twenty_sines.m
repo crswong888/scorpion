@@ -30,7 +30,7 @@ accel_func = @(t) -250 * pi * pi * sin(50 * pi * t);
 
 %//
 catseries = [accel; vel; disp; adj_accel; adj_vel; adj_disp];
-tiles = 1:2;
+tiles = 1:4;
 
 str = ' Time History';
 plot_titles = {['Acceleration', str];
