@@ -27,23 +27,24 @@ function [] = plotTimeSeries(time, series, varargin)
     valid_series = @(x) validateattributes(x, {'numeric'}, {'ncols', N});
     addRequired(params, 'Series', valid_series)
     
-    %/
-    valid_tiles = @(x) isnumeric(x) && (numel(x) == length(x)) && (1 < length(x))...
-                       && (length(x) < 7) && (max(x) <= num_series);
-    addParameter(params, 'TiledLayout', [], @(x) valid_tiles(x) || all(cellfun(valid_tiles, x)))
-    
     %/ cell array of plot titles and axis labels for each 'series' - use 'none' to hide titles
     valid_title = @(x) ischar(x) || isstring(x);
-    valid_titles = @(x) (valid_title(x) || (iscell(x) && all(cellfun(valid_title, x))))...
-                         && (length(string(x)) == num_series);
-    addParameter(params, 'Title', "", valid_titles)
+    valid_titles = @(x) valid_title(x) || (iscell(x) && all(cellfun(valid_title, x)));
+    addParameter(params, 'Title', "", @(x) valid_titles(x) && (length(string(x)) == num_series))
     addParameter(params, 'XLabel', "Time", valid_title);
-    addParameter(params, 'YLabel', "", valid_titles);
+    addParameter(params, 'YLabel', "", @(x) valid_titles(x) && (length(string(x)) == num_series));
     
-    %/ font to use on plot axes and title test
+    %/
+    valid_layout = @(x) isnumeric(x) && (numel(x) == length(x)) && (1 < length(x))...
+                        && (length(x) < 7) && (max(x) <= num_series);
+    valid_layouts = @(x) valid_layout(x) || (iscell(x) && all(cellfun(valid_layout, x)));
+    addParameter(params, 'TiledLayout', [], valid_layouts)
+    addParameter(params, 'LayoutTitle', "", valid_titles)
+    
+    %/ font to use on plot axes and title test (max font size is 24 pt)
     valid_font = @(x) ischar(x) || (isstring(x) && (length(x) == 1));
     addParameter(params, 'FontName', 'Helvetica', valid_font)
-    addParameter(params, 'FontSize', 10, @(x) isnumeric(x) && (2 <= x) && (x <= 28));
+    addParameter(params, 'FontSize', 10, @(x) isnumeric(x) && (2 <= x) && (x <= 24));
     
     %/ wether or not to close all currently open plots before generating new ones
     addParameter(params, 'ClearFigures', false, @(x) islogical(x));
@@ -52,20 +53,28 @@ function [] = plotTimeSeries(time, series, varargin)
     parse(params, series, varargin{:})
     
     %/ simplify pointer syntax
-    tiles = params.Results.TiledLayout;
+    layouts = params.Results.TiledLayout;
     plot_titles(1:num_series) = string(params.Results.Title);
     x_label = string(params.Results.XLabel);
     y_labels(1:num_series) = string(params.Results.YLabel);
+    layout_titles = string(params.Results.LayoutTitle);
     ftname = params.Results.FontName;
     ftsize = params.Results.FontSize;
     
     %/ convert variables to cells if necessary and set number of tilesets to plot
-    if (~iscell(tiles)), tiles = {tiles}; end
-    if (~isempty(tiles{1})), num_tiles = length(tiles); else, num_tiles = 0; end
+    if (~iscell(layouts)), layouts = {layouts}; end
+    if (~isempty(layouts{1})), num_layouts = length(layouts); else, num_layouts = 0; end
     
-    %/ convenience variables
+    %/ check that titles are provided for each layout if at all (hard to do this before parsing)
+    if (~ismember('LayoutTitle', params.UsingDefaults) && (length(layout_titles) ~= num_layouts))
+        error(['The number of strings provided for ''LayoutTitle'' (',... 
+               num2str(length(layout_titles)), ') must be equal to the number of plot sets ',...
+               'provided for ''TiledLayout'' (', num2str(num_layouts), ').'])
+    end
+        
     
     num_plots = num_series; % devel: eventually need to distinguish this based on plot styles
+    
     
     %// generate alphanumeric array for tab indexing
     tab = string(transpose('A':'Z'));
@@ -85,37 +94,37 @@ function [] = plotTimeSeries(time, series, varargin)
         close all
     end
     
-    %// get available screen resolution by generating a figure, then maximizing it
-    f = figure('OuterPosition', get(groot, 'ScreenSize')); drawnow
-    res = get(f, 'OuterPosition')
+%     get(groot, 'DefaultAxesMinorGridAlpha')
+%     set(groot, 'DefaultAxesXGrid', 'on', 'DefaultAxesXMinorGrid', 'on')
     
-    %%% this isn't going to work, I need a better way to ensure static figure extents
-
-    
-    %// scale fig window bounds to screen width based on 'FontSize' and use a 20:9 aspect ratio
-    
+    %// scale fig window bounds to screen width based on 'FontSize' and use a 9:20 aspect ratio
     %%% devel: if max(length(tiles)) > 2, use a certain aspect, else, ...
-    
-
+    res = get(groot, 'ScreenSize');
     %aspect = (0.030225 * ftsize + 0.1537) * res(3) * [1, 9 / 20];
-    
-    aspect = (0.030225 * ftsize + 0.1537) * res(3) * [1, max(res(4) / res(3), 0.625)]; % devel
-    
+    aspect = (0.030225 * ftsize + 0.1546) * res(3) * [1, max(res(4) / res(3), 0.625)]; % devel
     pos = [res(1) + (res(3) - aspect(1)) / 2, res(2) + (res(4) - aspect(2)) / 2, aspect];
-    set(f, 'OuterPosition', pos);
+    figure('OuterPosition', pos)
     
     %// 
     count = 1;
-    for t = 1:num_tiles
-        %%% devel: using 'nexttile(span)' might be an interesting way to use a 3x3 grid here...
-        %%% if so, always priortize the last plot added, i.e., it gets the most space
-        
+    for t = 1:num_layouts
         %/ create new tab
-        current = tiles{t};
-        num_tiles = length(current);
+        num_tiles = length(layouts{t});
         num_rows = min(num_tiles, 3);
         layout = tiledlayout(uitab('Title', tab(count)), num_rows, 2, 'Padding', 'none',...
-                             'TileSpacing', 'none'); 
+                             'TileSpacing', 'compact', 'OuterPosition', [0.01, 0.01, 0.98, 0.98]);
+                         
+        %/ 
+        if (layout_titles(t) ~= "none")
+            current = layout_titles(t);
+            tab(count)
+            if (current == "")
+                current = "Series Layout " + tab(count);
+            end
+            title(layout, current, 'FontSize', ftsize * 1.1)
+            xlabel(layout, 'Time', 'FontSize', ftsize)
+        end
+            
         
         %/
         pos = 0;
@@ -126,9 +135,13 @@ function [] = plotTimeSeries(time, series, varargin)
             
             ax = nexttile(layout, pos, [1, span]);
             
-            plot(time, series(current(i),:))
+            plot(time, series(layouts{t}(i),:), 'Color', [0, 0, 0],...
+                 'LineWidth', linearInterpolation([2, 10, 24], [1, 1, 1.7], ftsize))
             hold on
-            set(ax, 'FontName', ftname, 'FontSize', ftsize, 'FontName', ftname, 'FontSize', ftsize)
+            
+            set(ax, 'FontName', ftname, 'FontSize', ftsize, 'XTickLabel', {})
+            
+            grid on
             
             hold off
         end
@@ -139,7 +152,7 @@ function [] = plotTimeSeries(time, series, varargin)
     %// loop through all input series and plot each one against time
     m = [0.005, 0.02]; % minimum vertical and horizontal tight space margins
     indvl = 1:num_series;
-    for p = indvl(~ismember(indvl, tiles{:})) 
+    for p = indvl(~ismember(indvl, layouts{:})) 
         %%% devel: after geting the size of the fig right for layouts, come back here and try to 
         %%% finesse the same plot ratios (but only for the case of existing tile tabs!)
         %%% 
@@ -149,7 +162,7 @@ function [] = plotTimeSeries(time, series, varargin)
         %/ create unique axes object in new tab, plot series, and set font style
         ax = axes(uitab('Title', tab(count))); %#ok<LAXES>
         plot(time, series(p,:), 'Color', [0, 0, 0],...
-             'LineWidth', linearInterpolation([2, 10, 28], [1, 1, 2], ftsize))
+             'LineWidth', linearInterpolation([2, 10, 24], [1, 1, 1.7], ftsize))
         hold on
         set(ax, 'FontName', ftname, 'FontSize', ftsize)
         

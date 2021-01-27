@@ -15,8 +15,8 @@ addpath('functions')
 
 %// input acceleration time series
 data = transpose(readmatrix('records/chichi_A0126300_N.csv'));
-time = data(1,:);
-accel = data(2,:);
+time = [0, data(1,:)];
+accel = [0, data(2,:)];
 
 %// compute drifting ratio of nominal displacement for comparison to corrected one
 [vel, disp] = newmarkIntegrate(time, accel, 0.5, 0.25);
@@ -34,9 +34,12 @@ accel = data(2,:);
 
 
 %// 
-catseries = [accel_V2; vel_V2; disp_V2];
-plot_titles = {'Adjusted Acceleration Time History';
+catseries = [accel; vel; disp; accel_V2; vel_V2; disp_V2];
+plot_titles = {'Nominal Acceleration Time History';
+               'Nominal Velocity Time History';
+               'Nominal Displacement Time History';
+               'Adjusted Acceleration Time History';
                'Adjusted Velocity Time History';
                'Adjusted Displacement Time History'};
 
-plotTimeSeries(time, catseries, 'Title', plot_titles)
+plotTimeSeries(time, catseries, 'Title', plot_titles, 'ClearFigures', true)
