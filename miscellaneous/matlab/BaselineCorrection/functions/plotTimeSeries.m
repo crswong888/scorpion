@@ -39,17 +39,19 @@ function [] = plotTimeSeries(time, series, varargin)
     %/
     valid_layout = @(x) isnumeric(x) && (numel(x) == length(x)) && (1 < length(x))...
                         && (length(x) < 7) && (max(x) <= num_series);
-    valid_layouts = @(x) valid_layout(x) || (iscell(x) && all(cellfun(valid_layout, x)));
-    addParameter(params, 'TiledLayout', [], valid_layouts)
+    valid_layouts = @(x) (numel(x) == length(x)) && all(cellfun(valid_layout, x));
+    addParameter(params, 'TiledLayout', [], @(x) valid_layout(x) || (iscell(x) && valid_layouts(x)))
     addParameter(params, 'LayoutTitle', "", valid_titles)
     
-    %/ font to use on plot axes and title test (max font size is 24 pt)
+    %/ font to use on plot axes
     valid_font = @(x) ischar(x) || (isstring(x) && (length(x) == 1));
     addParameter(params, 'FontName', 'Helvetica', valid_font)
-    addParameter(params, 'FontSize', 10, @(x) isnumeric(x) && (8 <= x) && (x <= 24));
+    
+    %/ sizing parameter - controls font sizes, line thickness, window width, etc.
+    addParameter(params, 'SizeFactor', 1, @(x) mustBeMember(x, [1, 2, 3, 4, 5]));
     
     %/ wether or not to close all currently open plots before generating new ones
-    addParameter(params, 'ClearFigures', false, @(x) islogical(x));
+    addParameter(params, 'ClearFigures', true, @(x) islogical(x));
     
     %// parse provided inputs
     parse(params, series, varargin{:})
@@ -59,112 +61,158 @@ function [] = plotTimeSeries(time, series, varargin)
     plot_titles(1:num_series) = string(params.Results.Title);
     x_label = string(params.Results.XLabel);
     y_labels(1:num_series) = string(params.Results.YLabel);
-    layout_titles = string(params.Results.LayoutTitle);
     ftname = params.Results.FontName;
-    ftsize = params.Results.FontSize / 1.1; % default title font multiplier is 1.1, so scale down
-    
+    size_factor = params.Results.SizeFactor;
+      
     %/ convert variables to cells if necessary and set number of tilesets to plot
     if (~iscell(layouts)), layouts = {layouts}; end
     if (~isempty(layouts{1})), num_layouts = length(layouts); else, num_layouts = 0; end
     
-    %/ check that titles are provided for each layout if at all (hard to do this before parsing)
+    % check that titles are provided for each layout if at all (hard to do this before parsing)
+    layout_titles = params.Results.LayoutTitle;
     if (~ismember('LayoutTitle', params.UsingDefaults) && (length(layout_titles) ~= num_layouts))
         error(['The number of strings provided for ''LayoutTitle'' (',... 
                num2str(length(layout_titles)), ') must be equal to the number of plot sets ',...
                'provided for ''TiledLayout'' (', num2str(num_layouts), ').'])
+    else
+        layout_titles(1:num_layouts) = string(layout_titles);
     end
-        
     
-    num_plots = num_series; % devel: eventually need to distinguish this based on plot styles
+    %/ construct array of all series indices placed in a tiled plot layout
+    all_layouts = [];
+    for t = 1:num_layouts
+        if (isrow(layouts{t}))
+            all_layouts = cat(2, all_layouts, layouts{t});
+        else
+            all_layouts = cat(2, all_layouts, transpose(layouts{t}));
+        end
+    end
     
+    % now append all individual plots (ones not in layouts) to 'layouts' cell array for tab indexing
+    indvl = setdiff(1:num_series, all_layouts);
+    if (isrow(layouts))
+        layouts = cat(2, layouts, num2cell(indvl));
+    else
+        layouts = cat(1, layouts, num2cell(transpose(indvl)));
+    end
     
-    %// generate alphanumeric array for tab indexing
+    %// convenience variables
+    num_tabs = length(layouts); 
+    sfdom = [1, 5]; % size factor domain boundaries used for interpolations
+    
+    %/ generate alphanumeric array for tab indexing
     tab = string(transpose('A':'Z'));
-    for i = 1:(ceil(num_plots / 26) - 1)
-        letters(1:26,1) = tab(i);
+    for p = 1:(ceil(num_tabs / 26) - 1)
+        letters(1:26,1) = tab(p);
         tab = cat(1, tab, join(cat(2, letters, tab(1:26)), ''));
     end
     
-    %// get current matlab version for handling position constraint property (9.8 is 2020a)
+    %/ get current matlab version for handling position constraint property (9.8 is 2020a)
     pos_arg = 'PositionConstraint';
     if (verLessThan('matlab', '9.8'))
         pos_arg = 'ActivePositionProperty';
     end
+    
+    %/ map size factor onto fontsizes [12.5, 22.5] pts for invidiual plots
+    title_ftsize = linearInterpolation(sfdom, [12.5, 22.5], size_factor);
+    ftsize = title_ftsize / 1.1; % default title font multiplier is 1.1, so scale down
     
     %// clear plot objects, if desired
     if (params.Results.ClearFigures)
         close all
     end
     
-%     get(groot, 'DefaultAxesMinorGridAlpha')
-%     set(groot, 'DefaultAxesXGrid', 'on', 'DefaultAxesXMinorGrid', 'on')
+    %// map size factor onto figure window widths and select aspect ratios based on plot layouts 
+    screen = get(groot, 'ScreenSize');
+    switch max(cellfun(@(x) length(x), layouts))
+        case 1
+            max_tiles = [1, 1];
+        case 2
+            max_tiles = [2, 1];
+        case 3
+            max_tiles = [3, 1];
+        otherwise
+            wfactor = linearInterpolation(sfdom, [0.56, 0.9], size_factor);
+            aspect = 2 / 5;
+            max_tiles = [3, 2];
+    end
     
-    %// scale fig window bounds to screen width based on 'FontSize' and use a 9:20 aspect ratio
-    %%% devel: if max(length(tiles)) > 2, use a certain aspect, else, ...
-    res = get(groot, 'ScreenSize');
-    %aspect = (0.030225 * ftsize + 0.1537) * res(3) * [1, 9 / 20];
-    aspect = (0.0332475 * ftsize + 0.1546) * res(3) * [1, max(res(4) / res(3), 0.625)]; % devel
-    pos = [res(1) + (res(3) - aspect(1)) / 2, res(2) + (res(4) - aspect(2)) / 2, aspect];
+    %/ compute results and initialize figure with 'OuterPosition' prop
+    res = wfactor * screen(3) * [1, min(screen(4) / screen(3), aspect)]; % [width, height] px
+    pos = [screen(1) + (screen(3) - res(1)) / 2, screen(2) + (screen(4) - res(2)) / 2, res];
     figure('OuterPosition', pos)
     
     %// 
-    count = 1;
-    for t = 1:num_layouts
+    max_res = [0.99, 0.98]; % max normalized width and height used for layout with most tiles
+    for t = 1:num_tabs
         %/ 
         current = layouts{t};
         num_tiles = length(current);
         rows = min(num_tiles, 3);
         cols = ceil(num_tiles / rows);
         if (num_tiles < 4)
-            pos = 1:num_tiles;
+            idx = 1:num_tiles;
             set_label = num_tiles;
         else
-            pos = [1, 3, 5, (14 - 2 * num_tiles):2:6]; % fills left column then right in reverse
+            idx = [1, 3, 5, (14 - 2 * num_tiles):2:6]; % fills left column then right in reverse
             set_label = [5, 6];
         end
         
         %/ create new layout tab
-        layout = tiledlayout(uitab('Title', tab(count)), rows, cols, 'Padding', 'none',...
-                             'TileSpacing', 'compact', 'OuterPosition', [0.01, 0.01, 0.98, 0.98]);
+        layout = tiledlayout(uitab('Title', tab(t)), rows, cols, 'Padding', 'none',...
+                             'TileSpacing', 'compact');
                          
-        %/ 
-        tstring = layout_titles(t);
-        if (tstring ~= "none")
-            if (tstring == "")
-                tstring = "Series Layout " + tab(count);
-            end
-            % TODO: need to shift this upward
-            title(layout, tstring, 'FontSize', ftsize * 1.1)
-        end
-        
-        %%% devel
-        ftscale = 0.8;
-        smft = ftscale * ftsize;
-        
         %/
-        for i = 1:num_tiles
+        if (num_tiles > 1)
+            W = cols / max_tiles(2) * max_res(1);
+            H = rows / max_tiles(1) * max_res(2);
+            objscale = 0.8;
             
-            ax = nexttile(layout, pos(i));
-            
-            plot(time, series(current(i),:), 'Color', [0, 0, 0],...
-                 'LineWidth', linearInterpolation(ftscale * [8, 24], [0.9, 1.7], smft))
-            hold on
-            set(ax, 'FontName', ftname, 'FontSize', smft)
-            
-            %/
-            tstring = plot_titles(current(i));
+            %
+            tstring = layout_titles(t);
             if (tstring ~= "none")
                 if (tstring == "")
-                    tstring = "Time Series " + num2str(current(i));
+                    tstring = "Series Layout " + tab(t);
+                end
+                % TODO: need to shift this upward
+                title(layout, tstring, 'FontSize', title_ftsize)
+            end
+        else
+            W = max_res(1);
+            H = max_res(2);
+            objscale = 1;
+        end
+        
+        % set outer resolution for tiled layout and constrain when resizing
+        set(layout, 'OuterPosition', [(1 - W) / 2, (1 - H) / 2, W, H], pos_arg, 'OuterPosition')
+        
+        %/
+        line_widths = objscale * [1.25, 2.25];
+        axft = objscale * ftsize;
+        for p = 1:num_tiles
+            
+            ax = nexttile(layout, idx(p));
+            
+            plot(time, series(current(p),:), 'Color', [0, 0, 0],...
+                 'LineWidth', linearInterpolation(sfdom, line_widths, size_factor))
+            hold on
+            set(ax, 'FontName', ftname, 'FontSize', axft)
+            
+            %/
+            tstring = plot_titles(current(p));
+            if (tstring ~= "none")
+                if (tstring == "")
+                    tstring = "Time Series " + num2str(current(p));
                 end
                 % TODO: need to shift this upward
                 title(ax, tstring)
             end
             
             %/
-            ylabel(y_labels(current(i)))
-            if (ismember(pos(i), set_label))
-                xlabel(x_label);
+            ylabel(y_labels(current(p)))
+            if (ismember(idx(p), set_label))
+                %%% xlabel(x_label)
+                check = xlabel(x_label);
             else
                 set(ax, 'XTickLabel', {})
             end
@@ -173,60 +221,65 @@ function [] = plotTimeSeries(time, series, varargin)
             hold off
         end
         
-        count = count + 1;
+        %%% devel checks
+        check_tab = tab(t)
+        check_pos = layout.OuterPosition
+        check_lw = linearInterpolation(sfdom, line_widths, size_factor)
+        check_tft = check.FontSize
+        check_aspect = ax.Position(3) / ax.Position(4)
     end
     
-    %// loop through all input series and plot each one against time
-    m = [0.005, 0.02]; % minimum vertical and horizontal tight space margins
-    indvl = 1:num_series;
-    for p = indvl(~ismember(indvl, layouts{:})) 
-        %%% devel: after geting the size of the fig right for layouts, come back here and try to 
-        %%% finesse the same plot ratios (but only for the case of existing tile tabs!)
-        %%% 
-        %%% honestly, probably could just used the dimensions of largest tile then center that bish
-        %%% in accordance with its outerposition
-        
-        %/ create unique axes object in new tab, plot series, and set font style
-        ax = axes(uitab('Title', tab(count))); %#ok<LAXES>
-        plot(time, series(p,:), 'Color', [0, 0, 0],...
-             'LineWidth', linearInterpolation([2, 10, 24], [1, 1, 1.7], ftsize))
-        hold on
-        set(ax, 'FontName', ftname, 'FontSize', ftsize)
-        
-        %/ set plot title - shift it up from top plot border by a smidge
-        tset = zeros(1, 4);
-        if (~strcmp(plot_titles(p), "none"))
-            current = plot_titles(p);
-            if (current == "")
-                current = ['Time Series ', num2str(p)];
-            end
-            th = title(current, 'Units', 'normalized', 'FontUnits', 'normalized');
-            tset = [th.Position + [0, m(2) * ftsize / 20, 0], th.FontSize];
-            set(th, 'Position', tset(1:3), 'FontUnits', 'points'); % not resetting units on purpose
-        end
-        
-        %/ set axis labels if there are ones
-        if ((x_label ~= "") && (x_label ~= "none"))
-            xlabel(x_label)
-        end
-        if ((y_labels(p) ~= "") && (y_labels(p) ~= "none"))
-            ylabel(y_labels(p))
-        end
-        
-        %/ 'TightInset' is a read-only prop - this attempts to modify it w/o knowing how it works
-        axtight = get(ax, 'TightInset');
-        shift = [max(axtight(1), m(1)) + m(1),...
-                 max(axtight(2), m(2)) + m(2),...
-                 1 - max(axtight(3), m(1)) - m(1),...
-                 1 - max(axtight(4), m(2)) - m(2) - tset(4)];
-        shift(3:4) = shift(3:4) - shift(1:2);
-        set(ax, 'Position', shift, pos_arg, 'outerposition')
-        
-        %/ toggle gridlines
-        grid on
-        grid minor
-        
-        hold off
-        count = count + 1;
-    end
+%     %// loop through all input series and plot each one against time
+%     m = [0.005, 0.02]; % minimum vertical and horizontal tight space margins
+%     indvl = 1:num_series;
+%     for p = indvl(~ismember(indvl, layouts{:})) 
+%         %%% devel: after geting the size of the fig right for layouts, come back here and try to 
+%         %%% finesse the same plot ratios (but only for the case of existing tile tabs!)
+%         %%% 
+%         %%% honestly, probably could just used the dimensions of largest tile then center that bish
+%         %%% in accordance with its outerposition
+%         
+%         %/ create unique axes object in new tab, plot series, and set font style
+%         ax = axes(uitab('Title', tab(count))); %#ok<LAXES>
+%         plot(time, series(p,:), 'Color', [0, 0, 0],...
+%              'LineWidth', linearInterpolation([2, 10, 24], [1, 1, 1.7], ftsize))
+%         hold on
+%         set(ax, 'FontName', ftname, 'FontSize', ftsize)
+%         
+%         %/ set plot title - shift it up from top plot border by a smidge
+%         tset = zeros(1, 4);
+%         if (~strcmp(plot_titles(p), "none"))
+%             current = plot_titles(p);
+%             if (current == "")
+%                 current = ['Time Series ', num2str(p)];
+%             end
+%             th = title(current, 'Units', 'normalized', 'FontUnits', 'normalized');
+%             tset = [th.Position + [0, m(2) * ftsize / 20, 0], th.FontSize];
+%             set(th, 'Position', tset(1:3), 'FontUnits', 'points'); % not resetting units on purpose
+%         end
+%         
+%         %/ set axis labels if there are ones
+%         if ((x_label ~= "") && (x_label ~= "none"))
+%             xlabel(x_label)
+%         end
+%         if ((y_labels(p) ~= "") && (y_labels(p) ~= "none"))
+%             ylabel(y_labels(p))
+%         end
+%         
+%         %/ 'TightInset' is a read-only prop - this attempts to modify it w/o knowing how it works
+%         axtight = get(ax, 'TightInset');
+%         shift = [max(axtight(1), m(1)) + m(1),...
+%                  max(axtight(2), m(2)) + m(2),...
+%                  1 - max(axtight(3), m(1)) - m(1),...
+%                  1 - max(axtight(4), m(2)) - m(2) - tset(4)];
+%         shift(3:4) = shift(3:4) - shift(1:2);
+%         set(ax, 'Position', shift, pos_arg, 'outerposition')
+%         
+%         %/ toggle gridlines
+%         grid on
+%         grid minor
+%         
+%         hold off
+%         count = count + 1;
+%     end
 end
