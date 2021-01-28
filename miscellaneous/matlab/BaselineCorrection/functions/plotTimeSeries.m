@@ -15,6 +15,8 @@
 %%%
 %%% at some point, if there really is time, it would be interesting to try getting superimposed
 %%% plots into a tiled layout
+%%%
+%%% superimposed plots have to have their own titles
 
 
 function [] = plotTimeSeries(time, series, varargin)
@@ -44,7 +46,7 @@ function [] = plotTimeSeries(time, series, varargin)
     %/ font to use on plot axes and title test (max font size is 24 pt)
     valid_font = @(x) ischar(x) || (isstring(x) && (length(x) == 1));
     addParameter(params, 'FontName', 'Helvetica', valid_font)
-    addParameter(params, 'FontSize', 10, @(x) isnumeric(x) && (2 <= x) && (x <= 24));
+    addParameter(params, 'FontSize', 10, @(x) isnumeric(x) && (8 <= x) && (x <= 24));
     
     %/ wether or not to close all currently open plots before generating new ones
     addParameter(params, 'ClearFigures', false, @(x) islogical(x));
@@ -59,7 +61,7 @@ function [] = plotTimeSeries(time, series, varargin)
     y_labels(1:num_series) = string(params.Results.YLabel);
     layout_titles = string(params.Results.LayoutTitle);
     ftname = params.Results.FontName;
-    ftsize = params.Results.FontSize;
+    ftsize = params.Results.FontSize / 1.1; % default title font multiplier is 1.1, so scale down
     
     %/ convert variables to cells if necessary and set number of tilesets to plot
     if (~iscell(layouts)), layouts = {layouts}; end
@@ -101,48 +103,73 @@ function [] = plotTimeSeries(time, series, varargin)
     %%% devel: if max(length(tiles)) > 2, use a certain aspect, else, ...
     res = get(groot, 'ScreenSize');
     %aspect = (0.030225 * ftsize + 0.1537) * res(3) * [1, 9 / 20];
-    aspect = (0.030225 * ftsize + 0.1546) * res(3) * [1, max(res(4) / res(3), 0.625)]; % devel
+    aspect = (0.0332475 * ftsize + 0.1546) * res(3) * [1, max(res(4) / res(3), 0.625)]; % devel
     pos = [res(1) + (res(3) - aspect(1)) / 2, res(2) + (res(4) - aspect(2)) / 2, aspect];
     figure('OuterPosition', pos)
     
     %// 
     count = 1;
     for t = 1:num_layouts
-        %/ create new tab
-        num_tiles = length(layouts{t});
-        num_rows = min(num_tiles, 3);
-        layout = tiledlayout(uitab('Title', tab(count)), num_rows, 2, 'Padding', 'none',...
+        %/ 
+        current = layouts{t};
+        num_tiles = length(current);
+        rows = min(num_tiles, 3);
+        cols = ceil(num_tiles / rows);
+        if (num_tiles < 4)
+            pos = 1:num_tiles;
+            set_label = num_tiles;
+        else
+            pos = [1, 3, 5, (14 - 2 * num_tiles):2:6]; % fills left column then right in reverse
+            set_label = [5, 6];
+        end
+        
+        %/ create new layout tab
+        layout = tiledlayout(uitab('Title', tab(count)), rows, cols, 'Padding', 'none',...
                              'TileSpacing', 'compact', 'OuterPosition', [0.01, 0.01, 0.98, 0.98]);
                          
         %/ 
-        if (layout_titles(t) ~= "none")
-            current = layout_titles(t);
-            tab(count)
-            if (current == "")
-                current = "Series Layout " + tab(count);
+        tstring = layout_titles(t);
+        if (tstring ~= "none")
+            if (tstring == "")
+                tstring = "Series Layout " + tab(count);
             end
-            title(layout, current, 'FontSize', ftsize * 1.1)
-            xlabel(layout, 'Time', 'FontSize', ftsize)
+            % TODO: need to shift this upward
+            title(layout, tstring, 'FontSize', ftsize * 1.1)
         end
-            
+        
+        %%% devel
+        ftscale = 0.8;
+        smft = ftscale * ftsize;
         
         %/
-        pos = 0;
-        span = 1;
         for i = 1:num_tiles
-            pos = pos + span;
-            span = ceil((i + 4) / (2 * (num_tiles - num_rows + 2)));
             
-            ax = nexttile(layout, pos, [1, span]);
+            ax = nexttile(layout, pos(i));
             
-            plot(time, series(layouts{t}(i),:), 'Color', [0, 0, 0],...
-                 'LineWidth', linearInterpolation([2, 10, 24], [1, 1, 1.7], ftsize))
+            plot(time, series(current(i),:), 'Color', [0, 0, 0],...
+                 'LineWidth', linearInterpolation(ftscale * [8, 24], [0.9, 1.7], smft))
             hold on
+            set(ax, 'FontName', ftname, 'FontSize', smft)
             
-            set(ax, 'FontName', ftname, 'FontSize', ftsize, 'XTickLabel', {})
+            %/
+            tstring = plot_titles(current(i));
+            if (tstring ~= "none")
+                if (tstring == "")
+                    tstring = "Time Series " + num2str(current(i));
+                end
+                % TODO: need to shift this upward
+                title(ax, tstring)
+            end
+            
+            %/
+            ylabel(y_labels(current(i)))
+            if (ismember(pos(i), set_label))
+                xlabel(x_label);
+            else
+                set(ax, 'XTickLabel', {})
+            end
             
             grid on
-            
             hold off
         end
         

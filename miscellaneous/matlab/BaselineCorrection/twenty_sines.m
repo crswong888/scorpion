@@ -29,23 +29,26 @@ accel_func = @(t) -250 * pi * pi * sin(50 * pi * t);
 [DR, AR] = computeDriftRatio(time, accel, adj_disp);
 
 %//
-catseries = [accel; vel; disp; adj_accel; adj_vel; adj_disp];
-tiles = 1:6;
+g = 9.81; % m/s/s, gravitational acceleration
+catseries = [accel / g; vel; disp; adj_accel / g; adj_vel; adj_disp];
+tiles = 1:4;
 
-str = ' Time History';
-plot_titles = {['Acceleration', str];
-               ['Velocity', str];
-               ['Displacement', str, ' (DR = ', num2str(nomDR), ', AR = ' num2str(nomAR), ')'];
-               ['Acceleration', str];
-               ['Velocity', str];
-               ['Displacement', str, ' (DR = ', num2str(DR), ', AR = ' num2str(AR), ')']};
+% str = ' Time History';
+% plot_titles = {['Nominal Acceleration', str];
+%                ['Nominal Velocity', str];
+%                ['Nominal Displacement', str, ' (DR = ', num2str(nomDR), ', AR = ' num2str(nomAR), ')'];
+%                ['Adjusted Acceleration', str];
+%                ['Adjusted Velocity', str];
+%                ['Adjusted Displacement', str, ' (DR = ', num2str(DR), ', AR = ' num2str(AR), ')']};
+
+plot_titles = {'Nominal Time History', 'none', 'none', 'none', 'none', 'none'};
            
-y_labels = {'Nominal Acceleration (m/s^{2})';
-            'Nominal Velocity (m/s)';
-            'Nominal Displacement (m)';
-            'Adjusted Acceleration (m/s^{2})';
-            'Adjusted Velocity (m/s)';
-            'Adjusted Displacement (m)'};
+y_labels = {'Acceleration (g)';
+            'Velocity (m/s)';
+            'Displacement (m)';
+            'Acceleration (g)';
+            'Velocity (m/s)';
+            'Displacement (m)'};
 
 plotTimeSeries(time, catseries, 'TiledLayout', tiles, 'LayoutTitle', "",...
                'Title', plot_titles, 'XLabel', 'Time (s)', 'YLabel', y_labels, ...
