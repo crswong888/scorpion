@@ -33,13 +33,43 @@ accel = [0, data(2,:)];
 [V2DR, V2AR] = computeDriftRatio(time, accel, disp_V2);
 
 
-%// 
-catseries = [accel; vel; disp; accel_V2; vel_V2; disp_V2];
-plot_titles = {'Nominal Acceleration Time History';
-               'Nominal Velocity Time History';
-               'Nominal Displacement Time History';
-               'Adjusted Acceleration Time History';
-               'Adjusted Velocity Time History';
-               'Adjusted Displacement Time History'};
+%//
+disp_ss = transpose(readmatrix('records/chichi_A0126300_N_ss.csv'));
+disp_ss = [0, disp_ss(4,:), 0];
+disp_aba = transpose(readmatrix('records/chichi_A0126300_N_aba.txt'));
+disp_aba = disp_aba(2,:);
 
-plotTimeSeries(time, catseries, 'Title', plot_titles, 'ClearFigures', true)
+%// 
+g = 981; % cm/s/s, gravitational acceleration
+catseries = [accel / g; vel; disp; 
+             accel_A3 / g; vel_A3; disp_A3; 
+             accel_V2 / g; vel_V2; disp_V2;
+             disp_ss; disp_aba];
+plot_titles = ["Nominal Time History";
+               "none";
+               "none";
+               "Corrected (A3) Time History"
+               "none"
+               "none";
+               "Corrected (V2) Time History";
+               "none";
+               "none";
+               "Corrected (SeismoSignal) Time History";
+               "Corrected (Abaqus) Time History"];
+           
+y_labels = ["Acc. (g)", "Vel. (cm/s)", "Disp. (cm)"];
+y_labels = [y_labels, y_labels, y_labels, y_labels(3), y_labels(3)];
+
+superimps = {[6, 10], [9, 11]};
+superimp_titles = ["none", "none"];
+superimp_labels = [y_labels(3), y_labels(3)];
+legends = {["Type-Oriented", "SeismoSignal"], ["Type-Oriented", "Abaqus"]};
+
+layouts = {1:3, 4:6, 7:9, 12:13};
+layout_titles(1:length(layouts)) = "none";
+
+plotTimeSeries(time, catseries, 'Title', plot_titles, 'Xlabel', 'Time (s)', 'YLabel', y_labels,...
+               'Superimpose', superimps, 'SuperimposeTitle', superimp_titles,...
+               'SuperimposeYLabel', superimp_labels, 'Legend', legends,...
+               'LegendLocation', 'northeast', 'TiledLayout', layouts,...
+               'LayoutTitle', layout_titles, 'SizeFactor', 2)
