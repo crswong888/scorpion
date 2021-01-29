@@ -90,7 +90,9 @@ function [] = plotTimeSeries(time, series, varargin)
     
     % now append all individual plots (ones not in layouts) to 'layouts' cell array for tab indexing
     indvl = setdiff(1:num_series, all_layouts);
-    if (isrow(layouts))
+    if (isempty(layouts{1}))
+        layouts = num2cell(indvl);
+    elseif (isrow(layouts))
         layouts = cat(2, layouts, num2cell(indvl));
     else
         layouts = cat(1, layouts, num2cell(transpose(indvl)));
@@ -114,7 +116,7 @@ function [] = plotTimeSeries(time, series, varargin)
     end
     
     %/ map size factor onto fontsizes [12.5, 22.5] pts for invidiual plots
-    title_ftsize = linearInterpolation(sfdom, [12.5, 22.5], size_factor);
+    title_ftsize = linearInterpolation(sfdom, [10, 18], size_factor);
     ftsize = title_ftsize / 1.1; % default title font multiplier is 1.1, so scale down
     
     %// clear plot objects, if desired
@@ -124,21 +126,25 @@ function [] = plotTimeSeries(time, series, varargin)
     
     %// map size factor onto figure window widths and select aspect ratios based on plot layouts 
     screen = get(groot, 'ScreenSize');
+    wr = linearInterpolation(sfdom, [0.29, 0.45], size_factor);
     switch max(cellfun(@(x) length(x), layouts))
         case 1
+            aspect = 43 / 80;
             max_tiles = [1, 1];
         case 2
+            aspect = 25 / 40;
             max_tiles = [2, 1];
         case 3
+            aspect = 16 / 20;
             max_tiles = [3, 1];
         otherwise
-            wfactor = linearInterpolation(sfdom, [0.56, 0.9], size_factor);
-            aspect = 2 / 5;
+            wr = linearInterpolation(sfdom, [0.58, 0.9], size_factor);
+            aspect = 8 / 20;
             max_tiles = [3, 2];
     end
     
     %/ compute results and initialize figure with 'OuterPosition' prop
-    res = wfactor * screen(3) * [1, min(screen(4) / screen(3), aspect)]; % [width, height] px
+    res = wr * screen(3) * [1, min(screen(4) / screen(3) / wr, aspect)]; % [width, height] px
     pos = [screen(1) + (screen(3) - res(1)) / 2, screen(2) + (screen(4) - res(2)) / 2, res];
     figure('OuterPosition', pos)
     
@@ -166,7 +172,6 @@ function [] = plotTimeSeries(time, series, varargin)
         if (num_tiles > 1)
             W = cols / max_tiles(2) * max_res(1);
             H = rows / max_tiles(1) * max_res(2);
-            objscale = 0.8;
             
             %
             tstring = layout_titles(t);
@@ -175,28 +180,28 @@ function [] = plotTimeSeries(time, series, varargin)
                     tstring = "Series Layout " + tab(t);
                 end
                 % TODO: need to shift this upward
-                title(layout, tstring, 'FontSize', title_ftsize)
+                title(layout, tstring, 'FontSize', 1.1 * title_ftsize)
             end
         else
-            W = max_res(1);
-            H = max_res(2);
-            objscale = 1;
+            selections = [1.0, 1.0, 1.0, 0.5; % width scale factors
+                          1.0, 0.78, 0.55, 0.55]; % height scale factors
+            select = [1, 2, 3, 6] == max_tiles(1) * max_tiles(2); % selection by layout dimensions
+            W = selections(1, select) * max_res(1);
+            H = selections(2, select) * max_res(2);
         end
         
         % set outer resolution for tiled layout and constrain when resizing
         set(layout, 'OuterPosition', [(1 - W) / 2, (1 - H) / 2, W, H], pos_arg, 'OuterPosition')
         
         %/
-        line_widths = objscale * [1.25, 2.25];
-        axft = objscale * ftsize;
         for p = 1:num_tiles
             
             ax = nexttile(layout, idx(p));
             
             plot(time, series(current(p),:), 'Color', [0, 0, 0],...
-                 'LineWidth', linearInterpolation(sfdom, line_widths, size_factor))
+                 'LineWidth', linearInterpolation(sfdom, [1, 1.4], size_factor))
             hold on
-            set(ax, 'FontName', ftname, 'FontSize', axft)
+            set(ax, 'FontName', ftname, 'FontSize', ftsize)
             
             %/
             tstring = plot_titles(current(p));
@@ -223,10 +228,13 @@ function [] = plotTimeSeries(time, series, varargin)
         
         %%% devel checks
         check_tab = tab(t)
-        check_pos = layout.OuterPosition
-        check_lw = linearInterpolation(sfdom, line_widths, size_factor)
-        check_tft = check.FontSize
+%         check_lw = linearInterpolation(sfdom, [1, 1.4], size_factor)
+%         check_tft = check.FontSize
+        set(ax, 'Units', 'pixels')
+        check_width = ax.Position(3)
+        check_height = ax.Position(4)
         check_aspect = ax.Position(3) / ax.Position(4)
+        set(ax, 'Units', 'normalized')
     end
     
 %     %// loop through all input series and plot each one against time

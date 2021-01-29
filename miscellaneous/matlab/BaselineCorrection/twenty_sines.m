@@ -32,6 +32,8 @@ accel_func = @(t) -250 * pi * pi * sin(50 * pi * t);
 g = 9.81; % m/s/s, gravitational acceleration
 catseries = [accel / g; vel; disp; adj_accel / g; adj_vel; adj_disp];
 layouts = {1:4, 1:3, [2; 4]};
+%layouts = {1:3, [1, 4], [2; 4]};
+%layouts = {[1, 3], 1:2, [2; 4]};
 layout_titles = ["none", "none", ""];
 
 % str = ' Time History';
@@ -51,9 +53,13 @@ y_labels = {'Acc. (g)';
             'Velocity (m/s)';
             'Displacement (m)'};
 
-plotTimeSeries(time, catseries, 'TiledLayout', layouts, 'LayoutTitle', layout_titles,...
+% plotTimeSeries(time, catseries, 'TiledLayout', layouts, 'LayoutTitle', layout_titles,...
+%                'Title', plot_titles, 'XLabel', 'Time (s)', 'YLabel', y_labels, ...
+%                'FontName', 'times new roman', 'SizeFactor', 1, 'ClearFigures', true)
+           
+plotTimeSeries(time, catseries,...
                'Title', plot_titles, 'XLabel', 'Time (s)', 'YLabel', y_labels, ...
-               'FontName', 'times new roman', 'SizeFactor', 1)
+               'FontName', 'times new roman', 'SizeFactor', 1, 'ClearFigures', true)
 
 %%% plot original acceleration by itself
 %%% plot adjusted time histories in layout format
