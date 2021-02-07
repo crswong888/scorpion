@@ -83,7 +83,8 @@ do
   elif [ ${!i} == "--rebuild" ]; then
     rebuild=true
   elif [ ${!i} == "--fast" ]; then
-    disable="MooseDocs.extensions.appsyntax MooseDocs.extensions.civet MooseDocs.extensions.sqa"
+    disable="MooseDocs.extensions.appsyntax MooseDocs.extensions.ifelse MooseDocs.extensions.civet
+             MooseDocs.extensions.sqa"
   elif [ ${!i} == "--ngrok" ]; then
     ngrok=true
 
