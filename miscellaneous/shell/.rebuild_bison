@@ -1,0 +1,12 @@
+#!/bin/bash
+
+cd ~/projects/bison
+git submodule update --init
+
+cd moose
+JOBS=4 ./scripts/update_and_rebuild_libmesh.sh
+
+cd ../
+make -j4
+./run_tests -j4
+

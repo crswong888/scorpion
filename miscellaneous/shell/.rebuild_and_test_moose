@@ -1,0 +1,9 @@
+#!/bin/bash
+
+cd ~/projects/moose/test
+make -j4
+./run_tests -j4
+
+cd ../modules
+make -j4
+./run_tests -j4

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+cd ~/projects/moose/python
+./run_tests -j4 --re=MooseDocs
+
+cd MooseDocs/test
+./moosedocs.py build
+
+cd ../../../tutorials/darcy_thermo_mech/doc
+./moosedocs.py build --disable MooseDocs.extensions.civet MooseDocs.extensions.appsyntax MooseDocs.extensions.sqa
+
+cd ../../../modules/doc
+./moosedocs.py build --disable MooseDocs.extensions.civet MooseDocs.extensions.appsyntax MooseDocs.extensions.sqa

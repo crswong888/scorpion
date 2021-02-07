@@ -1,0 +1,207 @@
+#!/bin/bash
+
+function printusage {
+    echo "Usage:    ./.moosedocs_virtualhost.sh <options>"
+    echo ""
+    echo "    A script for configuring an Apache2 server to host a local copy of the MOOSE website."
+    echo ""
+    echo "    Prerequisites: apache2, mailutils, ssmtp, xterm, and ngrok"
+    echo ""
+    echo "    <options> Non-positional arguments supplied after the script name:"
+    echo ""
+    echo "              --email <user@example.com>"
+    echo "                  If specified, an e-mail containing the site addresses will be sent"
+    echo "                  to 'user@example.com' using the local SSMTP configuration."
+    echo ""
+    echo "              --rebuild"
+    echo "                  Invoke MooseDocs to rebuild the site from scratch. This will not"
+    echo "                  overwrite any existing copies."
+    echo ""
+    echo "              --fast"
+    echo "                  Disable the slowest MooseDocs extensions. This has no affect when the "
+    echo "                  '--rebuild' argument is not specified."
+    echo ""
+    echo "              --ngrok"
+    echo "                  Create an HTTPS tunnel with a public URL using ngrok. The site is only"
+    echo "                  accesible to devices on the local network without this."
+    echo ""
+}
+
+if [[ "$1" == "-h" || "$1" == "--help" || $# > 5 ]]; then
+    printusage
+    exit 1
+fi
+
+# verify apache2 is installed (send 'apt' warnings about unsopported CLI to /dev/null)
+# NOTE: this won't be supported on Mac OS - need to somehow finagle homebrew to do all this
+installed=false
+apt -qq list apache2 2> /dev/null | grep "[installed]" &> /dev/null && installed=true
+if ! $installed; then
+  echo "Error: The apache2 package is required. Please run 'sudo apt-get install apache2'."
+  exit 1
+fi
+
+# parse input arguments
+email=""
+admin=""
+rebuild=false
+disable="MooseDocs.extensions.civet"
+ngrok=false
+i=$((1))
+while [ $i -le $# ]
+do
+  if [ ${!i} == "--email" ]; then
+    i=$(($i + 1))
+    email=${!i}
+    admin="    ServerAdmin $email\n"
+
+    # check that email address is valid
+    msg="Error: Please provide a valid e-mail address like '--email YourEmail@example.com'."
+    if [[ $email == *"@"* ]]; then
+      dig $(echo $email | cut -d @ -f2) | grep "ANSWER: 0" &> /dev/null && echo $msg && exit 1
+    else
+      echo $msg
+      exit 1
+    fi
+
+    # verify mailutils is installed
+    installed=false
+    apt -qq list mailutils 2> /dev/null | grep "[installed]" &> /dev/null && installed=true
+    if ! $installed; then
+      echo "Error: The mailutils package is required. Please run 'sudo apt-get install mailutils'."
+      exit 1
+    fi
+
+    # verify ssmtp is installed
+    installed=false
+    apt -qq list ssmtp 2> /dev/null | grep "[installed]" &> /dev/null && installed=true
+    if ! $installed; then
+      echo "Error: The ssmtp package is required. Please run 'sudo apt-get install ssmtp'."
+      echo "       Please see https://wiki.archlinux.org/index.php/SSMTP for more information."
+      exit 1
+    fi
+  elif [ ${!i} == "--rebuild" ]; then
+    rebuild=true
+  elif [ ${!i} == "--fast" ]; then
+    disable="MooseDocs.extensions.appsyntax MooseDocs.extensions.civet MooseDocs.extensions.sqa"
+  elif [ ${!i} == "--ngrok" ]; then
+    ngrok=true
+
+    # verify xterm is installed
+    installed=false
+    apt -qq list xterm 2> /dev/null | grep "[installed]" &> /dev/null && installed=true
+    if ! $installed; then
+      echo "Error: The xterm package is required. Please run 'sudo apt-get install xterm'."
+      exit 1
+    fi
+
+    # verify ngrok is installed and properly configured (i.e., configured in home directory)
+    cd ~ && ./ngrok &> /dev/null
+    if [ ! $? -eq 0 ]; then
+      echo "Error: The ngrok package is required and can be downloaded from their website."
+      echo "       Please see https://ngrok.com/docs for more information."
+      exit 1
+    fi
+  else
+    echo "Error: The argument in position $i is invalid."
+    exit 1
+  fi
+
+  i=$(($i + 1))
+done
+
+# enable superuser privelages for 15 minutes - this will prompt for password if not already active
+sudo --validate
+
+# set a global ServerName to localhost - mostly to suppress the apache warning
+svrname="/etc/apache2/conf-available/servername.conf"
+cd $(dirname $svrname)
+if [ -f $svrname ]; then
+  sudo a2disconf $(basename $svrname) &> /dev/null
+  sudo rm $svrname
+fi
+
+localhost="127.0.0.1"
+echo "ServerName $localhost" | sudo tee -a $svrname &> /dev/null
+sudo a2enconf $(basename $svrname) &> /dev/null
+
+# regernerate apache2 configuration file disable all available sites except MOOSE
+conf="/etc/apache2/sites-available/moose.conf"
+cd $(dirname $conf)
+sudo a2dissite * &> /dev/null
+if [ -f $conf ]; then
+  sudo rm $conf
+fi
+
+dst="/var/www/moose/"
+content=$(echo "<VirtualHost *:80>"
+          echo -n -e "$admin"
+          echo "    DocumentRoot $dst"
+          echo "    ErrorLog \${APACHE_LOG_DIR}/error.log"
+          echo "    CustomLog \${APACHE_LOG_DIR}/access.log combined"
+          echo "</VirtualHost>")
+echo "$content" | sudo tee -a $conf &> /dev/null
+sudo a2ensite $(basename $conf) &> /dev/null
+
+# build the MOOSE website, or use an existing build, and copy it to DocumentRoot
+if [ -d $dst ]; then
+  sudo rm -rf $dst
+fi
+
+if ! $rebuild; then
+  src="$HOME/.local/share/moose/site/"
+  if [ ! -d $src ] || [ ! -f "$src/index.html" ]; then
+    echo "Error: The site content needs to have been built and stored in the directory"
+    echo "       '/home/crswong888/.local/share/moose/site/' and it must contain a file named "
+    echo "       'index.html' before running this script. Otherwise, use the '--rebuild' argument."
+    exit 1
+  fi
+  sudo cp -r $src $dst
+else
+  src="SHOME/.local/share/moose/virtual/"
+  cd ~/projects/moose/modules/doc && ./moosedocs.py build --disable $disable --destination $src
+  sudo --validate # renew superuser privelages in case MooseDocs build took awhile
+  sudo mv $src $dst
+fi
+
+# start apache
+IP=$(echo `hostname -I`)
+echo "Starting Apache HTTP Server."
+sudo apachectl start &> /dev/null
+echo "---------------------------------------------------------------------------------------------"
+sudo systemctl status apache2
+echo "---------------------------------------------------------------------------------------------"
+echo "Serving on http://$localhost"
+echo "Local network access on http://$IP"
+
+# enable ngrok if desired
+notice="" # initialize string containing ngrok url for email context
+if $ngrok; then
+  # kill any active ngrok sessions to ensure default tunnel port (4040) is available
+  sudo lsof -i -P -n | grep ngrok | while read line
+  do
+    read -a active <<< $line # the second column in each row is PID to be killed
+    sudo kill -9 ${active[1]} &> /dev/null # supress warning caused by lines having identical PIDs
+  done
+
+  cd ~ && xterm -e ./ngrok http 80 &
+  sleep 5 # pause a moment while ngrok initializes
+  url=$(curl --silent --show-error http://127.0.0.1:4040/api/tunnels \
+        | sed -nE 's/.*public_url":"https:..([^"]*).*/\1/p')
+  echo "Public web access on https://$url"
+  echo "ngrok is continuing to serve in a separate xterm window. Close the window to shut it down."
+
+  notice="\nFor secure web access on any device, please go to https://$url."
+fi
+echo "Apache2 is continuing to serve in the background. Use 'sudo apachectl stop' to shut it down."
+
+# send e-mail to specified address
+if [ -n "$email" ]; then
+  content=$(echo "***THIS IS AN AUTOMATED NOTICE***"
+            echo ""
+            echo "A private branch of the MOOSE website is now being hosted on a temporary server."
+            echo ""
+            echo "Local network devices may access the site at http://$IP."
+            echo -n -e $notice)
+  echo "$content" | mail -s "MooseDocs Virtual Host" $email
+fi

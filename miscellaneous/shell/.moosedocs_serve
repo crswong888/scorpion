@@ -1,0 +1,4 @@
+#!/bin/bash
+
+./moosedocs.py build --serve --disable MooseDocs.extensions.civet
+
