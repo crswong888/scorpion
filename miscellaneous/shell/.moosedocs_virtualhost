@@ -153,7 +153,7 @@ if ! $rebuild; then
   src="$HOME/.local/share/moose/site/"
   if [ ! -d $src ] || [ ! -f "$src/index.html" ]; then
     echo "Error: The site content needs to have been built and stored in the directory"
-    echo "       '/home/crswong888/.local/share/moose/site/' and it must contain a file named "
+    echo "       '$HOME/.local/share/moose/site/' and it must contain a file named "
     echo "       'index.html' before running this script. Otherwise, use the '--rebuild' argument."
     exit 1
   fi

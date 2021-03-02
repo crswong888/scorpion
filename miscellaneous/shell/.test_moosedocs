@@ -7,7 +7,7 @@ cd MooseDocs/test
 ./moosedocs.py build
 
 cd ../../../tutorials/darcy_thermo_mech/doc
-./moosedocs.py build --disable MooseDocs.extensions.civet MooseDocs.extensions.appsyntax MooseDocs.extensions.sqa
+./moosedocs.py build --disable MooseDocs.extensions.civet MooseDocs.extensions.appsyntax MooseDocs.extensions.ifelse MooseDocs.extensions.sqa
 
 cd ../../../modules/doc
-./moosedocs.py build --disable MooseDocs.extensions.civet MooseDocs.extensions.appsyntax MooseDocs.extensions.sqa
+./moosedocs.py build --disable MooseDocs.extensions.civet MooseDocs.extensions.appsyntax MooseDocs.extensions.ifelse MooseDocs.extensions.sqa
