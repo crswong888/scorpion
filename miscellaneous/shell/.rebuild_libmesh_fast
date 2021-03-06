@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# reconfiguring libmesh doesn't actually take very long, but it causes it to completely recompile, 
+# which takes very long, so --fast avoids this also, if there is a submodule update, then it's 
+# probably safe to just reconfigure. Thus, these two args should pretty much always be paired
+cd ~/projects/moose
+JOBS=4 ./scripts/update_and_rebuild_libmesh.sh --fast --skip-submodule-update

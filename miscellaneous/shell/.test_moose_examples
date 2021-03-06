@@ -1,0 +1,94 @@
+#!/bin/bash
+
+cd ~/projects/moose/training/examples/ex01_inputfile
+make -j6
+mpiexec -n 6 ./ex01-opt -i ex01.i
+
+cd ~/projects/moose/training/examples/ex02_kernel
+make -j6
+mpiexec -n 6 ./ex02-opt -i ex02.i
+
+cd ~/projects/moose/training/examples/ex03_coupling
+make -j6
+mpiexec -n 6 ./ex03-opt -i ex03.i
+
+cd ~/projects/moose/training/examples/ex04_bcs
+make -j6
+mpiexec -n 6 ./ex04-opt -i dirichlet_bc.i
+mpiexec -n 6 ./ex04-opt -i neumann_bc.i
+mpiexec -n 6 ./ex04-opt -i periodic_bc.i
+mpiexec -n 6 ./ex04-opt -i trapezoid.i
+
+cd ~/projects/moose/training/examples/ex05_amr
+make -j6
+mpiexec -n 6 ./ex05-opt -i ex05.i
+
+cd ~/projects/moose/training/examples/ex06_transient
+make -j6
+mpiexec -n 6 ./ex06-opt -i ex06.i
+
+cd ~/projects/moose/training/examples/ex07_ics
+make -j6
+mpiexec -n 6 ./ex07-opt -i steady.i
+mpiexec -n 6 ./ex07-opt -i transient.i
+
+cd ~/projects/moose/training/examples/ex08_materials
+make -j6
+mpiexec -n 6 ./ex08-opt -i ex08.i
+
+cd ~/projects/moose/training/examples/ex09_stateful_materials
+make -j6
+mpiexec -n 6 ./ex09-opt -i ex09.i
+
+cd ~/projects/moose/training/examples/ex10_aux
+make -j6
+mpiexec -n 6 ./ex10-opt -i ex10.i
+
+cd ~/projects/moose/training/examples/ex11_prec
+make -j6
+mpiexec -n 6 ./ex11-opt -i default.i
+mpiexec -n 6 ./ex11-opt -i fdb.i
+mpiexec -n 6 ./ex11-opt -i smp.i
+
+cd ~/projects/moose/training/examples/ex12_pbp
+make -j6
+mpiexec -n 6 ./ex12-opt -i ex12.i
+
+cd ~/projects/moose/training/examples/ex13_functions
+make -j6
+mpiexec -n 6 ./ex13-opt -i ex13.i
+
+cd ~/projects/moose/training/examples/ex14_pps
+make -j6
+mpiexec -n 6 ./ex14-opt -i ex14_compare_solutions_1.i
+mpiexec -n 6 ./ex14-opt -i ex14_compare_solutions_2.i
+mpiexec -n 6 ./ex14-opt -i ex14.i
+
+cd ~/projects/moose/training/examples/ex15_actions
+make -j6
+mpiexec -n 6 ./ex15-opt -i ex15.i
+
+cd ~/projects/moose/training/examples/ex16_timestepper
+make -j6
+mpiexec -n 6 ./ex16-opt -i ex16.i
+
+cd ~/projects/moose/training/examples/ex17_dirac
+make -j6
+mpiexec -n 6 ./ex17-opt -i ex17.i
+
+cd ~/projects/moose/training/examples/ex18_scalar_kernel
+make -j6
+mpiexec -n 6 ./ex18-opt -i ex18_parsed.i
+mpiexec -n 6 ./ex18-opt -i ex18.i
+
+cd ~/projects/moose/training/examples/ex19_dampers
+make -j6
+mpiexec -n 6 ./ex19-opt -i ex19.i
+
+cd ~/projects/moose/training/examples/ex20_user_objects
+make -j6
+mpiexec -n 6 ./ex20-opt -i ex20.i
+
+cd ~/projects/moose/training/examples/ex21_debugging
+METHOD=dbg make -j6
+./ex21-dbg -i ex21.i
