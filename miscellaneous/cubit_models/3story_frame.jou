@@ -1,0 +1,86 @@
+reset
+reset aprepro
+
+## Input bay story height and bay width (units in centimeters)
+#{h = 350} {W = 700}
+
+## Compute ne/column and ne/beam (assuming 1 element per 10 centimeters)
+#{dx = 10}
+#{nec = h / dx} {neb = W / dx}
+
+
+## First story
+create curve location 0 0 0 location 0 {h} 0           # left column
+create curve location {W} 0 0 location {W} {h} 0 # right column
+create curve location 0 {h} 0 location {W} {h} 0  # beam
+
+# merge vertices and create groups ('merge all' prints a warning about vertices, but then succesfully merges them, so ignore it)
+merge vertex all
+group "base" add vertex 1 3
+group "c1" add curve 1 2
+group "b1" add curve 3
+
+# mesh
+curve c1 interval {nec}
+curve b1 interval {neb}
+
+# ground supports nodeset
+nodeset 1 group base
+nodeset 1 name "base"
+
+# element blocks (beams and columns need to be separate so they're transverse axes may be identified)
+block 1 group c1
+block 1 name "L1_columns"
+block 2 group b1
+block 2 name "L1_beam"
+
+
+## Second story
+create curve location 0 {h} 0 location 0 {2 * h} 0           # left column
+create curve location {W} {h} 0 location {W} {2 * h} 0 # right column
+create curve location 0 {2 * h} 0 location {W} {2 * h} 0 # beam
+
+# merge and group
+merge vertex all
+group "c2" add curve 4 5
+group "b2" add curve 6
+
+# mesh
+curve c2 interval {nec}
+curve b2 interval {neb}
+
+# element blocks
+block 3 group c2
+block 3 name "L2_columns"
+block 4 group b2
+block 4 name "L2_beam"
+
+
+## Third story
+create curve location 0 {2 * h} 0 location 0 {3 * h} 0           # left column
+create curve location {W} {2 * h} 0 location {W} {3 * h} 0 # right column
+create curve location  0 {3 * h} 0 location {W} {3 * h} 0     # beam
+
+# merge and group
+merge vertex all
+group "c3" add curve 7 8
+group "b3" add curve 9
+
+# mesh
+curve c3 interval {nec}
+curve b3 interval {neb}
+
+# element blocks
+block 5 group c3
+block 5 name "L3_columns"
+block 6 group b3
+block 6 name "L3_beam"
+
+
+## generate mesh
+mesh group all
+block all element type Beam2
+
+
+## export ExodusII mesh
+export mesh '/home/crswong888/projects/scorpion/inputs/3story_frame/3story_frame.e' overwrite
