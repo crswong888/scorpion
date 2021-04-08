@@ -1,12 +1,16 @@
 #!/bin/bash
 
 cd ~/projects/moose
+git submodule deinit libmesh/ -f
 JOBS=4 ./scripts/update_and_rebuild_libmesh.sh
 
 cd test
+make cleanall
+make clobberall
 make -j4
 ./run_tests -j4
 
 cd ../modules
+make cleanall
 make -j4
 ./run_tests -j4

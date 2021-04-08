@@ -1,9 +1,11 @@
 #!/bin/bash
 
 cd ~/projects/moose/test
+make cleanall
 make -j4
 ./run_tests -j4
 
 cd ../modules
+make cleanall
 make -j4
 ./run_tests -j4

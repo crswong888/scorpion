@@ -1,0 +1,13 @@
+#!/bin/bash
+
+cd ~/projects/moose
+if [ -d libmesh ]; then
+	cd libmesh
+	git clean -xfd
+	cd ../
+	git submodule deinit libmesh/ petsc/ -f
+	rm -rf libmesh/
+fi
+
+git submodule update --init
+git submodule update --init --recursive

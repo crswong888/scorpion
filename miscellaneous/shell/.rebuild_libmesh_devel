@@ -5,10 +5,17 @@ dst=~/projects/moose/libmesh
 cd $dst
 sha=$(git rev-parse HEAD)
 
+# if the submodule is totally clean, then presumably all git diffed files should be copied
+copyall=false # assume theres no need to copy all files, only newer ones
+reconf=false # assume theres no need to reconfigure
+if [ -z "$(git diff)" ]; then 
+	copyall=true
+	reconf=true
+fi
+
 # copy diffed files from libmesh fork to MOOSE submodule
 src=~/projects/libmesh
 cd $src
-reconf=false # assume theres no need to reconfigure
 for file in $(git diff --name-only $sha)
 do
 	path=$dst/$(dirname $file)
@@ -18,7 +25,7 @@ do
 
 	# only copy the file if its new, in case it's already been diffed and copied
 	dstfile=$path/$(basename $file)
-	if [ $file -nt $dstfile ]; then
+	if $copyall || [ $file -nt $dstfile ]; then
 		cp -p $file $dstfile
 		echo "Copied: $src/$file -> $dstfile"
 
@@ -38,4 +45,3 @@ else
 	# reinstall without reconfiguring
   JOBS=4 ./scripts/update_and_rebuild_libmesh.sh --fast --skip-submodule-update
 fi
-
