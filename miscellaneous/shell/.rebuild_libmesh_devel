@@ -1,40 +1,54 @@
 #!/bin/bash
 
-# get SHA of submodule head so it can be diffed
+# set path to libmesh submodule 'dst' and to libmesh fork 'src'
 dst=~/projects/moose/libmesh
-cd $dst
-sha=$(git rev-parse HEAD)
-
-# if the submodule is totally clean, then presumably all git diffed files should be copied
-copyall=false # assume theres no need to copy all files, only newer ones
-reconf=false # assume theres no need to reconfigure
-if [ -z "$(git diff)" ]; then 
-	copyall=true
-	reconf=true
-fi
-
-# copy diffed files from libmesh fork to MOOSE submodule
 src=~/projects/libmesh
-cd $src
-for file in $(git diff --name-only $sha)
-do
-	path=$dst/$(dirname $file)
-	if [ ! -d $path ]; then
-		mkdir -p $path
+
+# if the libmesh submodule doesn't exist or is empty, update submodule and merge all files from fork
+reconf=false # assume theres no need to reconfigure
+if [ ! -d $dst ] || [ -z "$(ls -A $dst)" ]; then
+	cd ~/projects/moose
+	git submodule update --init --recursive libmesh
+	rsync $src $dst
+	reconf=true
+
+# otherwise, copy only files that have been modified WRT the current submodule update
+else
+	# get SHA of submodule head so it can be diffed
+	cd $dst
+	sha=$(git rev-parse HEAD)
+
+	# if the submodule is totally clean, then presumably all git diffed files should be copied
+	copyall=false # assume theres no need to copy all files, only newer ones
+	if [ -z "$(git diff)" ]; then
+		cd ../ && git submodule update --init --recursive libmesh
+		copyall=true
+		reconf=true
 	fi
 
-	# only copy the file if its new, in case it's already been diffed and copied
-	dstfile=$path/$(basename $file)
-	if $copyall || [ $file -nt $dstfile ]; then
-		cp -p $file $dstfile
-		echo "Copied: $src/$file -> $dstfile"
-
-		# if the default configure file has changed, we ought to reconfigure the MOOSE install as well
-		if [ $file = configure ]; then
-			reconf=true
+	# copy diffed files from libmesh fork to MOOSE submodule
+	src=~/projects/libmesh
+	cd $src
+	for file in $(git diff --name-only $sha)
+	do
+		path=$dst/$(dirname $file)
+		if [ ! -d $path ]; then
+			mkdir -p $path
 		fi
-	fi
-done
+
+		# only copy the file if its new, in case it's already been diffed and copied
+		dstfile=$path/$(basename $file)
+		if $copyall || [ $file -nt $dstfile ]; then
+			cp -p $file $dstfile
+			echo "Copied: $src/$file -> $dstfile"
+
+			# if the default configure file has changed, we ought to reconfigure the MOOSE install as well
+			if [ $file = configure ]; then
+				reconf=true
+			fi
+		fi
+	done
+fi
 
 # now rebuild and install libmesh
 cd $(dirname $dst)

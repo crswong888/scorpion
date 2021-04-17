@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# NOTE: to run an individual libmesh example after compiling, navigate to the examples directory
+#       and build/test it with `make check -j4`. Then it can be ran using the binary like
+#       `./example-opt`, or in parallel like `mpiexex -np 2 ./example-opt --n-threads=2`.
+
+git submodule update --init --recursive
+./configure
+make -j4
+make check -j4
