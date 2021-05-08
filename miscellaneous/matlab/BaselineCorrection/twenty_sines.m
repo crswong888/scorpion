@@ -17,16 +17,19 @@ addpath('functions')
 accel_func = @(t) -250 * pi * pi * sin(50 * pi * t);
 [time, accel] = functionAcceleration(-0.4, 0.4, 1e-03, accel_func);
 
+%/ set a reference displacement corresponding to drift-free ICs to use when compute drift/amp ratios
+ref_disp = -0.1 * sin(50 * pi * time);
+
 %// compute drifting ratio of nominal displacement for comparison to corrected one
 [vel, disp] = newmarkIntegrate(time, accel, 0.5, 0.25);
-[nomDR, nomAR] = computeDriftRatio(time, accel, disp);
+[nomDR, nomAR] = computeDriftRatio(time, disp, 'ReferenceDisp', ref_disp);
 
 %// apply least squares baseline correction and output adjusted time histories
 [adj_accel, adj_vel, adj_disp] = baselineCorrection(time, accel, 'AccelFitOrder', 12,...
                                                     'VelFitOrder', 11, 'DispFitOrder', 7);                            
 
 %// ideally, DR < 0.05 and |AR - 1| < 0.05
-[DR, AR] = computeDriftRatio(time, accel, adj_disp);
+[DR, AR] = computeDriftRatio(time, adj_disp, 'ReferenceDisp', ref_disp);
 
 %//
 g = 9.81; % m/s/s, gravitational acceleration

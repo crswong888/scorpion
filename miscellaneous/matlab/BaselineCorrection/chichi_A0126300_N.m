@@ -20,17 +20,17 @@ accel = [0, data(2,:)];
 
 %// compute drifting ratio of nominal displacement for comparison to corrected one
 [vel, disp] = newmarkIntegrate(time, accel, 0.5, 0.25);
-[nomDR, nomAR] = computeDriftRatio(time, accel, disp);
+[nomDR, nomAR] = computeDriftRatio(time, disp, 'ReferenceAccel', accel);
 
 %// baseline correction using A3, A4 and V2 type adjustments
 [accel_A3, vel_A3, disp_A3] = baselineCorrection(time, accel, 'AccelFitOrder', 3);
 [accel_A4, vel_A4, disp_A4] = baselineCorrection(time, accel, 'AccelFitOrder', 4);
-[accel_V2, vel_V2, disp_V2] = baselineCorrection(time, accel, 'VelFitOrder', 2);
+[accel_V3, vel_V3, disp_V3] = baselineCorrection(time, accel, 'VelFitOrder', 3);
 
 %// ideally, DR < 0.05 and |AR - 1| < 0.05
-[A3DR, A3AR] = computeDriftRatio(time, accel, disp_A3);
-[A4DR, A4AR] = computeDriftRatio(time, accel, disp_A4);
-[V2DR, V2AR] = computeDriftRatio(time, accel, disp_V2);
+[A3DR, A3AR] = computeDriftRatio(time, disp_A3, 'ReferenceAccel', accel);
+[A4DR, A4AR] = computeDriftRatio(time, disp_A4, 'ReferenceAccel', accel);
+[V2DR, V2AR] = computeDriftRatio(time, disp_V3, 'ReferenceAccel', accel);
 
 
 %//
@@ -43,7 +43,7 @@ disp_aba = disp_aba(2,:);
 g = 981; % cm/s/s, gravitational acceleration
 catseries = [accel / g; vel; disp; 
              accel_A3 / g; vel_A3; disp_A3; 
-             accel_V2 / g; vel_V2; disp_V2;
+             accel_V3 / g; vel_V3; disp_V3;
              disp_ss; disp_aba];
 plot_titles = ["Nominal Time History";
                "none";
@@ -51,7 +51,7 @@ plot_titles = ["Nominal Time History";
                "Corrected (A3) Time History"
                "none"
                "none";
-               "Corrected (V2) Time History";
+               "Corrected (V3) Time History";
                "none";
                "none";
                "Corrected (SeismoSignal) Time History";
