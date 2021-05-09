@@ -47,8 +47,9 @@ end
 %%% Helper function for parsing input parameters, setting defaults, and validating data types
 function params = validParams(time, disp, varargin)
     %// validate required inputs
-    validateattributes(time, {'numeric'}, {'vector', 'increasing'}, 1)
-    valid_series = @(x) validateattributes(x, {'numeric'}, {'vector', 'numel', length(time)}, 2);
+    validateattributes(time, {'numeric'}, {'vector', 'real', 'increasing'}, 1)
+    valid_series = @(x) validateattributes(x, {'numeric'},...
+                                           {'vector', 'numel', length(time), 'real'}, 2);
     valid_series(disp);
     
     %// create parser object for inputs to control Newmark parameters and specify a reference signal

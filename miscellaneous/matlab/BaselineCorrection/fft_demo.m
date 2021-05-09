@@ -15,15 +15,16 @@ fprintf('\n')
 addpath('functions')
 
 
-%// define an anonymous ATH handle composed of a sine and cosine wave
-ATH = @(t) 5 * sin(4 * pi * t) - 3 * cos(40 * pi * t);
-
 %// define a time domain and a uniform timestep size
 T = [-5, 5];
 dt = 0.005; % appropriate time step size for 20 Hz that should be able to accomodate corruptions
 
+%// define an anonymous ATH handle composed of a sine and cosine wave
+ATH = @(t) 5 * sin(4 * pi * t) - 3 * cos(40 * pi * t);
+
 %// CASE 1A: uniformly discretized ATH 
-[t, u] = functionAcceleration(T(1), T(2), dt, ATH);
+t = generate1DGridPoints(T(1), T(2), dt);
+u = arrayfun(ATH, t);
 
 %// CASE 1B: uniformly discretized corrupted ATH
 nu = u + norm(u, 'inf') * randn(size(u));
@@ -39,10 +40,8 @@ suu = arrayfun(ATH, sut);
 nsuu = suu + norm(suu, 'inf') * randn(size(suu));
 
 %// CASE 3A: nonuniformly discretized ATH
-[nut{1}, nuu{1}] = functionAcceleration(T(1), 0, dt / 10, ATH);
-[nut{2}, nuu{2}] = functionAcceleration(dt, T(2), dt, ATH);
-nut = cell2mat(nut);
-nuu = cell2mat(nuu);
+nut = [generate1DGridPoints(T(1), 0, dt / 10), generate1DGridPoints(dt, T(2), dt)];
+nuu = arrayfun(ATH, nut);
 
 %// CASE 3B: nonuniformly discretized corrupted ATH
 nnuu = nuu + norm(nuu, 'inf') * randn(size(nuu));

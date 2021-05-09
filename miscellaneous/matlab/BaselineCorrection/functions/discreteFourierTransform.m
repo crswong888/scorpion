@@ -1,33 +1,20 @@
+%%% This function evaluates the discrete Fourier transform of a time series 'u' specified at an
+%%% array of time instants 't'. It subsequently performs a one-sided (real) expansion and sums the 
+%%% absolute values of conjugate pairs to get total amplitudes in the frequency domain. The user may
+%%% restrict the output domain to specified boundaries of any of the three frequency types: 'cyclic'
+%%% (e.g., Hz), 'angular' (e.g., rad/s), or 'periodic' (e.g., 1/s). If the user does not specify a
+%%% domain, than the largest possible domain is output. The time points may be spaced at irregular
+%%% intervals, but it is important that the degree of irregularities be classified as either
+%%% 'uniform', 'semiuniform', or 'nonuniform' using the 'Distribution' parameter.
+%%%
+%%% By: Christopher Wong | crswong888@gmail.com
+
 function [f, uo] = discreteFourierTransform(t, u, varargin)
-    %// validate required time series input
-    validateattributes(t, {'numeric'}, {'vector', 'increasing'})
-    N = length(t); % number of time instants
-    validateattributes(u, {'numeric'}, {'vector', 'numel', N})
-    
-    %// create parser object for validating additional inputs to control how data is processed
-    params = inputParser;
-    
-    %/ general description of how time domain is discretized to decide how to properly set up a 
-    %/ frequency domain... here's what they mean:
-    %/     uniform - nearly all time instants have exactly equal spacing between one another
-    %/     semiuniform - small deviations in size of many intervals, but roughly uniform overall
-    %/     nonuniform - large deviations in size of some or all intervals; severe irregularities
-    valid_discretization = @(x) validatestring(x, {'uniform', 'semiuniform', 'nonuniform'});
-    addParameter(params, 'Distribution', 'uniform', @(x) any(valid_discretization(x)));
-    
-    %/ type of abscissa to be paired with amplitudes
-    valid_ftype = @(x) validatestring(x, {'cyclic', 'angular', 'periodic'});
-    addParameter(params, 'FrequencyType', 'cyclic', @(x) any(valid_ftype(x)));
-    
-    %/ lower and upper bounds of frequency domain - if type not supplied, assumed to be cyclic
-    valid_fdom = @(x) validateattributes(x, {'numeric'},...
-                                         {'vector', 'numel', 2, 'increasing', 'nonnegative'});
-    addParameter(params, 'Domain', [], valid_fdom);
-    
-    %/ parse input parameters
-    parse(params, varargin{:});
-    dtype = valid_discretization(params.Results.Distribution);
-    ftype = valid_ftype(params.Results.FrequencyType);
+    %// parse & validate function inputs
+    [params, tokens] = validParams(t, u, varargin{:});
+    N = length(t); % total number of time instants
+    dtype = tokens.Distribution;
+    ftype = tokens.FrequencyType;
     fdom = params.Results.Domain;
     
     %// setup one-sided expansion of frequency domain based on type of discretization
@@ -124,4 +111,38 @@ function [f, uo] = discreteFourierTransform(t, u, varargin)
                 uo = [uo(1), uo];
             end
     end
+end
+
+%%% Helper function for parsing input parameters, setting defaults, and validating data types
+function [params, tokens] = validParams(t, u, varargin)
+    %// validate required inputs
+    validateattributes(t, {'numeric'}, {'vector', 'real', 'increasing'}, 1)
+    validateattributes(u, {'numeric'}, {'vector', 'numel', length(t), 'real'}, 2)
+    
+    %// create parser object for additional inputs controlling data processing of time and frequency
+    params = inputParser;
+    
+    %/ general description of how time domain is discretized to decide how to properly set up a 
+    %/ frequency domain... here's what they mean:
+    %/     uniform - nearly all time instants have exactly equal spacing between one another
+    %/     semiuniform - small deviations in size of many intervals, but roughly uniform overall
+    %/     nonuniform - large deviations in size of some or all intervals; severe irregularities
+    valid_discretization = @(x) validatestring(x, {'uniform', 'semiuniform', 'nonuniform'});
+    addParameter(params, 'Distribution', 'uniform', @(x) any(valid_discretization(x)));
+    
+    %/ type of abscissa to be paired with amplitudes
+    valid_ftype = @(x) validatestring(x, {'cyclic', 'angular', 'periodic'});
+    addParameter(params, 'FrequencyType', 'cyclic', @(x) any(valid_ftype(x)));
+    
+    %/ lower and upper bounds of frequency domain - if type not supplied, assumed to be cyclic
+    valid_fdom = @(x) validateattributes(x, {'numeric'},...
+                                         {'vector', 'numel', 2, 'increasing', 'nonnegative'});
+    addParameter(params, 'Domain', [], valid_fdom);
+    
+    %/ run parser
+    parse(params, varargin{:});
+    
+    %/ re-run string validators and create pointers to expected inputs from only partial matches
+    tokens.Distribution = valid_discretization(params.Results.Distribution);
+    tokens.FrequencyType = valid_ftype(params.Results.FrequencyType);
 end

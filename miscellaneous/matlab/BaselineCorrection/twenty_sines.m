@@ -13,9 +13,9 @@ fprintf('\n')
 addpath('functions')
 
 
-%// input acceleration time series
-accel_func = @(t) -250 * pi * pi * sin(50 * pi * t);
-[time, accel] = functionAcceleration(-0.4, 0.4, 1e-03, accel_func);
+%// generate array of discrete time instances and evaluate acceleration function
+time = generate1DGridPoints(-0.4, 0.4, 1e-03);
+accel = -250 * pi * pi * sin(50 * pi * time);
 
 %/ set a reference displacement corresponding to drift-free ICs to use when compute drift/amp ratios
 ref_disp = -0.1 * sin(50 * pi * time);

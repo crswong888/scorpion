@@ -1,32 +1,32 @@
-%%% Creates an array of uniformly spaced values along a specified domain.
+%%% Creates a uniformly distributed array of values along a specified domain '[s_start, s_end]' at
+%%% intervals of 'ds'. If 's_start' is greater than 's_end', then values will run in descending
+%%% order. The last point is always 's_end', even if the domain length is not divisible by 'ds'.
 %%%
 %%% By: Christopher Wong | crswong888@gmail.com
 
-function [s, n] = generate1DGridPoints(start_position, end_position, ds)
-    %// determine length of domain
-    length = end_position - start_position;
-    
-    %// determine no. of grid points
-    n = ceil(round(abs(length) / ds / ds) * ds) + 1; % round to nearest ds avoids numerical errors
-    
-    %// initialize grid array
-    s = zeros(1, n);
-    s(1) = start_position;
+function [s, n] = generate1DGridPoints(s_start, s_end, ds)
+    %// validate required inputs
+    validateattributes(s_start, {'numeric'}, {'scalar', 'real'}, 1)
+    validateattributes(s_end, {'numeric'}, {'scalar', 'real'}, 2)
+    validateattributes(ds, {'numeric'}, {'scalar', 'real', '<=', abs(s_start - s_end)}, 3)
     
     %// fill grid points with interval values
-    if (length >= 0) 
-        for i = 2:n 
-            s(i) = round(s(i-1) / ds) * ds + ds; 
+    if (s_start < s_end)
+        s = s_start:ds:s_end;
+        
+        %/ concatenate end_position in case domain not wholly divisible by ds
+        if (s(end) ~= s_end)
+            s(end + 1) = s_end;
         end
     else
-        for i = 2:n
-            s(i) = round(s(i-1) / ds) * ds - ds; 
+        s = flip(s_end:ds:s_start);
+        
+        %/ concatenate start_position in case domain not wholly divisible by ds
+        if (s(1) ~= s_start)
+            s = [s_start, s];
         end
     end
     
-    %// in case length is not divisible by specified ds, fill s(n + 1) with that value
-    if (s(n) ~= end_position)
-        s(n + 1) = end_position;
-        n = n + 1;
-    end
+    %// convenient output (but could easily be determined outside of this function)
+    n = length(s);
 end

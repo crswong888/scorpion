@@ -32,8 +32,8 @@ end
 %%% Helper function for parsing input parameters, setting defaults, and validating data types
 function params = validParams(t, d2u, varargin)
     %// validate required inputs
-    validateattributes(t, {'numeric'}, {'vector', 'increasing'}, 1)
-    validateattributes(d2u, {'numeric'}, {'vector', 'numel', length(t)}, 2)
+    validateattributes(t, {'numeric'}, {'vector', 'real', 'increasing'}, 1)
+    validateattributes(d2u, {'numeric'}, {'vector', 'numel', length(t), 'real'}, 2)
     
     %// create parser object for inputs to control mean value coefficients and initial conditions
     params = inputParser;

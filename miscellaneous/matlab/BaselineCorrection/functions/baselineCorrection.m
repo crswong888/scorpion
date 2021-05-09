@@ -78,8 +78,8 @@ end
 %%% Helper function for parsing input parameters, setting defaults, and validating data types
 function params = validParams(time, accel, varargin)
     %// validate required inputs
-    validateattributes(time, {'numeric'}, {'vector', 'increasing'}, 1)
-    validateattributes(accel, {'numeric'}, {'vector', 'numel', length(time)}, 2)
+    validateattributes(time, {'numeric'}, {'vector', 'real', 'increasing'}, 1)
+    validateattributes(accel, {'numeric'}, {'vector', 'numel', length(time), 'real'}, 2)
     
     %// create parser object for additional inputs controlling numerical procedure
     params = inputParser;
