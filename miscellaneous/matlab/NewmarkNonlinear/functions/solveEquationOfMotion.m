@@ -67,8 +67,8 @@ function [t, d2u, du, u, fs_history] = solveEquationOfMotion(m, c, fs, ke, t, dt
             end
             
             % shift abscissa-ordinate pairs
-            fs(1,:) = fs(1,:) + horizontal_shift * ones(1, width(fs));
-            fs(2,:) = fs(2,:) + vertical_shift * ones(1, width(fs));
+            fs(1,:) = fs(1,:) + horizontal_shift * ones(1, size(fs, 2));
+            fs(2,:) = fs(2,:) + vertical_shift * ones(1, size(fs, 2));
             
             % update state variables
             uy_top = uy_top + horizontal_shift; 
