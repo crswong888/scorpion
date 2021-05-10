@@ -25,7 +25,7 @@ m = 0.1583; % kN*s*s/cm
 g = 0;
 
 %// critical damping ratio
-xi = 0.03;
+zeta = 0.03;
 
 %// restoring force backbone curve fs(u) = df/du * u - data must be input as abscissa-ordinate pairs
 fs = readmatrix('a992bar_backbone.csv');
@@ -40,7 +40,7 @@ dt = 0;
 du_initial = 0;
 u_initial = 0;
 
-%// forcing function p(t) (use anonymous function format - can be made piecewise using .* syntax)
+%// forcing function p(t) (use an anonymous function format that can be sampled at any time instant)
 p = @(t) (t < 0.2).*(250 * sin(40 * pi * t)) + (0.2 <= t).*(0); % kN
 
 %// angular frequency of forcing function - set to zero if p(t) is not a harmonic function
@@ -64,7 +64,7 @@ units = {'s', 'cm', 'kN'};
 %%% ------------------------------------------------------------------------------------------------
 
 %// compute natural angular frequency, damping coefficient, and elastic stiffness
-[omega_n, c, ke] = computeDynamicConstants(m, xi, fs);
+[omega_n, c, ke] = computeDynamicConstants(m, zeta, fs);
 
 %// determine a suitable time step size if not specified by user
 if (dt == 0)
