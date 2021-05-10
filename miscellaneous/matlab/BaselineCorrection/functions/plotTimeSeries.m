@@ -2,6 +2,11 @@
 %%%
 %%% By: Christopher Wong | crswong888@gmail.com
 
+%%% NOTE: organize the series inputs in cellular abscissa-ordinate pairs {time, matrix} so that each 
+%%% row represents an array of series with a common time domain and series that have different
+%%% numbers of data points may be superimposed
+%%%
+%%% TODO: need a file basename option
 
 function [] = plotTimeSeries(time, series, varargin)
     %// object for additional inputs which control plot behavior
@@ -47,8 +52,11 @@ function [] = plotTimeSeries(time, series, varargin)
     %/ sizing parameter - controls font sizes, line thickness, window width, etc.
     addParameter(params, 'SizeFactor', 1, @(x) mustBeMember(x, [1, 2, 3, 4, 5]));
     
+    %/ 
+    addParameter(params, 'SaveImage', false, @(x) islogical(x));
+    
     %/ wether or not to close all currently open plots before generating new ones
-    addParameter(params, 'ClearFigures', true, @(x) islogical(x));
+    addParameter(params, 'ClearFigures', false, @(x) islogical(x));
     
     %// parse provided inputs
     parse(params, series, varargin{:})
@@ -59,6 +67,7 @@ function [] = plotTimeSeries(time, series, varargin)
     y_labels(1:num_series) = string(params.Results.YLabel);
     ftname = params.Results.FontName;
     size_factor = params.Results.SizeFactor;
+    save_image = params.Results.SaveImage;
       
     %/ convert variables to cells if necessary
     layouts = params.Results.TiledLayout;
@@ -160,6 +169,13 @@ function [] = plotTimeSeries(time, series, varargin)
         layouts = cat(1, layouts, num2cell(transpose(indvl)));
     end
     
+    % set tile spacing of plot layouts
+    if (size_factor == 1)
+        spacing = 'none';
+    else
+        spacing = 'compact';
+    end
+    
     %// clear plot objects, if desired
     if (params.Results.ClearFigures)
         close all
@@ -178,10 +194,19 @@ function [] = plotTimeSeries(time, series, varargin)
         tab = cat(1, tab, join(cat(2, letters, tab(1:26)), ''));
     end
     
-    %// get current matlab version for handling position constraint property (9.8 is 2020a)
-    pos_arg = 'PositionConstraint';
-    if (verLessThan('matlab', '9.8'))
-        pos_arg = 'ActivePositionProperty';
+    %// setup file structure for exporting images/graphics
+    if (save_image)
+        %/ get filename, excluding extension, of top-level stack frame, i.e., of invoking script
+        file_base = string(erase(dbstack(length(dbstack) - 1).file, '.m')) + "_outputs";
+        
+        %/ get screen resolution so image can be made to look exactly how it appears on screen
+        dpi = get(groot, 'ScreenPixelsPerInch');
+        hdpi = 5 * dpi; % also create images at 5x screen res
+        
+        %/ create an output folder if it doesn't already exist
+        if (exist(file_base, 'dir') ~= 7)
+            mkdir(file_base)
+        end
     end
     
     %// map size factor onto figure window widths and select aspect ratios based on plot layouts 
@@ -198,8 +223,11 @@ function [] = plotTimeSeries(time, series, varargin)
             aspect = 4 / 5;
             max_tiles = [3, 1];
         otherwise
-            wr = linearInterpolation(sfdom, [0.58, 0.9], size_factor);
-            aspect = 2 / 5;
+            %%% TODO: these sizing params don't quite work. For normal margins w/ 10pt font (sf=2),
+            %%% the layout needs to be less than 6.5"
+            %%% actually, 6.5" at 8pt font is totally fine, cuz the big text looks weird anyways
+            wr = linearInterpolation(sfdom, [0.34, 0.5], size_factor);
+            aspect = 3 / 5;
             max_tiles = [3, 2];
     end
     
@@ -210,9 +238,9 @@ function [] = plotTimeSeries(time, series, varargin)
     
     %// 
     max_res = [0.99, 0.98]; % max normalized width and height used for layout with most tiles
-    color = [0.5, 0.5, 0.5; 0, 0, 0; 0.15, 0.15, 0.15; 0, 0, 0]; % color scheme for superimp plots
-    linewidth = [2.8, 3.2; 0.8, 1.2; 2, 2.4; 1, 1.4]; % line width scheme for superimp plots
-    linetype = [":", "-", "-.", "--"]; % linetype scheme for superimp plots
+    color = [0, 0, 0; 0.4, 0.4, 0.4; 0.2, 0.2, 0.2; 0.75, 0.75, 0.75]; % color scheme for superimps
+    linewidth = [2.4, 2.8; 0.8, 1.2; 2, 2.4; 1, 1.4]; % line width scheme for superimp plots
+    linetype = [":", "-", "--", "-."]; % linetype scheme for superimp plots
     for t = 1:num_tabs
         %/ 
         current = layouts{t};
@@ -228,13 +256,15 @@ function [] = plotTimeSeries(time, series, varargin)
         end
         
         %/ create new layout tab
+        %%% TODO: make tile spacing an input parameter
         layout = tiledlayout(uitab('Title', tab(t)), rows, cols, 'Padding', 'none',...
-                             'TileSpacing', 'compact');
+                             'TileSpacing', spacing);
                          
         %/
         if (num_tiles > 1)
             W = cols / max_tiles(2) * max_res(1);
             H = rows / max_tiles(1) * max_res(2);
+            align_title = 'left';
             
             %
             tstring = layout_titles(t);
@@ -243,7 +273,7 @@ function [] = plotTimeSeries(time, series, varargin)
                     tstring = "Series Layout " + tab(t);
                 end
                 % TODO: need to shift this upward
-                title(layout, tstring, 'FontSize', 1.1 * title_ftsize)
+                title(layout, tstring, 'FontName', ftname, 'FontSize', 1.1 * title_ftsize)
             end
         else
             selections = [0.98, 0.98, 0.98, 0.5; % width scale factors
@@ -251,10 +281,12 @@ function [] = plotTimeSeries(time, series, varargin)
             select = [1, 2, 3, 6] == max_tiles(1) * max_tiles(2); % selection by layout dimensions
             W = selections(1, select) * max_res(1);
             H = selections(2, select) * max_res(2);
+            align_title = 'center';
         end
         
         % set outer resolution for tiled layout and constrain when resizing
-        set(layout, 'OuterPosition', [(1 - W) / 2, (1 - H) / 2, W, H], pos_arg, 'OuterPosition')
+        set(layout, 'OuterPosition', [(1 - W) / 2, (1 - H) / 2, W, H],...
+            'PositionConstraint', 'OuterPosition')
         
         %/
         for p = 1:num_tiles
@@ -289,13 +321,15 @@ function [] = plotTimeSeries(time, series, varargin)
                     plot(time, imp, linetype(i), 'Color', color(i,:), 'DisplayName', lgdset(i),...
                          'LineWidth', linearInterpolation(sfdom, linewidth(i,:), size_factor))
                      
-                    % update min and max values if found
+                    % update min and max values as needed
+                    minval = min(minval, min(imp));
+                    maxval = max(maxval, max(imp));
                 end
             end
             
-            
             %
-            set(ax, 'FontName', ftname, 'FontSize', ftsize, 'YLim', [minval, maxval])
+            set(ax, 'FontName', ftname, 'FontSize', ftsize, 'YLim', [minval, maxval],...
+                'TitleHorizontalAlignment', align_title)
             tstring = plot_titles(current(p));
             if (tstring ~= "none")
                 if (tstring == "")
@@ -328,7 +362,25 @@ function [] = plotTimeSeries(time, series, varargin)
             end
         end
         
-%         %%% devel checks
+        %/
+        if (save_image)
+            filename = file_base + "/" + tab(t);
+            
+            % Portable Network Graphic images at screen dpi and 5x screen dpi
+            exportgraphics(layout, filename + "_" + num2str(dpi) + "dpi.png", 'Resolution', dpi)
+            exportgraphics(layout, filename + "_" + num2str(hdpi) + "dpi.png", 'Resolution', hdpi)
+            
+            % vector graphics - Enhanced metafile if OS is Windows, else Encapsulated PostScript
+            if (ispc)
+                exportgraphics(layout, filename + ".emf", 'ContentType', 'vector',...
+                               'BackgroundColor', 'none')
+            else
+                exportgraphics(layout, filename + ".eps", 'ContentType', 'vector',...
+                               'BackgroundColor', 'none')
+            end
+        end
+        
+        %%% devel checks
 %         check_tab = tab(t)
 %         check_lw = linearInterpolation(sfdom, [1, 1.4], size_factor)
 %         check_tft = check.FontSize
@@ -337,5 +389,8 @@ function [] = plotTimeSeries(time, series, varargin)
 %         check_height = ax.Position(4)
 %         check_aspect = ax.Position(3) / ax.Position(4)
 %         set(ax, 'Units', 'normalized')
+%         set(layout, 'Units', 'inches')
+%         check_layout_dims = layout.Position
+%         set(layout, 'Units', 'normalized')
     end
 end
