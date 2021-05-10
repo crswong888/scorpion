@@ -37,7 +37,7 @@ function [] = plotTimeSeries(time, series, varargin)
     valid_layout = @(x) isnumeric(x) && (numel(x) == length(x)) && (1 < length(x))...
                         && (length(x) < 7);
     valid_layouts = @(x) (numel(x) == length(x)) && all(cellfun(valid_layout, x));
-    addParameter(params, 'TiledLayout', [], @(x) valid_layout(x) || (iscell(x) && valid_layouts(x)))
+    addParameter(params, 'TiledLayout', 1, @(x) valid_layout(x) || (iscell(x) && valid_layouts(x)))
     addParameter(params, 'LayoutTitle', "", valid_strings)
     
     %/ font to use on plot axes

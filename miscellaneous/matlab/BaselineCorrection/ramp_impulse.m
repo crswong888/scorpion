@@ -26,7 +26,7 @@ end
 [adj_accel, adj_vel, adj_disp] = baselineCorrection(time, accel, 'AccelFitOrder', 1);
 
 %// ideally, DR < 0.05 and |AR - 1| < 0.05
-[DR, AR] = computeDriftRatio(time, accel, adj_disp);
+[DR, AR] = computeDriftRatio(time, adj_disp, 'ReferenceAccel', accel);
 
 %//
 catseries = [adj_accel; adj_vel; adj_disp];
