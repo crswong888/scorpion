@@ -33,7 +33,7 @@ fs = readmatrix('a992bar_backbone.csv');
 %// time domain [t_initial, t_end]
 t = [0, 0.6]; % s
 
-%// timestep size - if zero (reccomended), one will be automatically selected
+%// timestep size - if zero or empty (reccomended), one will be automatically selected
 dt = 0;
 
 %// velocity and displacement initial conditions du(t_initial) u(t_initial)
@@ -42,9 +42,6 @@ u_initial = 0;
 
 %// forcing function p(t) (use an anonymous function format that can be sampled at any time instant)
 p = @(t) (t < 0.2) .* (250 * sin(40 * pi * t)) + (0.2 <= t) .* 0; % kN
-
-%// angular frequency of forcing function - set to zero if p(t) is not a harmonic function
-omegaBar = 40 * pi; % rad/s
 
 %// residual tolerance used for Newton solver and certain other tasks
 R_tol = 1e-09; % should be nearly zero, but large enough to allow small errors
@@ -59,9 +56,9 @@ units = {'s', 'cm', 'kN'};
 %// compute natural angular frequency, damping coefficient, and elastic stiffness
 [omega_n, c, ke] = computeDynamicConstants(m, zeta, fs);
 
-%// determine a suitable time step size if not specified by user
-if (dt == 0)
-    dt = computeTimeStepSize(omega_n, omegaBar, 'Nonlinear', (length(fs(1,:)) > 1));
+%// determine a suitable time step size based on natural frequency and frequencies of forcing func
+if (isempty(dt) || (dt == 0)) % but only if not already specified by user
+    dt = computeTimeStepSize(t, omega_n, p, 'Nonlinear', (length(fs(1,:)) > 1));
 end
 
 %// add a static initialization to displacement initial condition

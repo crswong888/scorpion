@@ -40,7 +40,7 @@ fs = [ 1;  % cm
 %// time domain [t_initial, t_end]
 t = [0, 1]; % s
 
-%// timestep size - if zero (reccomended), one will be automatically selected
+%// timestep size - if zero or empty (reccomended), one will be automatically selected
 dt = 0.1; % s
 
 %// velocity and displacement initial conditions du(t_initial) u(t_initial)
@@ -49,9 +49,6 @@ u_initial = 0;
 
 %// forcing function p(t) (use an anonymous function format that can be sampled at any time instant)
 p = @(t) (t < 0.6) .* (50 * sin(pi * t / 0.6)) + (0.6 <= t) .* 0; % kN
-
-%// angular frequency of forcing function - set to zero if p(t) is not a harmonic function
-omegaBar = pi / 0.6; % rad/s
 
 %// Newmark-beta method parameters (reccomended: gamma = 1/2 and beta = 1/4 or beta = 1/6)
 gamma = 1 / 2;
@@ -67,9 +64,9 @@ units = {'s', 'cm', 'kN'};
 %// compute natural angular frequency, damping coefficient, and elastic stiffness
 [omega_n, c, ke] = computeDynamicConstants(m, zeta, fs);
 
-%// determine a suitable time step size if not specified by user
-if (dt == 0)
-    dt = computeTimeStepSize(omega_n, omegaBar, 'Nonlinear', (length(fs(1,:)) > 1));
+%// determine a suitable time step size based on natural frequency and frequencies of forcing func
+if (isempty(dt) || (dt == 0)) % but only if not already specified by user
+    dt = computeTimeStepSize(t, omega_n, p, 'Nonlinear', (length(fs(1,:)) > 1));
 end
 
 %// add a static initialization to displacement initial condition
