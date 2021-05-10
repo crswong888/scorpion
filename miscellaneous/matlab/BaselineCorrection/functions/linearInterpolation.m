@@ -16,10 +16,10 @@ function fx = linearInterpolation(x, f, p, varargin)
     
     %// locate lower bound index of subdomain holding 'x' - use lower index of first or last
     %// subdomain if extrapolating and 'p' is outside global bounds
-    [~, idx] = min(abs(p - x(1:(end - 1))));
+    [~, idx] = max([x(x(1:(end - 1)) < p), x(1)]);
     
     %// compute ordinate at target point using linear interpolation between neighboring abscissa
-    fx = f(idx+1) - (x(idx+1) - p) * (f(idx+1) - f(idx)) / (x(idx+1) - x(idx));
+    fx = f(idx + 1) - (x(idx + 1) - p) * (f(idx + 1) - f(idx)) / (x(idx + 1) - x(idx));
 end
 
 %%% Helper function for parsing input parameters, setting defaults, and validating data types

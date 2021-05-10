@@ -27,7 +27,7 @@ g = 0;
 %// critical damping ratio
 zeta = 0.05;
 
-%// restoring force backbone curve fs(u) = df/du * u - data must be input as abscissa-ordinate pairs
+%// restoring force backbone 'fs(u) = df/du * u' - data must be input as abscissa-ordinate pairs
 fs = [ 2,  5;  % cm
       36, 36]; % kN
 
@@ -42,20 +42,13 @@ du_initial = 0;
 u_initial = 0;
 
 %// forcing function p(t) (use an anonymous function format that can be sampled at any time instant)
-p = @(t) (t < 0.6).*(50 * sin(pi * t / 0.6)) + (0.6 <= t).*(0); % kN
+p = @(t) (t < 0.6) .* (50 * sin(pi * t / 0.6)) + (0.6 <= t) .* 0; % kN
 
 %// angular frequency of forcing function - set to zero if p(t) is not a harmonic function
 omegaBar = pi / 0.6; % rad/s
 
-%// Newmark-beta method parameters (reccomended: gamma = 1/2 and beta = 1/4 or beta = 1/6)
-gamma = 1 / 2;
-beta = 1 / 4;
-
 %// residual tolerance used for Newton solver and certain other tasks
 R_tol = 1e-03; % should be nearly zero, but large enough to allow small errors
-
-%// max allowable Newton-Raphson iterations
-max_it = 20;
 
 %// string of parameter units = {time, distance, force} (used for data reports - not conversions)
 units = {'s', 'cm', 'kN'};
@@ -77,7 +70,7 @@ u_initial = u_initial + m * g / ke;
 
 %// numerically solve nonlinear equation of motion using Newmark-beta and Newton-Raphson methods
 [t, d2u, du, u, fs_history] = solveEquationOfMotion(m, c, fs, ke, t, dt, du_initial, u_initial,...
-                                                    p, gamma, beta, R_tol, max_it);
+                                                    p, 'ResidualTol', R_tol);
 
 
 %%% POSTPROCESSING
