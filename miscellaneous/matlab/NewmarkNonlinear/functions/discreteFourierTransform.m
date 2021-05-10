@@ -116,7 +116,7 @@ end
 %%% Helper function for parsing input parameters, setting defaults, and validating data types
 function [params, tokens] = validParams(t, u, varargin)
     %// validate required inputs
-    validateattributes(t, {'numeric'}, {'vector', 'real', 'increasing'}, 1)
+    validateattributes(t, {'numeric'}, {'vector', 'increasing'}, 1)
     validateattributes(u, {'numeric'}, {'vector', 'numel', length(t), 'real'}, 2)
     
     %// create parser object for additional inputs controlling data processing of time and frequency

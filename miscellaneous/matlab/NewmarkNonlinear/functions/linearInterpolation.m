@@ -25,7 +25,7 @@ end
 %%% Helper function for parsing input parameters, setting defaults, and validating data types
 function params = validParams(x, f, p, varargin)
     %// validate required inputs 
-    validateattributes(x, {'numeric'}, {'vector', 'real', 'increasing'}, 1)
+    validateattributes(x, {'numeric'}, {'vector', 'increasing'}, 1)
     validateattributes(f, {'numeric'}, {'vector', 'numel', length(x), 'real'}, 2)
     validateattributes(p, {'numeric'}, {'scalar', 'real'}, 3)
     
