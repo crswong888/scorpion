@@ -9,6 +9,15 @@
 %%% TODO: need a file basename option
 
 function [] = plotTimeSeries(time, series, varargin)
+    %// get filename, excluding extension, of top-level stack frame, i.e., of invoking script
+    caller = string(erase(dbstack(length(dbstack) - 1).file, '.m'));
+    
+    %// confirm that invoker is not 'run_tests.m', because if it is, then we don't want to waste 
+    %// time generating and/or exporting plots and simply return
+    if (strcmp(caller, 'run_tests'))
+        return
+    end
+    
     %// object for additional inputs which control plot behavior
     params = inputParser;
     
@@ -50,7 +59,7 @@ function [] = plotTimeSeries(time, series, varargin)
     addParameter(params, 'FontName', 'Helvetica', valid_font)
     
     %/ sizing parameter - controls font sizes, line thickness, window width, etc.
-    addParameter(params, 'SizeFactor', 1, @(x) mustBeMember(x, [1, 2, 3, 4, 5]));
+    addParameter(params, 'SizeFactor', 2, @(x) mustBeMember(x, [1, 2, 3, 4, 5]));
     
     %/ 
     addParameter(params, 'SaveImage', false, @(x) islogical(x));
@@ -170,18 +179,23 @@ function [] = plotTimeSeries(time, series, varargin)
     end
     
     % set tile spacing of plot layouts
-    if (size_factor == 1)
+    if (size_factor <= 2)
         spacing = 'none';
     else
         spacing = 'compact';
     end
+    
+    % set color, line width, and line style schemes each (up to max allowable) superimposed plots
+    color = [0, 0, 0; 0.4, 0.4, 0.4; 0.2, 0.2, 0.2; 0.75, 0.75, 0.75]; % color scheme for superimps
+    linewidth = [2.4, 2.8; 0.8, 1.2; 2, 2.4; 1, 1.4]; % line width scheme for superimp plots
+    linetype = [":", "-", "--", "-."]; % linetype scheme for superimp plots
     
     %// clear plot objects, if desired
     if (params.Results.ClearFigures)
         close all
     end
     
-    %// map size factor onto fontsizes [12.5, 22.5] pts for invidiual plots
+    %// map size factor onto fontsizes [8, 16] pts for invidiual plots
     sfdom = [1, 5]; % size factor domain boundaries used for interpolations
     title_ftsize = linearInterpolation(sfdom, [8, 16], size_factor);
     ftsize = title_ftsize / 1.1; % default title font multiplier is 1.1, so scale down
@@ -197,7 +211,7 @@ function [] = plotTimeSeries(time, series, varargin)
     %// setup file structure for exporting images/graphics
     if (save_image)
         %/ get filename, excluding extension, of top-level stack frame, i.e., of invoking script
-        file_base = string(erase(dbstack(length(dbstack) - 1).file, '.m')) + "_outputs";
+        file_base = caller + "_outputs";
         
         %/ get screen resolution so image can be made to look exactly how it appears on screen
         dpi = get(groot, 'ScreenPixelsPerInch');
@@ -209,10 +223,14 @@ function [] = plotTimeSeries(time, series, varargin)
         end
     end
     
-    %// map size factor onto figure window widths and select aspect ratios based on plot layouts 
+    %// map size factor onto figure window width ratio 'wr' and select an aspect ratio that can
+    %// support tab with most no. of tiles of all tabs
+    %//
+    %// NOTE: the screen width ratio needs to be such that the figure extents never go beyond the
+    %//       bounds of taskbars and other OS graphics fixed to a users screen, 80% ish max!
     screen = get(groot, 'ScreenSize');
-    wr = linearInterpolation(sfdom, [0.29, 0.45], size_factor);
-    switch max(cellfun(@(x) length(x), layouts))
+    wr = linearInterpolation(sfdom, [0.29, 0.63], size_factor); % normalized WRT screen width
+    switch max(cellfun(@(x) length(x), layouts)) % finds layour w/ most no. of tiles
         case 1
             aspect = 43 / 80;
             max_tiles = [1, 1];
@@ -223,24 +241,20 @@ function [] = plotTimeSeries(time, series, varargin)
             aspect = 4 / 5;
             max_tiles = [3, 1];
         otherwise
-            %%% TODO: these sizing params don't quite work. For normal margins w/ 10pt font (sf=2),
-            %%% the layout needs to be less than 6.5"
-            %%% actually, 6.5" at 8pt font is totally fine, cuz the big text looks weird anyways
-            wr = linearInterpolation(sfdom, [0.34, 0.5], size_factor);
+            wr = linearInterpolation(sfdom, [0.34, 0.7], size_factor); % two columns, so more width
             aspect = 3 / 5;
             max_tiles = [3, 2];
     end
     
-    %/ compute results and initialize figure with 'OuterPosition' prop
+    %/ compute resolution and screen position and initialize figure object with 'OuterPosition' prop
     res = wr * screen(3) * [1, min(screen(4) / screen(3) / wr, aspect)]; % [width, height] px
     pos = [screen(1) + (screen(3) - res(1)) / 2, screen(2) + (screen(4) - res(2)) / 2, res];
     figure('OuterPosition', pos) 
     
-    %// 
-    max_res = [0.99, 0.98]; % max normalized width and height used for layout with most tiles
-    color = [0, 0, 0; 0.4, 0.4, 0.4; 0.2, 0.2, 0.2; 0.75, 0.75, 0.75]; % color scheme for superimps
-    linewidth = [2.4, 2.8; 0.8, 1.2; 2, 2.4; 1, 1.4]; % line width scheme for superimp plots
-    linetype = [":", "-", "--", "-."]; % linetype scheme for superimp plots
+    %/ set max resolution for layout objects
+    max_res = [0.99, 0.98]; % [width, height] (normalized WRT figure resolution)
+    
+    %// Loop through figure tabs and generate all plots in tiled layouts
     for t = 1:num_tabs
         %/ 
         current = layouts{t};
@@ -256,12 +270,12 @@ function [] = plotTimeSeries(time, series, varargin)
         end
         
         %/ create new layout tab
-        %%% TODO: make tile spacing an input parameter
         layout = tiledlayout(uitab('Title', tab(t)), rows, cols, 'Padding', 'none',...
                              'TileSpacing', spacing);
                          
         %/
         if (num_tiles > 1)
+            %/ select resolution of current layout object in proportion to one w/ most no. of tiles
             W = cols / max_tiles(2) * max_res(1);
             H = rows / max_tiles(1) * max_res(2);
             align_title = 'left';
@@ -272,7 +286,8 @@ function [] = plotTimeSeries(time, series, varargin)
                 if (tstring == "")
                     tstring = "Series Layout " + tab(t);
                 end
-                % TODO: need to shift this upward
+                
+                % font size of tab title should be even bigger (1.1x) than individual tile titles
                 title(layout, tstring, 'FontName', ftname, 'FontSize', 1.1 * title_ftsize)
             end
         else
@@ -383,7 +398,8 @@ function [] = plotTimeSeries(time, series, varargin)
         %%% devel checks
 %         check_tab = tab(t)
 %         check_lw = linearInterpolation(sfdom, [1, 1.4], size_factor)
-%         check_tft = check.FontSize
+%         check_ft = ax.FontSize
+%         check_tft = check.FontSize % should be 1.1x ax.FontSize (font size of tick labels)
 %         set(ax, 'Units', 'pixels')
 %         check_width = ax.Position(3)
 %         check_height = ax.Position(4)

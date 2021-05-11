@@ -1,8 +1,8 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Baseline Correction of Acceleration Time Histories %%%
-%%%                By: Christopher Wong                %%%
-%%%                crswong888@gmail.com                %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% The Type-oriented Algorithm for Baseline Correction %%%
+%%%                By: Christopher Wong                 %%%
+%%%                crswong888@gmail.com                 %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%% This is a demonstration of how the 'discreteFourierTransform()' function can be invoked in
 %%% different ways for different types of signals. This script does not have a regression test

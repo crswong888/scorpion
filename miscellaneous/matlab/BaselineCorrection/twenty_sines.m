@@ -1,8 +1,8 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Baseline Correction of Acceleration Time Histories %%%
-%%%                By: Christopher Wong                %%%
-%%%                crswong888@gmail.com                %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% The Type-oriented Algorithm for Baseline Correction %%%
+%%%                By: Christopher Wong                 %%%
+%%%                crswong888@gmail.com                 %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%% 
 
@@ -13,57 +13,63 @@ fprintf('\n')
 addpath('functions')
 
 
-%// generate array of discrete time instances and evaluate acceleration function
-time = generate1DGridPoints(-0.4, 0.4, 1e-03);
-accel = -250 * pi * pi * sin(50 * pi * time);
+%%% COMPUTATIONS
+%%% ------------------------------------------------------------------------------------------------
 
-%/ set a reference displacement corresponding to drift-free ICs to use when compute drift/amp ratios
-ref_disp = -0.1 * sin(50 * pi * time);
+%// generate array of discrete time instances and evaluate a harmonic acceleration function
+time = generate1DGridPoints(-5, 5, 0.01); % time mesh = [-5, 5] s @ 0.01 s
+accel = 80 * pi * pi * sin(4 * pi * time); % amplitude = 80 * pi^2 cm/s/s, frequency = 2 Hz
 
-%// compute drifting ratio of nominal displacement for comparison to corrected one
-[vel, disp] = newmarkIntegrate(time, accel, 0.5, 0.25);
+%/ set a reference displacement corresponding to drift-free ICs for evaluating drift/amp ratios
+%/
+%/ NOTE: This expression can be obtained by double-integrating 'accel' and assuming that the initial
+%/       velocity is '-80 pi * pi / 4 / pi * cos(4 * pi * -5)', and that the initial displacement
+%/       is: '-80 * pi * pi / 4 / pi / 4 / pi * sin(4 * pi * -5)'.
+ref_disp = -5 * sin(4 * pi * time);
+
+%// compute nominal time series and its drift ratio to compare to corrected ones
+[vel, disp] = newmarkIntegrate(time, accel);
 [nomDR, nomAR] = computeDriftRatio(time, disp, 'ReferenceDisp', ref_disp);
 
-%// apply least squares baseline correction and output adjusted time histories
-[adj_accel, adj_vel, adj_disp] = baselineCorrection(time, accel, 'AccelFitOrder', 12,...
-                                                    'VelFitOrder', 11, 'DispFitOrder', 7);                            
+%// apply various baseline correction types to demonstrate their differences
+[accel_A3, vel_A3, disp_A3] = baselineCorrection(time, accel, 'AccelFitOrder', 3);
+[accel_V3, vel_V3, disp_V3] = baselineCorrection(time, accel, 'VelFitOrder', 3);
+[accel_A13V13D11, vel_A13V13D11, disp_A13V13D11] = baselineCorrection(time, accel,...
+                                                                      'AccelFitOrder', 13,...
+                                                                      'VelFitOrder', 13,...
+                                                                      'DispFitOrder', 11);
 
-%// ideally, DR < 0.05 and |AR - 1| < 0.05
-[DR, AR] = computeDriftRatio(time, adj_disp, 'ReferenceDisp', ref_disp);
+%// compute drift and amplitude ratios of corrected series' (ideally, DR < 0.05 and |AR - 1| < 0.05)
+[A3DR, A3AR] = computeDriftRatio(time, disp_A3, 'ReferenceDisp', ref_disp);
+[V3DR, V3AR] = computeDriftRatio(time, disp_V3, 'ReferenceDisp', ref_disp);
+[A13V13D11DR, A13V13D11AR] = computeDriftRatio(time, disp_A13V13D11, 'ReferenceDisp', ref_disp);
 
-%//
-g = 9.81; % m/s/s, gravitational acceleration
-catseries = [accel / g; vel; disp; adj_accel / g; adj_vel; adj_disp];
-%layouts = {1:4, 1:3, [2; 4]};
-layouts = {1:3, [1, 4], [2; 4]};
-%layouts = {[1, 3], 1:2, [2; 4]};
-layout_titles = ["none", "none", ""];
 
-% str = ' Time History';
-% plot_titles = {['Nominal Acceleration', str];
-%                ['Nominal Velocity', str];
-%                ['Nominal Displacement', str, ' (DR = ', num2str(nomDR), ', AR = ' num2str(nomAR), ')'];
-%                ['Adjusted Acceleration', str];
-%                ['Adjusted Velocity', str];
-%                ['Adjusted Displacement', str, ' (DR = ', num2str(DR), ', AR = ' num2str(AR), ')']};
+%%% POSTPROCESSING
+%%% ------------------------------------------------------------------------------------------------
 
-plot_titles = {'Nominal Time History', 'none', 'none', 'none', 'none', 'none'};
-           
-y_labels = {'Acc. (g)';
-            'Vel. (m/s)';
-            'Disp. (m)';
-            'Acc. (g)';
-            'Velocity (m/s)';
-            'Displacement (m)'};
+%// concate time histories to be read by plot generator
+g = 981; % cm/s/s, gravitational acceleration
+catseries = [accel / g; vel; disp; disp_A3; disp_V3; disp_A13V13D11];
 
-plotTimeSeries(time, catseries, 'TiledLayout', layouts, 'LayoutTitle', layout_titles,...
-               'Title', plot_titles, 'XLabel', 'Time (s)', 'YLabel', y_labels, ...
-               'FontName', 'times new roman', 'SizeFactor', 2, 'ClearFigures', true)
-           
-% plotTimeSeries(time, catseries,...
-%                'Title', plot_titles, 'XLabel', 'Time (s)', 'YLabel', y_labels, ...
-%                'FontName', 'times new roman', 'SizeFactor', 1, 'ClearFigures', true)
+%/ set corresponding plot titles
+plot_titles = ["Nominal Acceleration";
+               "Nominal Velocity";
+               "Nominal Displacement (DR = " + num2str(nomDR, 4) + ", AR = " + num2str(nomAR, 4)...
+               + ")";
+               "Type A3 (DR = " + num2str(A3DR, 4) + ", AR = " + num2str(A3AR, 4) + ")";
+               "Type V3 (DR = " + num2str(V3DR, 4) + ", AR = " + num2str(V3AR, 4) + ")";
+               "Type A13-V13-D11 (DR = " + num2str(A13V13D11DR, 4) + ", AR = "...
+               + num2str(A13V13D11AR, 4) + ")"];
 
-%%% plot original acceleration by itself
-%%% plot adjusted time histories in layout format
-%%% plot adjusted vs displaced in superimposed format (maybe do this on chichi)
+%/ set corresponding y-axis labels
+y_labels = ["Acc. (g)", "Vel. (cm/s)", "Disp. (cm)"];
+y_labels(end:(end + 3)) = y_labels(3);
+
+%// identify plot sets to appear in individual tiled layouts
+layouts = 1:length(plot_titles); % all plots in one layout
+
+%// run plot generator
+plotTimeSeries(time, catseries, 'Title', plot_titles, 'Xlabel', 'Time (s)', 'YLabel', y_labels,...
+               'TiledLayout', 1:6, 'LayoutTitle', 'none', 'FontName', 'times new roman',...
+               'SaveImage', true, 'SizeFactor', 1)
