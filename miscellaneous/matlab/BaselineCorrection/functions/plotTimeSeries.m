@@ -1,4 +1,4 @@
-%%%
+%%% 
 %%%
 %%% By: Christopher Wong | crswong888@gmail.com
 
@@ -63,6 +63,9 @@ function [] = plotTimeSeries(time, series, varargin)
     
     %/ 
     addParameter(params, 'SaveImage', false, @(x) islogical(x));
+    
+    %/ name of directory to export images to if 'SaveImage' being used, default is 'caller' + '_out'
+    addParameter(params, 'FileBase', caller + "_outputs", valid_string)
     
     %/ wether or not to close all currently open plots before generating new ones
     addParameter(params, 'ClearFigures', false, @(x) islogical(x));
@@ -210,14 +213,12 @@ function [] = plotTimeSeries(time, series, varargin)
     
     %// setup file structure for exporting images/graphics
     if (save_image)
-        %/ get filename, excluding extension, of top-level stack frame, i.e., of invoking script
-        file_base = caller + "_outputs";
-        
         %/ get screen resolution so image can be made to look exactly how it appears on screen
         dpi = get(groot, 'ScreenPixelsPerInch');
         hdpi = 5 * dpi; % also create images at 5x screen res
         
         %/ create an output folder if it doesn't already exist
+        file_base = params.Results.FileBase; % name of directory to export images to
         if (exist(file_base, 'dir') ~= 7)
             mkdir(file_base)
         end
@@ -394,19 +395,5 @@ function [] = plotTimeSeries(time, series, varargin)
                                'BackgroundColor', 'none')
             end
         end
-        
-        %%% devel checks
-%         check_tab = tab(t)
-%         check_lw = linearInterpolation(sfdom, [1, 1.4], size_factor)
-%         check_ft = ax.FontSize
-%         check_tft = check.FontSize % should be 1.1x ax.FontSize (font size of tick labels)
-%         set(ax, 'Units', 'pixels')
-%         check_width = ax.Position(3)
-%         check_height = ax.Position(4)
-%         check_aspect = ax.Position(3) / ax.Position(4)
-%         set(ax, 'Units', 'normalized')
-%         set(layout, 'Units', 'inches')
-%         check_layout_dims = layout.Position
-%         set(layout, 'Units', 'normalized')
     end
 end

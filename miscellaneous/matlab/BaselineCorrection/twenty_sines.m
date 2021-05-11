@@ -4,7 +4,7 @@
 %%%                crswong888@gmail.com                 %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%% 
+%%% No summary yet...
 
 clear all %#ok<CLALL>
 format longeng
@@ -45,7 +45,7 @@ ref_disp = -5 * sin(4 * pi * time);
 [A13V13D11DR, A13V13D11AR] = computeDriftRatio(time, disp_A13V13D11, 'ReferenceDisp', ref_disp);
 
 
-%%% POSTPROCESSING
+%%% POSTPROCESSING 1: GENERATE PLOTS OF NOMINAL THs AND CORRECTED DISPLACEMENT THs
 %%% ------------------------------------------------------------------------------------------------
 
 %// concate time histories to be read by plot generator
@@ -72,4 +72,38 @@ layouts = 1:length(plot_titles); % all plots in one layout
 %// run plot generator
 plotTimeSeries(time, catseries, 'Title', plot_titles, 'Xlabel', 'Time (s)', 'YLabel', y_labels,...
                'TiledLayout', 1:6, 'LayoutTitle', 'none', 'FontName', 'times new roman',...
-               'SaveImage', true, 'SizeFactor', 1)
+               'SaveImage', true, 'SizeFactor', 1, 'ClearFigures', true)
+
+
+%%% POSTPROCESSING 2: PLOT FOURIER TRANSFORMS OF NOMINAL & CORRECTED 3-STORY FRAME ROOF DISPLACEMENT
+%%% ------------------------------------------------------------------------------------------------           
+           
+%// read in roof displacement THs from MOOSE 3-story frame models subject to nominal and type 
+%// A13-V13-D11 ground accelerations, data is: [time, ground disp., relative disp., roof disp.]
+disp_frame = readmatrix('records/3story_frame_nominal_out.csv');
+disp_A13V13D11_frame = readmatrix('records/3story_frame_corrected_out.csv');
+
+%/ evaluate their discrete fourier transforms to demonstrate effect of BL drift in frequency domain
+fdom = [0, 4]; % Hz, cyclic frequency domain of intesrest
+[freq, peak_roof_disp] = discreteFourierTransform(time, disp_frame(:,4), 'Domain', fdom);
+[~, peak_roof_disp_A13V13D11] = discreteFourierTransform(time, disp_A13V13D11_frame(:,4),...
+                                                         'Domain', fdom);
+
+%// concate frequency series' to be read by plot generator
+transforms = transpose([peak_roof_disp, peak_roof_disp_A13V13D11]);
+
+%/ set corresponding plot titles and y-axis labels
+fplot_titles = ["Nominal Model", "Type A13-V13-D11 Corrected Model"];
+amp_labels = repmat("Peak Disp. (cm)", size(fplot_titles));
+
+%// run plot generator
+plotTimeSeries(freq, transforms, 'Title', fplot_titles, 'Xlabel', 'Frequency (Hz)',...
+               'YLabel', amp_labels, 'TiledLayout', 1:2, 'LayoutTitle', 'none',...
+               'FontName', 'times new roman', 'SaveImage', true, 'SizeFactor', 1,...
+               'FileBase', '3story_frame_freqs')
+           
+%// NOTE: The fundamental frequency represents translation of all floors in a purely-lateral common
+%//       direction at a rate of 2.2 Hz. Amplitude spikes at this natural frequency and the
+%//       frequency of the ground acceleration (2.0 Hz) can be observed in both the nominal and 
+%//       corrected FFT plots, but the nominal transform also has a severe spike at 0 Hz, as the
+%//       baseline drift is a quasistatic component of the motion with a relatively large amplitude
