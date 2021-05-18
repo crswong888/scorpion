@@ -8,9 +8,9 @@ cd test
 make cleanall
 make clobberall
 make -j4
-./run_tests -j4
+./run_tests -j4 -p2
 
 cd ../modules
 make cleanall
 make -j4
-./run_tests -j4
+./run_tests -j4 -p2

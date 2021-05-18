@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cd ~/projects/moose/test
-./run_tests -j4
+./run_tests -j4 -p2
 
 cd ../modules
-./run_tests -j4
+./run_tests -j4 -p2

@@ -8,5 +8,5 @@ JOBS=4 ./scripts/update_and_rebuild_libmesh.sh
 
 cd ../
 make -j4
-./run_tests -j4
+./run_tests -j4 -p2
 

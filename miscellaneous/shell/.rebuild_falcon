@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# we want to be sure the submodule is not initialized so that Makefile knows to ref. $MOOSE_DIR
+cd ~/projects/falcon
+git submodule deinit moose/ -f
+
+# now clean up, recompile, and test
+make clean
+make -j4
+./run_tests -j4 -p2
