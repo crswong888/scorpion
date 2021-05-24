@@ -3,7 +3,13 @@
 %%%
 %%% By: Christopher Wong | crswong888@gmail.com
 
-function [] = plotEquationOfMotion(t, d2u, du, u, fs_history, p, units)    
+function [] = plotEquationOfMotion(t, d2u, du, u, fs_history, p, units)
+    %// confirm that root invoking script is not 'run_tests.m', because if it is, then we don't want 
+    %// to waste time generating and/or exporting plots, since they aren't tested, and simply return
+    if (strcmp(dbstack(length(dbstack) - 1).file, 'run_tests.m'))
+        return
+    end
+    
     %// 'reset(groot)' breaks 'DefaultFigurePosition', so store current default and manually reset
     defaultFP = get(groot, 'DefaultFigurePosition');
     
@@ -21,7 +27,7 @@ function [] = plotEquationOfMotion(t, d2u, du, u, fs_history, p, units)
     ylabel(['External Force (', units{3}, '), $p$'])
     grid on
     grid minor
-
+    
     %// plot hysteresis loop
     figure()
     plot(u, fs_history)
@@ -31,7 +37,7 @@ function [] = plotEquationOfMotion(t, d2u, du, u, fs_history, p, units)
     ylabel(['Restoring Force (', units{3}, '), $f_{s}$'])
     grid on
     grid minor
-
+    
     %// plot acceleration time history
     figure()
     plot(t, d2u)
@@ -41,7 +47,7 @@ function [] = plotEquationOfMotion(t, d2u, du, u, fs_history, p, units)
     ylabel(['Acceleration (', units{2}, '/', units{1}, '\textsuperscript{2}), $\ddot{u}$'])
     grid on
     grid minor
-
+    
     %// plot velocity time history
     figure()
     plot(t, du)
@@ -51,7 +57,7 @@ function [] = plotEquationOfMotion(t, d2u, du, u, fs_history, p, units)
     ylabel(['Velocity (', units{2}, '/', units{1}, '), $\dot{u}$'])
     grid on
     grid minor
-
+    
     %// plot displacement time history
     figure()
     plot(t, u)
