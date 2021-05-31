@@ -2,23 +2,20 @@
 %%%
 %%% By: Christopher Wong | crswong888@gmail.com
 
-function root = newtonSolve(f, interval, max_it, R_tol, varargin)
+function x = newtonSolve(f, p, max_it, R_tol, varargin)
     %// parse and validate function inputs
-    params = validParams(f, interval, max_it, R_tol, varargin{:});
+    params = validParams(f, p, max_it, R_tol, varargin{:});
     
-    %// compute initial approximations for residual
-    p = interval; % secant vertices (root approximations)
-    q = zeros(1,2); % residual at vertices
-    for i = 1:2
-        q(i) = f(interval(i));
-    end
+    %// initialize numerical procedure
+    q = arrayfun(f, p); % residuals at initial secant vertices 'p' (root approximations)
+    df = (q(2) - q(1)) / (p(2) - p(1)); % initial secant (finite difference)
+    n = 1; % iteration count
     
     %// iterate until method converges or specified max number of iterations is reached
-    n = 1; % initialize iteration count
     while (n <= max_it)
-        %/ compute x-intercept of finite difference secant line and evaluate residual
-        root = p(2) - q(2) * (p(2) - p(1)) / (q(2) - q(1));
-        R = f(root);
+        %/ compute x-intercept (root) of secant line and evaluate residual at that point
+        x = p(2) - q(2) / df;
+        R = f(x);
         
         %/ return root if convergence criteria is satisfied
         if (abs(R) <= R_tol)
@@ -31,8 +28,14 @@ function root = newtonSolve(f, interval, max_it, R_tol, varargin)
             return
         end
         
-        %/ set current approximation as new upper bound of secant
-        p(1) = p(2); q(1) = q(2); p(2) = root; q(2) = R;
+        %/ set lower bound of secant to old upper bound and set current approximation as new upper
+        p(1) = p(2); q(1) = q(2); % swap lower bound pair
+        p(2) = x; q(2) = R; % set up upper pair
+        
+        %/ update secant lines if using traditional Newton-Raphson iterations
+        if (params.Results.Secant)
+            df = (q(2) - q(1)) / (p(2) - p(1));
+        end
         
         %/ assert that estimate for root is changing
         if (q(2) == q(1))
@@ -50,17 +53,23 @@ function root = newtonSolve(f, interval, max_it, R_tol, varargin)
 end
 
 %%% Helper function for parsing input parameters, setting defaults, and validating data types
-function params = validParams(f, interval, max_it, R_tol, varargin)
+function params = validParams(f, p, max_it, R_tol, varargin)
     %// validate required inputs
     validateattributes(f, {'function_handle'}, {'scalar', 'real'}, 1)
-    validateattributes(interval, {'numeric'}, {'vector', 'numel', 2, 'real'}, 2)
+    validateattributes(p, {'numeric'}, {'vector', 'numel', 2, 'real'}, 2)
     validateattributes(max_it, {'numeric'}, {'scalar', 'positive', 'integer'}, 3)
     validateattributes(R_tol, {'numeric'}, {'scalar', 'nonnegative'}, 4)
     
-    %// create parser object for additional input controlling whether or not to report final 
-    %// residual to console upon converging
+    %// create parser object for additional inputs
     params = inputParser;
-    addParameter(params, 'Console', true, @(x) validateattributes(x, {'logical'}, {'scalar'}))
+    
+    %/ whether or not to re-compute finite differences on each iteration - when 'false', this method
+    %/ is sometimes referred to as a "Modified Newton-Raphson"
+    valid_bool = @(x) validateattributes(x, {'logical'}, {'scalar'});
+    addParameter(params, 'Secant', true, valid_bool)
+    
+    %/ whether or not to report final residual to console upon converging
+    addParameter(params, 'Console', true, valid_bool)
     
     %/ run parser
     parse(params, varargin{:})

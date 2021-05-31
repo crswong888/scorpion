@@ -12,11 +12,12 @@ function [t, d2u, du, u, fs_history] = solveEquationOfMotion(m, c, fs, ke, t, dt
     beta = params.Results.beta;
     max_it = params.Results.MaxIterations;
     R_tol = params.Results.ResidualTol;
+    is_updated = params.Results.UpdateStiffness;
     console = params.Results.Console;
     
     %// store upper and lower isotropic yield points (first point of backbone assumed to be yield)
-    uy_top = fs(1,1); uy_bot = -uy_top; % yield displacement
-    fy_top = fs(2,1); fy_bot = -fy_top; % yield force
+    uy_top = fs(1, 1); uy_bot = -uy_top; % yield displacement
+    fy_top = fs(2, 1); fy_bot = -fy_top; % yield force
     
     %// reflect supplied backbone through horizontal and vertical axes and combine with original
     fs = cat(2, -flip(fs, 2), fs);
@@ -24,12 +25,13 @@ function [t, d2u, du, u, fs_history] = solveEquationOfMotion(m, c, fs, ke, t, dt
     %// allocate array of grid points along time domain and arrays of variable values for each
     [t, N] = generate1DGridPoints(t(1), t(2), dt);
     d2u = zeros(1, N); du = d2u; u = d2u; % acceleration, velocity, and displacement, respectively
-    fs_history = zeros(1,N); % save restoring force value at each time for postprocessing
     
     %// set initial conditions
-    du(1) = du_initial; u(1) = u_initial;
+    du(1) = du_initial; 
+    u(1) = u_initial;
     
     %// compute initial restoring force and acceleration
+    fs_history = zeros(1, N); % array of restoring forces at each time instant (hysteresis loop)
     fs_history(1) = linearInterpolation(fs(1,:), fs(2,:), u(1), 'Extrapolate', true);
     d2u(1) = (p(t(1)) - c * du(1) - fs_history(1)) / m;
     
@@ -80,12 +82,12 @@ function [t, d2u, du, u, fs_history] = solveEquationOfMotion(m, c, fs, ke, t, dt
             yielded = false; % rebounded, so no longer yielding
         end
         
-        %/ set initial guess for root of residual as linear case
-        u(i + 1) = const / (k + b(3));
+        %/ guess that solution lies on an interval between old one and updated linear one
+        u_trial = [u(i), const / (k + b(3))]; % secant vertices needed for 'newtonSolve()'
         
-        %/ define equatioon of motion residual R(u) = 0 and begin Newton-Raphson procedure
+        %/ define equation of motion residual R(u) = 0 and begin Newton-Raphson procedure
         R = @(u) (const - b(3) * u - linearInterpolation(fs(1,:), fs(2,:), u, 'Extrapolate', true));
-        u(i + 1) = newtonSolve(R, [u(i), u(i + 1)], max_it, R_tol, 'Console', console);
+        u(i + 1) = newtonSolve(R, u_trial, max_it, R_tol, 'Secant', is_updated, 'Console', console);
         
         %/ use a single point forward difference to compute current tangent stiffness
         delta_u = u(i + 1) - u(i);
@@ -95,11 +97,11 @@ function [t, d2u, du, u, fs_history] = solveEquationOfMotion(m, c, fs, ke, t, dt
         %/ if tangent stiffness not equal to elastic one - system has gone plastic
         if (~yielded && (abs(k - ke) / ke >= R_tol)) % check against R_tol to avoid small errors
             yielded = true;
-        end 
+        end
         
         %/ update acceleration and velocity
-        d2u(i + 1) = -a(1) * d2u(i) - a(2) * du(i) + a(3) * (u(i + 1) - u(i));
-        du(i + 1) = -a(4) * d2u(i) - a(5) * du(i) + a(6) * (u(i + 1) - u(i));
+        d2u(i + 1) = -a(1) * d2u(i) - a(2) * du(i) + a(3) * delta_u;
+        du(i + 1) = -a(4) * d2u(i) - a(5) * du(i) + a(6) * delta_u;
     end
     
     if (console)
@@ -125,17 +127,20 @@ function params = validParams(m, c, fs, ke, t, dt, du_initial, u_initial, p, var
     params = inputParser;
     
     %/ default Newmark params are those of constant average acceleration method (trapezoidal rule)
-    valid_gamma = @(x) validateattributes(x, {'numeric'}, {'scalar', 'nonnegative', '<=', 1});
-    addOptional(params, 'gamma', 0.5, valid_gamma)
-    valid_beta = @(x) validateattributes(x, {'numeric'}, {'scalar', 'nonnegative', '<=', 0.5});
-    addOptional(params, 'beta', 0.25, valid_beta)
+    valid_w = @(x, wmax) validateattributes(x, {'numeric'}, {'scalar', 'nonnegative', '<=', wmax});
+    addOptional(params, 'gamma', 0.5, @(x) valid_w(x, 1))
+    addOptional(params, 'beta', 0.25, @(x) valid_w(x, 0.5))
     
     %/ residual tolerance and max iterations for Newton-Raphson solver (validated in that function)
     addParameter(params, 'MaxIterations', 20)
     addParameter(params, 'ResidualTol', 1e-12)
     
+    %/ whether or not to update tangent stiffness on each non-linear iteration
+    valid_bool = @(x) validateattributes(x, {'logical'}, {'scalar'});
+    addParameter(params, 'UpdateStiffness', true, valid_bool)
+    
     %/ whether or not to report time instants and residuals to console while solving
-    addParameter(params, 'Console', true, @(x) validateattributes(x, {'logical'}, {'scalar'}))
+    addParameter(params, 'Console', true, valid_bool)
     
     %/ run parser
     parse(params, varargin{:})

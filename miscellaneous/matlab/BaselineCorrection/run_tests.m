@@ -40,6 +40,7 @@ fprintf('Testing scripts against "gold" files (''OK'' = passed, ''NG'' = failed)
 fprintf('-------------------------------------------------------------------\n')
 
 %// loop over and run demo input files that have a matching gold workspace file
+save temp.mat % initialize temporary workspace file
 tic % initiate test timer
 for test = string(gold)
     %/ get and report name of script currently being tested
