@@ -1,5 +1,5 @@
 %%% Attempts to solve an equation, f(x) = 0, using the Newton-Raphson method with finite difference.
-%%%
+%%% 
 %%% By: Christopher Wong | crswong888@gmail.com
 
 function x = newtonSolve(f, p, max_it, R_tol, varargin)
@@ -11,7 +11,7 @@ function x = newtonSolve(f, p, max_it, R_tol, varargin)
     df = (q(2) - q(1)) / (p(2) - p(1)); % initial secant (finite difference)
     n = 1; % iteration count
     
-    %// iterate until method converges or specified max number of iterations is reached
+    %// iterate until method converges or specified maximum number of iterations is reached
     while (n <= max_it)
         %/ compute x-intercept (root) of secant line and evaluate residual at that point
         x = p(2) - q(2) / df;
@@ -19,7 +19,7 @@ function x = newtonSolve(f, p, max_it, R_tol, varargin)
         
         %/ return root if convergence criteria is satisfied
         if (abs(R) <= R_tol)
-            % report converge residual if requested
+            % report converged residual if console output is requested
             if (params.Results.Console)
                 fprintf('Newton solver converged at R = %g with %d iterations.\n\n', R, n)
             end
@@ -32,15 +32,15 @@ function x = newtonSolve(f, p, max_it, R_tol, varargin)
         p(1) = p(2); q(1) = q(2); % swap lower bound pair
         p(2) = x; q(2) = R; % set up upper pair
         
-        %/ update secant lines if using traditional Newton-Raphson iterations
-        if (params.Results.Secant)
-            df = (q(2) - q(1)) / (p(2) - p(1));
-        end
-        
         %/ assert that estimate for root is changing
         if (q(2) == q(1))
             error(['Newton solver has stalled. Try using a looser residual tolerance or ',...
                    'changing other numerical controls. The current residual is R = %g.'], R)
+        end
+        
+        %/ update secant lines if using traditional Newton-Raphson iterations
+        if (params.Results.Secant)
+            df = (q(2) - q(1)) / (p(2) - p(1));
         end
         
         %/ update iteration count
@@ -49,7 +49,7 @@ function x = newtonSolve(f, p, max_it, R_tol, varargin)
     
     %// if solver failed - terminate execution
     error(['Newton solver failed to converge before reaching the specified maximum number of ',...
-           'iterations. The current residual is R = %g.'], R)
+           'iterations (%d). The current residual is R = %g.'], max_it, R)
 end
 
 %%% Helper function for parsing input parameters, setting defaults, and validating data types

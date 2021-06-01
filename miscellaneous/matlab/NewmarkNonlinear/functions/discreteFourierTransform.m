@@ -1,21 +1,21 @@
 %%% This function evaluates the discrete Fourier transform of a time series 'u' specified at an
-%%% array of time instants 't'. It subsequently performs a one-sided (real) expansion and sums the 
+%%% array of time instants 't'. It subsequently performs a one-sided (real) expansion and sums the
 %%% absolute values of conjugate pairs to get total amplitudes in the frequency domain. The user may
 %%% restrict the output domain to specified boundaries of any of the three frequency types: 'cyclic'
-%%% (e.g., Hz), 'angular' (e.g., rad/s), or 'periodic' (e.g., 1/s). If the user does not specify a
+%%% (e.g., Hz), 'angular' (e.g., rad/s), or 'periodic' (e.g., s). If the user does not specify a
 %%% domain, than the largest possible domain is output. The time points may be spaced at irregular
 %%% intervals, but it is important that the degree of irregularities be classified as either
 %%% 'uniform', 'semiuniform', or 'nonuniform' using the 'Distribution' parameter.
-%%%
+%%% 
 %%% By: Christopher Wong | crswong888@gmail.com
 
 function [f, uo] = discreteFourierTransform(t, u, varargin)
     %// parse & validate function inputs
     [params, tokens] = validParams(t, u, varargin{:});
     N = length(t); % total number of time instants
-    dtype = tokens.Distribution;
-    ftype = tokens.FrequencyType;
-    fdom = params.Results.Domain;
+    dtype = tokens.Distribution; % discretization type: 'uniform', 'semiuniform', or 'nonuniform'
+    ftype = tokens.FrequencyType; % frequency type: 'cyclic', 'angular', or 'periodic'
+    fdom = params.Results.Domain; % lower and upper bounds of frequency domain
     
     %// setup one-sided expansion of frequency domain based on type of discretization
     switch dtype
@@ -24,10 +24,10 @@ function [f, uo] = discreteFourierTransform(t, u, varargin)
             fmax = (N - 1) / 2 / range(t); % (Chopra Eqn. A.5.2 & A.5.5)
             
             %/ for uniform dt, real amplitudes are well defined at a number of sample points equal
-            %/ to half no. of time instants
+            %/ to half no. of time instants (second half is just all conjugate pairs of first)
             df = fmax / floor(N / 2); % sampling frequency
         otherwise
-            %/ compute an appropriate upper bound value based on maximum timestep size
+            %/ compute an appropriate upper bound of cyclic domain based on maximum timestep size
             fmax = 1 / (2 * max(abs(t(2:N) - t(1:(N - 1)))));
             
             if (strcmp(dtype, 'semiuniform'))
@@ -36,12 +36,12 @@ function [f, uo] = discreteFourierTransform(t, u, varargin)
                 df = (N - 1) / 2 / range(t) / floor(N / 2); % based on fmax of uniform dtype
             else
                 %/ but for straight up nonuniform spacing, everything is going to be messed up, and
-                %/ sampling every 1 cycle/unit time seems to always be safe
+                %/ sampling every 1 cycle/unit time seems to always be safe, however coarse
                 df = 1;
             end
     end
     
-    %// check bounds of fdom and convert non-cyclic types... if not specified, then set a default
+    %// check bounds of 'fdom' and convert non-cyclic types - if not specified, then set a default
     if (~ismember('Domain', params.UsingDefaults))
         switch ftype
             case 'cyclic'
@@ -65,7 +65,7 @@ function [f, uo] = discreteFourierTransform(t, u, varargin)
                 end
                 
                 %/ conversion: 'f = frac{1}{T}'
-                fdom = 1 ./ flip(fdom); % frequency increases as period decreases, hence flip()
+                fdom = 1 ./ flip(fdom); % frequency increases as period decreases, hence 'flip()'
                 
                 %/ need to warn about zero-valued periods and adjust upper domain bound used for FFT
                 if (fdom(2) == Inf)
@@ -77,21 +77,21 @@ function [f, uo] = discreteFourierTransform(t, u, varargin)
                 end
         end
     elseif (strcmp(ftype, 'periodic'))
-        %/ default fdom includes all real frequencies except zero, which is undefined
+        %/ default domain includes all real frequencies except zero, because it is undefined
         fdom = [df, fmax];
     else
-        %/ default fdom includes all real frequencies
+        %/ default domain includes all real frequencies
         fdom = [0, fmax];
     end
     
-    %// discretize frequency domain and evaluate magnitudes of complex (fast) Fourier transform
+    %// discretize domain and evaluate magnitudes of discrete Fourier transform (Cooley-Tukey FFT)
     f = generate1DGridPoints(fdom(1), fdom(2), df);
-    uo = abs(nufft(u, t, f) / N);
+    uo = abs(nufft(u, t, f) / N); % need to take absolute value of complex numbers
     
     %/ sum conjugate pairs (i.e., multiply 1-sided expansion by 2) to get total amplitudes
     uo(f ~= 0) = 2 * uo(f ~= 0); % except at zero frequency, which has no conjugate pair
     
-    %/ if there is an odd number of time instants, then amplitude at fmax also has no conjugate pair
+    %/ if there is an odd no. of time instants, then amplitude at 'fmax' also has no conjugate pair
     if (~rem(N, 2))
         uo(f == fmax) = uo(f == fmax) / 2;
     end
@@ -124,7 +124,7 @@ function [params, tokens] = validParams(t, u, varargin)
     
     %/ general description of how time domain is discretized to decide how to properly set up a 
     %/ frequency domain... here's what they mean:
-    %/     uniform - nearly all time instants have exactly equal spacing between one another
+    %/     uniform - all or nearly all time instants have exactly equal spacing between one another
     %/     semiuniform - small deviations in size of many intervals, but roughly uniform overall
     %/     nonuniform - large deviations in size of some or all intervals; severe irregularities
     valid_discretization = @(x) validatestring(x, {'uniform', 'semiuniform', 'nonuniform'});

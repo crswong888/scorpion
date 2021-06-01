@@ -1,6 +1,6 @@
 %%% This function consolidates three basic calculations: elastic stiffness (slope of the intitial
 %%% segment of the backbone curve), natural frequency, and viscous damping coefficient.
-%%%
+%%% 
 %%% By: Christopher Wong | crswong888@gmail.com
 
 function [omega_n, c, ke] = computeDynamicConstants(m, zeta, fs)

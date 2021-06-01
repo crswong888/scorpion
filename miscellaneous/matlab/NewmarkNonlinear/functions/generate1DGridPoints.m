@@ -14,14 +14,14 @@ function [s, n] = generate1DGridPoints(s_start, s_end, ds)
     if (s_start < s_end)
         s = s_start:ds:s_end;
         
-        %/ concatenate end_position in case domain not wholly divisible by ds
+        %/ concatenate 's_end' in case domain not wholly divisible by 'ds'
         if (s(end) ~= s_end)
             s(end + 1) = s_end;
         end
     else
         s = flip(s_end:ds:s_start);
         
-        %/ concatenate start_position in case domain not wholly divisible by ds
+        %/ concatenate 's_start' in case domain not wholly divisible by 'ds'
         if (s(1) ~= s_start)
             s = [s_start, s];
         end

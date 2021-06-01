@@ -31,15 +31,15 @@ zeta = 0.05;
 fs = [ 2,  5;  % cm
       36, 36]; % kN
 
-%// time domain [t_initial, t_end]
+%// time domain [t_init, t_end]
 t = [0, 1]; % s
 
 %// timestep size - if zero or empty (reccomended), one will be automatically selected
 dt = 0.1; % s
 
-%// velocity and displacement initial conditions du(t_initial) u(t_initial)
-du_initial = 0;
-u_initial = 0;
+%// velocity and displacement initial conditions (at time "t_init"), respectively
+du_init = 0;
+u_init = 0;
 
 %// forcing function p(t) (use an anonymous function format that can be sampled at any time instant)
 p = @(t) (t < 0.6) .* (50 * sin(pi * t / 0.6)) + (0.6 <= t) .* 0; % kN
@@ -63,11 +63,11 @@ if (isempty(dt) || (dt == 0)) % but only if not already specified by user
 end
 
 %// add a static initialization to displacement initial condition
-u_initial = u_initial + m * g / ke;
+u_init = u_init + m * g / ke;
 
 %// numerically solve nonlinear equation of motion using Newmark-beta and Newton-Raphson methods
-[t, d2u, du, u, fs_history] = solveEquationOfMotion(m, c, fs, ke, t, dt, du_initial, u_initial,...
-                                                    p, 'ResidualTol', R_tol);
+[t, d2u, du, u, fs_history] = solveEquationOfMotion(m, c, fs, ke, t, dt, du_init, u_init, p,...
+                                                    'ResidualTol', R_tol);
 
 
 %%% POSTPROCESSING
