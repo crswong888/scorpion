@@ -7,9 +7,29 @@
 # 					`mpiexex -np 2 ./example-opt <input arguments> --n-threads=2`.
 #
 # NOTE: if you edit the LibMesh source (i.e., not simply the example file), you have to recompile
-#       in the root directory with `make -j4` before running `make check` on an example executable
+#       in the root directory with `make -j4` before running `make check` on an example executable.
+#       You can also simply rebuild a binary without testing or recompiling in the root like:
+#           `make example-opt -j4`
+#
+# NOTE: run libMesh unit tests like:
+#        		```
+#						cd tests
+#						./unit_tests-opt
+#           ````
+#       use a regex to specify an individual CPPUNIT_TEST() to run like:
+#           `./unit_tests-devel --re MeshInputTest::testExodusCopyElementSolutionReplicated`
+#       or a group of them like:
+#           `./unit_tests-devel --re MeshInputTest`
+#
+# NOTE: if you modify unit tests, the 'devel' binary must be recompiled in the 'tests' directory
+#       with `make -j4` ('opt' is recompiled with `make check -j4` or `make unit_tests-opt -j4`)
+#
+# For more information, simply run `make -h`
 
 git submodule update --init --recursive
 ./configure
 make -j4
-make check -j4
+
+if [ "$1" != "--no-test" ]; then
+	make check -j4
+fi

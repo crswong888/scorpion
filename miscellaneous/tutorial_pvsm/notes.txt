@@ -1,0 +1,11 @@
+Keep in mind the following when loading the '.pvsm' files in the 'tutorial_pvsm/' directory and
+generating the screenshot images:
+
+
+- all exodus files should be loaded from the Babbler application directories in 
+  'moose/tutorials/tutorial01_app_development/'
+
+- before loading the 'step10_result01.pvsm' state, generate the exodus with:
+			`../babbler-opt -i pressure_diffusion.i`
+  then, before loading 'step10_result02.pvsm', re-generate the exodus with:
+			`../babbler-opt -i pressure_diffusion.i Executioner/l_tol=1e-12`

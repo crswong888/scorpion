@@ -104,7 +104,8 @@ do
       exit 1
     fi
   else
-    echo "Error: The argument in position $i is invalid."
+    echo -e "Error: The argument in position $i is invalid.\n"
+		printusage
     exit 1
   fi
 

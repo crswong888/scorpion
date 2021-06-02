@@ -1,0 +1,16 @@
+Upon loading the ParaView state stored in any one of the '.pvsm' files in the 'tutorial_pvsm/' 
+directory, the view size resolution must be set for the image to render correctly (or as intended).
+
+To do this, go to "Tools > Lock View Size Custom..." and enter one of the resolutions given below. 
+---------------------------------------------------------------------------------------------------
+step02_result:      1470x420
+step05_result:      1470x420
+step08_result:       900x834
+step09_result:       930x805
+step10_result01:    1470x420
+step10_result02:    1470x420
+step10_result03:     900x834
+---------------------------------------------------------------------------------------------------
+
+NOTE: You can always check the properties of an existing '.png' file screenshot that was generated
+      by a given state for the resolution that was used.
