@@ -8,4 +8,4 @@ generating the screenshot images:
 - before loading the 'step10_result01.pvsm' state, generate the exodus with:
 			`../babbler-opt -i pressure_diffusion.i`
   then, before loading 'step10_result02.pvsm', re-generate the exodus with:
-			`../babbler-opt -i pressure_diffusion.i Executioner/l_tol=1e-12`
+			`../babbler-opt -i pressure_diffusion.i Executioner/l_tol=1e-16`
