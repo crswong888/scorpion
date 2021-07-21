@@ -31,5 +31,5 @@ git submodule update --init --recursive
 make -j4
 
 if [ "$1" != "--no-test" ]; then
-	make check -j4
+  make check -j4
 fi

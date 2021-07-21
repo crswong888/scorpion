@@ -8,9 +8,15 @@ cd test
 make cleanall
 make clobberall
 make -j4
-./run_tests -j4 -p2
+
+if [ "$1" != "--no-test" ]; then
+  ./run_tests -j4 -p2
+fi
 
 cd ../modules
-make cleanall
+make clean
 make -j4
-./run_tests -j4 -p2
+
+if [ "$1" != "--no-test" ]; then
+  ./run_tests -j4 -p2
+fi

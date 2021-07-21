@@ -1,0 +1,29 @@
+"*":
+  core:
+    customFileTypes:
+      "source.cpp": "C"
+      "source.gfm": "md.template"
+    disabledPackages: [
+      "linter-gcc2"
+    ]
+    telemetryConsent: "no"
+  editor:
+    fontSize: 10
+    preferredLineLength: 100
+  "exception-reporting":
+    userId: "0bcb4147-6ec6-4012-8b15-5db14521466d"
+  "linter-python":
+    enableDebug: true
+    executablePath: "/home/crswong888/.local/lib/python3.6/site-packages/pylama"
+    force: true
+    lintTrigger: "File saved or modified"
+  "linter-ui-default": {}
+  "python-linters":
+    lintTrigger:
+      mypy: "LintAsYouType"
+      pydocstyle: "LintOnFileSave"
+    path:
+      python: "%PROJECT_PATH"
+  welcome:
+    showOnStartup: false
+  whitespace: {}
