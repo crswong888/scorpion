@@ -1,0 +1,78 @@
+#!/bin/bash
+
+function printusage {
+    echo "Usage:    .local_repo_copy <destination> <options>"
+    echo
+    echo "    A script for copying both tracked and untracked files in a local Git repository to"
+    echo "    a specified destination. This is useful for uploading backups to a cloud storage."
+    echo "    This script can be called from within a subdirectory of a repository to copy only its"
+    echo "    contents. Submodule directories are copied but not traversed, leaving the copy empty."
+    echo ""
+    echo "    <destination> The name of the folder to store the copy in."
+    echo ""
+    echo "    <options> Non-positional arguments supplied after <destination>:"
+    echo ""
+    echo "              --untracked"
+    echo "                  Include untracked files not matching a .gitignore pattern in the copy."
+    echo ""
+    echo "              -f, --force"
+    echo "                  Overwrite existing files in the directory specified by <destination>."
+    echo ""
+}
+
+if [[ $1 == "-h" || $1 == "--help" || $# == 0 || $# > 3 ]]; then
+    printusage
+    exit 1
+fi
+
+# function for copying a complete filepath to a specified destination
+function copyfile {
+  dstpath="$(dirname $2)"
+  if [ ! -d $dstpath ]; then
+    mkdir -p $dstpath
+  fi
+
+  verbose=$(cp -TPpuv $1 $2)
+  if [[ $verbose ]]; then
+    echo $verbose
+  else
+    return 1
+  fi
+}
+
+# create destination folder, but error if it already exists and not forcing an overwrite
+dstname="${1%/}/"
+if [ -d $dstname ] && ! [[ $2 == "-f" || $2 == "--force" || $3 == "-f" || $3 == "--force" ]]; then
+  echo "Error: Directory '$dstname' already exists. Use -f or --force to replace existing files."
+  exit 1
+fi
+
+# get a list of files to copy
+gitfiles=$(git ls-files)
+if [[ $2 == "--untracked" || $3 == "--untracked" ]]; then
+  gitfiles+=" "$(git ls-files --exclude-standard --others)
+fi
+
+# get a list of submodule names so we know to skip copying of all their contents
+gitmodules=$(git rev-parse --show-cdup)".gitmodules"
+submodules=$(git config --file $gitmodules --get-regexp path | awk '{print $2}')
+
+#
+cwd=$(git rev-parse --show-prefix)
+for file in $gitfiles
+do
+  if [[ $submodules =~ (^|[[:space:]])$file($|[[:space:]]) ]]; then
+    mkdir -p $dstname$cwd$file
+    continue
+  elif copyfile $file $dstname$cwd$file; then
+    copied+=" "$file
+  fi
+done
+
+# get total size of files written and report completion
+if [[ $copied ]]; then
+  size=$(du -hc $copied | tail -n1 | awk '{print $1}')
+else
+  size="0K"
+fi
+echo -e "\nFinished copying current state of local files totaling ${size%B}B to '$dstname$cwd'"

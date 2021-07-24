@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function printusage {
-    echo "Usage:    ./.moosedocs_virtualhost.sh <options>"
+    echo "Usage:    .moosedocs_virtualhost <options>"
     echo ""
     echo "    A script for configuring an Apache2 server to host a local copy of the MOOSE website."
     echo ""
@@ -27,7 +27,7 @@ function printusage {
     echo ""
 }
 
-if [[ "$1" == "-h" || "$1" == "--help" || $# > 5 ]]; then
+if [[ $1 == "-h" || $1 == "--help" || $# > 5 ]]; then
     printusage
     exit 1
 fi
