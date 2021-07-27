@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# NOTE: if this script overloads buff/cache memory, it can be cleared with the following command:
+# `sudo sh -c "echo 1 > /proc/sys/vm/drop_caches"`
+
 function printusage {
     echo "Usage:    .local_repo_copy <destination> <options>"
     echo
@@ -32,13 +35,38 @@ function copyfile {
     mkdir -p $dstpath
   fi
 
-  verbose=$(cp -TPpuv $1 $2)
-  if [[ $verbose ]]; then
+  # copy file or symbolic link only if its new - return a nonzero exit status if nothing is copied
+  verbose=$(cp -TPpuv $1 $2 2> /tmp/.copyfile_stderr)
+  if [ $? -ne 0 ]; then
+    echo -e "\nError: ("$(cat /tmp/.copyfile_stderr)")" && rm /tmp/.copyfile_stderr
+    exit 1
+  elif [[ $verbose ]]; then
     echo $verbose
   else
     return 1
   fi
 }
+
+# converts bytes to a smaller nonbinary (decimal) prefixed value kilo (k), mega (M), and giga (G)
+function convertBytes {
+  digits=${#1}
+
+  if [ $digits -lt 4 ]; then
+    echo "$1 bytes"
+  elif [ $digits -lt 7 ]; then
+    printf "%0.1f kB" $(echo "scale = 16; $1 / 1000" | bc)
+  elif [ $digits -lt 10 ]; then
+    printf "%0.1f MB" $(echo "scale = 16; $1 / 1000 / 1000" | bc)
+  else
+    printf "%0.1f GB" $(echo "scale = 16; $1 / 1000 / 1000 / 1000" | bc)
+  fi
+}
+
+# make sure this script is ran from inside a git repo
+if ! $(git rev-parse --is-inside-work-tree 2> /dev/null); then
+  echo "Error: This script must be ran from within the working tree of a valid Git repository."
+  exit 1
+fi
 
 # create destination folder, but error if it already exists and not forcing an overwrite
 dstname="${1%/}/"
@@ -57,22 +85,18 @@ fi
 gitmodules=$(git rev-parse --show-cdup)".gitmodules"
 submodules=$(git config --file $gitmodules --get-regexp path | awk '{print $2}')
 
-#
+# copy/merge files while computing approximate logical size (not disk usage) of all new data written
 cwd=$(git rev-parse --show-prefix)
+size=$((0))
 for file in $gitfiles
 do
   if [[ $submodules =~ (^|[[:space:]])$file($|[[:space:]]) ]]; then
     mkdir -p $dstname$cwd$file
     continue
   elif copyfile $file $dstname$cwd$file; then
-    copied+=" "$file
+    size=$(($size + $(du -b $file | tail -n1 | awk '{print $1}')))
   fi
 done
 
-# get total size of files written and report completion
-if [[ $copied ]]; then
-  size=$(du -hc $copied | tail -n1 | awk '{print $1}')
-else
-  size="0K"
-fi
-echo -e "\nFinished copying current state of local files totaling ${size%B}B to '$dstname$cwd'"
+# indicate completion with message containing total logical size of files copied
+echo -e "\nFinished copying local state of files totaling $(convertBytes $size) to '$dstname$cwd'"

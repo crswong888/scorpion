@@ -98,7 +98,7 @@ do
 
     # verify ngrok is installed and properly configured (i.e., configured in home directory)
     cd ~ && ./ngrok &> /dev/null
-    if [ ! $? -eq 0 ]; then
+    if [ $? -ne 0 ]; then
       echo "Error: The ngrok package is required and can be downloaded from their website."
       echo "       Please see https://ngrok.com/docs for more information."
       exit 1
