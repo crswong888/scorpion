@@ -62,8 +62,15 @@ fi
 gitmodules=$(git rev-parse --show-cdup)".gitmodules"
 submodules=$(git config --file $gitmodules --get-regexp path | awk '{print $2}')
 
+# copy .git folder so result is a true copy of local repository, and not just a clone
+if [ -d .git ] & [ $PWD == $(git rev-parse --show-toplevel) ]; then
+  echo -n "Copying directory '.git' to preserve the local state of the repository... "
+  cp -fru .git $dstname
+  echo "Done."
+fi
+
 # loop through local files list and copy/merge them or create empty directories for submodules
-echo "Copying files. This may take a moment."
+echo "Copying current state of local files. This may take a moment."
 
 dst=$dstname$(git rev-parse --show-prefix)
 for file in $gitfiles
@@ -75,4 +82,4 @@ do
   fi
 done
 
-echo -e "\nFinished copying the local state of all files on the working tree to '$dst'"
+echo -e "\nFinished copying all files on the working tree to '$dst'"
