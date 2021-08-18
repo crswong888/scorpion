@@ -1,0 +1,62 @@
+crswong888@MOOSEMachine:~/projects/libmesh/tests$ sudo apt-get install libcppunit-dev
+Reading package lists... Done
+Building dependency tree       
+Reading state information... Done
+The following additional packages will be installed:
+  libcppunit-1.15-0
+Suggested packages:
+  libcppunit-doc
+The following NEW packages will be installed:
+  libcppunit-1.15-0 libcppunit-dev
+0 upgraded, 2 newly installed, 0 to remove and 0 not upgraded.
+Need to get 217 kB of archives.
+After this operation, 1,223 kB of additional disk space will be used.
+Do you want to continue? [Y/n] Y
+Get:1 http://us.archive.ubuntu.com/ubuntu focal/universe amd64 libcppunit-1.15-0 amd64 1.15.1-2build1 [79.2 kB]
+Get:2 http://us.archive.ubuntu.com/ubuntu focal/universe amd64 libcppunit-dev amd64 1.15.1-2build1 [138 kB]
+Fetched 217 kB in 0s (476 kB/s)          
+Selecting previously unselected package libcppunit-1.15-0:amd64.
+(Reading database ... 200298 files and directories currently installed.)
+Preparing to unpack .../libcppunit-1.15-0_1.15.1-2build1_amd64.deb ...
+Unpacking libcppunit-1.15-0:amd64 (1.15.1-2build1) ...
+Selecting previously unselected package libcppunit-dev.
+Preparing to unpack .../libcppunit-dev_1.15.1-2build1_amd64.deb ...
+Unpacking libcppunit-dev (1.15.1-2build1) ...
+Setting up libcppunit-1.15-0:amd64 (1.15.1-2build1) ...
+Setting up libcppunit-dev (1.15.1-2build1) ...
+Processing triggers for libc-bin (2.31-0ubuntu9.2) ...
+
+crswong888@MOOSEMachine:~/projects/libmesh$ sudo apt-get install libcppunit-doc
+[sudo] password for crswong888: 
+Reading package lists... Done
+Building dependency tree       
+Reading state information... Done
+The following NEW packages will be installed:
+  libcppunit-doc
+0 upgraded, 1 newly installed, 0 to remove and 0 not upgraded.
+Need to get 519 kB of archives.
+After this operation, 5,676 kB of additional disk space will be used.
+Get:1 http://us.archive.ubuntu.com/ubuntu focal/universe amd64 libcppunit-doc all 1.15.1-2build1 [519 kB]
+Fetched 519 kB in 0s (1,103 kB/s)      
+Selecting previously unselected package libcppunit-doc.
+(Reading database ... 200388 files and directories currently installed.)
+Preparing to unpack .../libcppunit-doc_1.15.1-2build1_all.deb ...
+Unpacking libcppunit-doc (1.15.1-2build1) ...
+Setting up libcppunit-doc (1.15.1-2build1) ...
+
+crswong888@MOOSEMachine:~/projects/libmesh$ dpkg --list 'libcppunit*'
+Desired=Unknown/Install/Remove/Purge/Hold
+| Status=Not/Inst/Conf-files/Unpacked/halF-conf/Half-inst/trig-aWait/Trig-pend
+|/ Err?=(none)/Reinst-required (Status,Err: uppercase=bad)
+||/ Name                    Version        Architecture Description
++++-=======================-==============-============-=================================
+ii  libcppunit-1.15-0:amd64 1.15.1-2build1 amd64        Unit Testing Library for C++
+ii  libcppunit-dev          1.15.1-2build1 amd64        Unit Testing Library for C++
+ii  libcppunit-doc          1.15.1-2build1 all          Unit Testing Library for C++
+
+crswong888@MOOSEMachine:~/.cppunit$ ls /usr/lib/x86_64-linux-gnu | grep cppunit
+libcppunit-1.15.so
+libcppunit-1.15.so.1
+libcppunit-1.15.so.1.0.0
+libcppunit.a
+libcppunit.so

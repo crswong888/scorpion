@@ -1,35 +1,49 @@
 #!/bin/bash
 
-# NOTE: to run an individual libmesh example after compiling, navigate to the examples directory
-#       and build/test it with `make check -j4`. Then it can be ran using the binary like:
-#						`./example-opt <input arguments>`
-#       or in parallel like:
-# 					`mpiexex -np 2 ./example-opt <input arguments> --n-threads=2`.
+# NOTE: Unit tests require the cppunit library, which is provided by the 'libcppunit-dev' package.
+#       For this script to work, you must first run the following commands:
+#           ```
+#           cd ~/.cppunit
+#           ./link_installation.sh
+#           ```
+#       The script assumes the default installation directory for Debian systems, so be careful!
 #
-# NOTE: if you edit the LibMesh source (i.e., not simply the example file), you have to recompile
+# NOTE: To run an individual libmesh example after compiling, navigate to the examples directory
+#       and build/test it with `make check -j4`. Then it can be ran using the binary like:
+#           `./example-opt <input arguments>`
+#       or in parallel like:
+#           `mpiexex -np 2 ./example-opt <input arguments> --n-threads=2`.
+#
+# NOTE: You can run individual tests for `make check` in parallel like:
+#           `LIBMESH_RUN="mpiexec -np 2" LIBMESH_OPTIONS="--n_threads=2" make check -j4`
+#
+# NOTE: If you edit the LibMesh source (i.e., not simply the example file), you have to recompile
 #       in the root directory with `make -j4` before running `make check` on an example executable.
 #       You can also simply rebuild a binary without testing or recompiling in the root like:
 #           `make example-opt -j4`
 #
-# NOTE: run libMesh unit tests like:
-#        		```
-#						cd tests
-#						./unit_tests-opt
-#           ````
+# NOTE: Run libMesh unit tests like:
+#           ```
+#           cd tests
+#           ./unit_tests-opt
+#           ```
 #       use a regex to specify an individual CPPUNIT_TEST() to run like:
 #           `./unit_tests-devel --re MeshInputTest::testExodusCopyElementSolutionReplicated`
 #       or a group of them like:
 #           `./unit_tests-devel --re MeshInputTest`
 #
-# NOTE: if you modify unit tests, the 'devel' binary must be recompiled in the 'tests' directory
+# NOTE: If you modify unit tests, the 'devel' binary must be recompiled in the 'tests' directory
 #       with `make -j4` ('opt' is recompiled with `make check -j4` or `make unit_tests-opt -j4`)
 #
 # For more information, simply run `make -h`
 
+cppunit_include=~/.cppunit/include
+cppunit_libs=~/.cppunit/libs
+
 git submodule update --init --recursive
-./configure
-make -j4
+./configure --with-cppunit-include=$cppunit_include --with-cppunit-lib=$cppunit_libs
+make -j8
 
 if [ "$1" != "--no-test" ]; then
-  make check -j4
+  make check -j8
 fi

@@ -1,61 +1,62 @@
 #!/bin/bash
 
+# If using the Conda MOOSE environment, be sure to run `unset LIBMESH_DIR` in the shell BEFORE this
+# script and BEFORE compiling any MOOSE application binaries.
+if [ -n "$LIBMESH_DIR" ]; then
+  echo "Error: You must run 'unset LIBMESH_DIR' before running this script."
+  exit 1
+fi
+
 # set path to libmesh submodule 'dst' and to libmesh fork 'src'
 dst=~/projects/moose/libmesh
 src=~/projects/libmesh
 
-# if the libmesh submodule doesn't exist or is empty, update submodule and merge all files from fork
-reconf=false # assume theres no need to reconfigure
+# if the submodule doesn't exist or is empty, then recursively initialize it
 if [ ! -d $dst ] || [ -z "$(ls -A $dst)" ]; then
-	cd ~/projects/moose
-	git submodule update --init --recursive libmesh
-	rsync $src $dst
-	reconf=true
-
-# otherwise, copy only files that have been modified WRT the current submodule update
-else
-	# get SHA of submodule head so it can be diffed
-	cd $dst
-	sha=$(git rev-parse HEAD)
-
-	# if the submodule is totally clean, then presumably all git diffed files should be copied
-	copyall=false # assume theres no need to copy all files, only newer ones
-	if [ -z "$(git diff)" ]; then
-		cd ../ && git submodule update --init --recursive libmesh
-		copyall=true
-		reconf=true
-	fi
-
-	# copy diffed files from libmesh fork to MOOSE submodule
-	src=~/projects/libmesh
-	cd $src
-	for file in $(git diff --name-only $sha)
-	do
-		path=$dst/$(dirname $file)
-		if [ ! -d $path ]; then
-			mkdir -p $path
-		fi
-
-		# only copy the file if its new, in case it's already been diffed and copied
-		dstfile=$path/$(basename $file)
-		if $copyall || [ $file -nt $dstfile ]; then
-			cp -p $file $dstfile
-			echo "Copied: $src/$file -> $dstfile"
-
-			# if the default configure file has changed, we ought to reconfigure the MOOSE install as well
-			if [ $file = configure ]; then
-				reconf=true
-			fi
-		fi
-	done
+  cd $(dirname $dst)
+  git submodule update --init --recursive libmesh
 fi
+
+# get SHA of submodule head so it can be diffed
+cd $dst
+sha=$(git rev-parse HEAD)
+
+# if the submodule is totally clean, then presumably all git diffed files should be copied
+copyall=false # assume theres no need to copy all files, only newer ones
+reconf=false # assume theres no need to reconfigure
+if [ -z "$(git diff)" ]; then
+  copyall=true
+  reconf=true
+fi
+
+# copy diffed files from libmesh fork to MOOSE submodule
+cd $src
+for file in $(git diff --name-only $sha)
+do
+  path=$dst/$(dirname $file)
+  if [ ! -d $path ]; then
+    mkdir -p $path
+  fi
+
+  # only copy the file if its new, in case it's already been diffed and copied
+  dstfile=$path/$(basename $file)
+  if $copyall || [ $file -nt $dstfile ]; then
+    cp -fPpr $file $dstfile
+    echo "Copied: $src/$file -> $dstfile"
+
+    # if the default configure file changed, we ought to reconfigure the MOOSE install as well
+    if [ $file = configure ]; then
+      reconf=true
+    fi
+  fi
+done
 
 # now rebuild and install libmesh
 cd $(dirname $dst)
 if [ ! -d $dst/build ] || $reconf; then
-	# run the MOOSE libmesh installer
-  JOBS=4 ./scripts/update_and_rebuild_libmesh.sh --skip-submodule-update
+  # run the MOOSE libmesh installer
+  JOBS=8 ./scripts/update_and_rebuild_libmesh.sh --skip-submodule-update
 else
-	# reinstall without reconfiguring
-  JOBS=4 ./scripts/update_and_rebuild_libmesh.sh --fast --skip-submodule-update
+  # reinstall without reconfiguring
+  JOBS=8 ./scripts/update_and_rebuild_libmesh.sh --fast --skip-submodule-update
 fi
