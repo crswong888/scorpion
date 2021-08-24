@@ -40,6 +40,16 @@
 cppunit_include=~/.cppunit/include
 cppunit_libs=~/.cppunit/libs
 
+# This stuff is copied from "moose/scripts/update_and_rebuild_libmesh.sh" and is necessary when
+# configuring LibMesh on Conda MOOSE environments (https://github.com/idaholab/moose/issues/15120)
+if [[ -n "$CPPFLAGS" ]]; then
+  export CPPFLAGS=${CPPFLAGS//-DNDEBUG/}
+  export CPPFLAGS=${CPPFLAGS//-O2/}
+fi
+if [[ -n "$CXXFLAGS" ]]; then
+  export CXXFLAGS=${CXXFLAGS//-O2/}
+fi
+
 git submodule update --init --recursive
 ./configure --with-cppunit-include=$cppunit_include --with-cppunit-lib=$cppunit_libs
 make -j8
