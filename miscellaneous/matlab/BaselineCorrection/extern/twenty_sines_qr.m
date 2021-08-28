@@ -2,7 +2,11 @@ clear all %#ok<CLALL>
 format longeng
 fprintf('\n')
 
-addpath('functions')
+addpath('../functions')
+
+if (~ispc)
+    error('This is supposed to be run on Windows in my thesis folder.')
+end
 
 %// generate array of discrete time instances and evaluate acceleration function
 time = generate1DGridPoints(-5, 5, 0.01);
@@ -52,7 +56,7 @@ plotTimeSeries(time, catseries, 'Title', plot_titles, 'Xlabel', 'Time (s)', 'YLa
                'SaveImage', true, 'SizeFactor', 1)
 
 %// Additional Plotting for Adobe Illustrator sketch
-filebase = "../media/"; % have to run 'mkdir' on this if not already
+filebase = "../../media/"; % have to run 'mkdir' on this if not already
 
 %/ nominal ground displacement (line styling can be handled in illustrator)
 filename(1) = "ground_nominal";
