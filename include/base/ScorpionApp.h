@@ -11,14 +11,14 @@
 
 #include "MooseApp.h"
 
-class scorpionTestApp : public MooseApp
+class ScorpionApp : public MooseApp
 {
 public:
   static InputParameters validParams();
 
-  scorpionTestApp(InputParameters parameters);
-  virtual ~scorpionTestApp();
+  ScorpionApp(InputParameters parameters);
+  virtual ~ScorpionApp();
 
   static void registerApps();
-  static void registerAll(Factory & f, ActionFactory & af, Syntax & s, bool use_test_objs = false);
+  static void registerAll(Factory & f, ActionFactory & af, Syntax & s);
 };

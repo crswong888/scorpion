@@ -3,7 +3,7 @@
 #include "EqualValuePlusConstant.h"
 #include "MooseMesh.h"
 
-registerMooseObject("scorpionApp", EqualValuePlusConstant);
+registerMooseObject("ScorpionApp", EqualValuePlusConstant);
 
 InputParameters
 EqualValuePlusConstant::validParams()

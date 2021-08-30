@@ -10,16 +10,18 @@
 *-prof
 *-devel
 *_out.e
-*_out.csv
 *.nav
 *.log
 *.aux
 *.toc
 *.snm
+*.csv
+*.csv.*
 *.dylib
 *.so
 *.so.*
 *.vrb
+*.jou
 *.pyc
 *.mod
 *.e.*
@@ -52,6 +54,7 @@ temp_print_trace.*
 *.mpx
 *.btr
 *.xml
+*.xml.*
 *.gmv
 *.plt
 *.slh
@@ -69,20 +72,26 @@ temp_print_trace.*
 *.pvtu
 .depend
 *.png
+*.svg
 *.gif
 *.tif
 *.jpg
 *.tiff
 *.ps
 *.bmp
+*.mp4
+*.webm
+*.ico
 *.html
 *.xyz
 *Revision.h
 *.json
+*.json.*
 *.bak
 *.processor.*
 .clang_complete
 .failed_tests
+failed-unittest
 compile_commands.json
 build
 
@@ -90,9 +99,12 @@ build
 !**/gold/*.e
 !**/gold/*.e-s*
 !**/gold/*.csv
+!**/gold/*.csv.*
 !**/gold/*.vtk
 !**/gold/*.vtu
 !**/gold/*.pvtu
+!**/gold/*.xml*
+!**/gold/*.json*
 
 peacock_run_tmp.i
 yaml_dump*
@@ -165,6 +177,9 @@ framework/contrib/asio/
 *.cpa-*
 *.cpr-*
 
+# Ignore petsc arch
+petsc/arch-*/*
+
 # phase_field/tests/solution_rasterizer
 out.xyz
 
@@ -176,8 +191,12 @@ tmp_jit_*
 # Do not store ipython notebook checkpoints
 *-checkpoint.ipynb*
 
+# HIT
+framework/contrib/hit/hit
+
 # MooseDocs
 site
+python/MooseDocs/test/output
 !**/doc/content/**/*.md
 !**/doc/content/**/*.jpg
 !**/doc/content/**/*.jpeg
@@ -192,6 +211,10 @@ site
 !**/doc/content/**/*.bib
 !**/doc/content/**/*.woff
 !**/doc/content/**/*.woff2
+!python/MooseDocs/test/gold/**/*.json
+!python/MooseDocs/test/gold/**/*.html
+!python/MooseDocs/test/gold/**/*.tex
+.ruby-version
 
 # Chigger
 !python/chigger/tests/**/gold/*.png
@@ -209,6 +232,18 @@ python/peacock/tests/postprocessor_tab/TestPostprocessorPluginManager_test_scrip
 !python/peacock/tests/**/input/*.*
 peacock_tmp_diff.exo
 *.e.diff
+
+# configure
+_configs.sed
+autom4te.cache
+config.status
+*MooseConfig.h
+*MooseConfig.h.tmp
+conf_vars.mk
+
+# GPerf performance
+*.prof
+*.heap
 
 # MOOSE output files
 **/inputs/**/*.csv

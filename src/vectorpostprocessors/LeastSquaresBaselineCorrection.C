@@ -1,7 +1,7 @@
 #include "LeastSquaresBaselineCorrection.h"
 #include "BaselineCorrectionUtils.h"
 
-registerMooseObject("scorpionApp", LeastSquaresBaselineCorrection);
+registerMooseObject("ScorpionApp", LeastSquaresBaselineCorrection);
 
 template <>
 InputParameters

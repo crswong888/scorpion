@@ -2,7 +2,7 @@
 
 #include "Function.h"
 
-registerMooseObject("scorpionApp", PointForcingFunction3DEquivalent);
+registerMooseObject("ScorpionApp", PointForcingFunction3DEquivalent);
 
 template <>
 InputParameters

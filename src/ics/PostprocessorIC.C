@@ -1,6 +1,6 @@
 #include "PostprocessorIC.h"
 
-registerMooseObject("scorpionApp", PostprocessorIC);
+registerMooseObject("ScorpionApp", PostprocessorIC);
 
 template <>
 InputParameters
@@ -14,9 +14,7 @@ validParams<PostprocessorIC>()
 }
 
 PostprocessorIC::PostprocessorIC(const InputParameters & parameters)
-  : InitialCondition(parameters),
-    PostprocessorInterface(this),
-    _pp_value(getPostprocessorValue("postprocessor"))
+  : InitialCondition(parameters), _pp_value(getPostprocessorValue("postprocessor"))
 {
 }
 

@@ -1,6 +1,6 @@
 #include "PenaltyFlexuralBC.h"
 
-registerMooseObject("scorpionApp", PenaltyFlexuralBC);
+registerMooseObject("ScorpionApp", PenaltyFlexuralBC);
 
 template <>
 InputParameters

@@ -1,6 +1,6 @@
 #include "VariableElasticModulus.h"
 
-registerMooseObject("scorpionApp", VariableElasticModulus);
+registerMooseObject("ScorpionApp", VariableElasticModulus);
 
 template <>
 InputParameters

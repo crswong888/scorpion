@@ -4,15 +4,15 @@
 #include "FEProblem.h"
 #include "Factory.h"
 
-registerMooseAction("scorpionApp", PresetLSBLCAccelerationAction, "add_vector_postprocessor");
+registerMooseAction("ScorpionApp", PresetLSBLCAccelerationAction, "add_vector_postprocessor");
 
-registerMooseAction("scorpionApp", PresetLSBLCAccelerationAction, "add_postprocessor");
+registerMooseAction("ScorpionApp", PresetLSBLCAccelerationAction, "add_postprocessor");
 
-registerMooseAction("scorpionApp", PresetLSBLCAccelerationAction, "add_ic");
+registerMooseAction("ScorpionApp", PresetLSBLCAccelerationAction, "add_ic");
 
-registerMooseAction("scorpionApp", PresetLSBLCAccelerationAction, "add_function");
+registerMooseAction("ScorpionApp", PresetLSBLCAccelerationAction, "add_function");
 
-registerMooseAction("scorpionApp", PresetLSBLCAccelerationAction, "add_bc");
+registerMooseAction("ScorpionApp", PresetLSBLCAccelerationAction, "add_bc");
 
 template <>
 InputParameters

@@ -2,7 +2,7 @@
 
 //#include "Assembly.h"
 
-registerMooseObject("scorpionApp", NodalSumUserObject);
+registerMooseObject("ScorpionApp", NodalSumUserObject);
 
 template <>
 InputParameters

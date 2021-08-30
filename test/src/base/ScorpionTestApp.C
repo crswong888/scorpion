@@ -6,44 +6,44 @@
 //*
 //* Licensed under LGPL 2.1, please see LICENSE for details
 //* https://www.gnu.org/licenses/lgpl-2.1.html
-#include "scorpionTestApp.h"
-#include "scorpionApp.h"
+#include "ScorpionTestApp.h"
+#include "ScorpionApp.h"
 #include "Moose.h"
 #include "AppFactory.h"
 #include "MooseSyntax.h"
 #include "ModulesApp.h"
 
 InputParameters
-scorpionTestApp::validParams()
+ScorpionTestApp::validParams()
 {
-  InputParameters params = scorpionApp::validParams();
+  InputParameters params = ScorpionApp::validParams();
   return params;
 }
 
-scorpionTestApp::scorpionTestApp(InputParameters parameters) : MooseApp(parameters)
+ScorpionTestApp::ScorpionTestApp(InputParameters parameters) : MooseApp(parameters)
 {
-  scorpionTestApp::registerAll(
+  ScorpionTestApp::registerAll(
       _factory, _action_factory, _syntax, getParam<bool>("allow_test_objects"));
 }
 
-scorpionTestApp::~scorpionTestApp() {}
+ScorpionTestApp::~ScorpionTestApp() {}
 
 void
-scorpionTestApp::registerAll(Factory & f, ActionFactory & af, Syntax & s, bool use_test_objs)
+ScorpionTestApp::registerAll(Factory & f, ActionFactory & af, Syntax & s, bool use_test_objs)
 {
-  scorpionApp::registerAll(f, af, s);
+  ScorpionApp::registerAll(f, af, s);
   if (use_test_objs)
   {
-    Registry::registerObjectsTo(f, {"scorpionTestApp"});
-    Registry::registerActionsTo(af, {"scorpionTestApp"});
+    Registry::registerObjectsTo(f, {"ScorpionTestApp"});
+    Registry::registerActionsTo(af, {"ScorpionTestApp"});
   }
 }
 
 void
-scorpionTestApp::registerApps()
+ScorpionTestApp::registerApps()
 {
-  registerApp(scorpionApp);
-  registerApp(scorpionTestApp);
+  registerApp(ScorpionApp);
+  registerApp(ScorpionTestApp);
 }
 
 /***************************************************************************************************
@@ -51,12 +51,12 @@ scorpionTestApp::registerApps()
  **************************************************************************************************/
 // External entry point for dynamic application loading
 extern "C" void
-scorpionTestApp__registerAll(Factory & f, ActionFactory & af, Syntax & s)
+ScorpionTestApp__registerAll(Factory & f, ActionFactory & af, Syntax & s)
 {
-  scorpionTestApp::registerAll(f, af, s);
+  ScorpionTestApp::registerAll(f, af, s);
 }
 extern "C" void
-scorpionTestApp__registerApps()
+ScorpionTestApp__registerApps()
 {
-  scorpionTestApp::registerApps();
+  ScorpionTestApp::registerApps();
 }

@@ -5,7 +5,7 @@
 // MOOSE includes
 #include "DelimitedFileReader.h"
 
-registerMooseObject("scorpionApp", BaselineCorrection);
+registerMooseObject("ScorpionApp", BaselineCorrection);
 
 InputParameters
 BaselineCorrection::validParams()

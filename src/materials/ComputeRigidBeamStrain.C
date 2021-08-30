@@ -6,7 +6,7 @@
 // MOOSE includes
 #include "NonlinearSystem.h"
 
-registerMooseObject("scorpionApp", ComputeRigidBeamStrain);
+registerMooseObject("ScorpionApp", ComputeRigidBeamStrain);
 
 InputParameters
 ComputeRigidBeamStrain::validParams()

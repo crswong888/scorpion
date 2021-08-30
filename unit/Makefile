@@ -29,15 +29,15 @@ include $(FRAMEWORK_DIR)/moose.mk
 CHEMICAL_REACTIONS        := no
 CONTACT                   := no
 FLUID_PROPERTIES          := no
+FSI                       := no
 HEAT_CONDUCTION           := no
 MISC                      := no
 NAVIER_STOKES             := no
 PHASE_FIELD               := no
 RDG                       := no
 RICHARDS                  := no
-SOLID_MECHANICS           := no
 STOCHASTIC_TOOLS          := no
-TENSOR_MECHANICS          := no
+TENSOR_MECHANICS          := yes
 XFEM                      := no
 POROUS_FLOW               := no
 LEVEL_SET                 := no
@@ -61,7 +61,7 @@ BUILD_EXEC         := yes
 DEP_APPS    ?= $(shell $(FRAMEWORK_DIR)/scripts/find_dep_apps.py $(APPLICATION_NAME))
 include $(FRAMEWORK_DIR)/app.mk
 
-# Find all the scorpion unit test source files and include their dependencies.
+# Find all the Scorpion unit test source files and include their dependencies.
 scorpion_unit_srcfiles := $(shell find $(CURRENT_DIR)/src -name "*.C")
 scorpion_unit_deps := $(patsubst %.C, %.$(obj-suffix).d, $(scorpion_unit_srcfiles))
 -include $(scorpion_unit_deps)

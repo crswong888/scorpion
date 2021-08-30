@@ -29,7 +29,7 @@
 // libmesh includes
 #include "libmesh/quadrature.h"
 
-registerMooseObject("scorpionApp", StressDivergenceSpring); // copied from MASTODON
+registerMooseObject("ScorpionApp", StressDivergenceSpring); // copied from MASTODON
 
 InputParameters
 StressDivergenceSpring::validParams()

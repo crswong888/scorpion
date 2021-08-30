@@ -12,7 +12,7 @@
 #include "libmesh/quadrature.h"
 #include "libmesh/utility.h"
 
-registerMooseObject("scorpionApp", LinearSpring); // copied from MASTODON
+registerMooseObject("ScorpionApp", LinearSpring); // copied from MASTODON
 
 template <>
 InputParameters
