@@ -1,53 +1,54 @@
+// This code was implemented in collaboration with Christopher J. Wong (chris.wong@utah.edu) from
+// the University of Utah as part of NEUP Project: 17-12939.
+//
+// Please see (https://github.com/idaholab/mastodon/pull/394) for the official PR
+
 #pragma once
 
-// MOOSE includes
-#include "Function.h"
-#include "LinearInterpolation.h"
+#include "PiecewiseBase.h"
+#include "FunctionInterface.h"
 
-// Forward Declarations
 class BaselineCorrection;
 
 /**
- * Applies a baseline correction to an accceleration time history using least squares polynomial
- * fits and outputs adjusted values for the specified kinematic variable.
+ * Applies a baseline correction to an acceleration time history using the type-oriented algorithm
+ * provided by Wong and Ibarra (2022) and evaluates the corrected ordinates of a kinematic variable.
  */
-class BaselineCorrection : public Function
+class BaselineCorrection : public PiecewiseBase, protected FunctionInterface
 {
 public:
   static InputParameters validParams();
 
   BaselineCorrection(const InputParameters & parameters);
 
-  virtual Real value(Real t, const Point & /*P*/) const override;
+  virtual Real value(Real t, const Point & /*p*/) const override;
+  virtual void setData(const std::vector<Real> & t, const std::vector<Real> & u) override;
 
 protected:
-  /// adjusted time series to evaluate - can be 'acceleration', 'velocity', or 'displacement'
-  const MooseEnum _series;
+  /**
+   * Helper function that computes the least squares polynomial of a kinematic time series and fills
+   * the container 'c' with its coefficients. The basis depends on the 'nmin' argument, which serves
+   * to guarantee that the minimum differentiability of a velocity or displacement fit is C1 or C2,
+   * respectively. See the 'applyAdjustment()' definition for the exact form of the polynomials.
+   */
+  void fitTimeSeries(std::vector<Real> * c,
+                     const int & nmin,
+                     const std::vector<Real> & tau,
+                     const std::vector<Real> & u,
+                     const Real & jmap,
+                     const Real & rtol = 1e-04);
 
-  /// Newmark integration parameters
-  const Real & _gamma;
-  const Real & _beta;
+  /**
+   * Helper function for adjusting the acceleration, velocity, and displacement time histories by
+   * polynomials of kinematically consistent bases multiplied by the provided coefficients 'c'.
+   */
+  void applyAdjustment(const std::vector<Real> & c,
+                       const std::vector<Real> & tau,
+                       std::vector<Real> & accel,
+                       std::vector<Real> & vel,
+                       std::vector<Real> & disp,
+                       const Real & jmap);
 
-  /// acceleration time history variables from input
-  std::vector<Real> _time;
-  std::vector<Real> _accel;
-
-  /// vector storing adjusted (corrected) time series values
-  std::vector<Real> _adj_series;
-
-  /// linear interpolation object is applied over adjusted acceleration, i.e., AFTER correction
-  std::unique_ptr<LinearInterpolation> _linear_interp;
-
-  /// function multiplier - final output is 'scale_factor * _linear_interp(_time, _adj_series)'
-  const Real & _scale_factor;
-
-private:
-  /// Applies baseline correction to raw acceleration and copies adjusted ordinates to '_adj_series'
-  void applyCorrection();
-
-  /// Reads and builds data from supplied file using MooseUtils::DelimitedFileReader()
-  void buildFromFile();
-
-  /// Builds data from pairs of `time_values` and `acceleration_values'
-  void buildFromXandY();
+  /// Object to perform a piecewise linear interpolation of the corrected time series data
+  LinearInterpolation _corrected_series;
 };

@@ -1,250 +1,244 @@
-// SCORPION includes
-#include "BaselineCorrection.h"
-#include "BaselineCorrectionUtils.h"
+// This code was implemented in collaboration with Christopher J. Wong (chris.wong@utah.edu) from
+// the University of Utah as part of NEUP Project: 17-12939.
+//
+// Please see (https://github.com/idaholab/mastodon/pull/394) for the official PR
 
-// MOOSE includes
-#include "DelimitedFileReader.h"
+#include "BaselineCorrection.h"
 
 registerMooseObject("ScorpionApp", BaselineCorrection);
 
 InputParameters
 BaselineCorrection::validParams()
 {
-  InputParameters params = Function::validParams();
-  params.addClassDescription("Applies a baseline correction to an accceleration time history using "
-                             "least squares polynomial fits and outputs adjusted values for the "
-                             "specified kinematic variable.");
+  InputParameters params = PiecewiseBase::validParams();
+  params.addClassDescription("Applies a baseline correction to an acceleration time history using "
+                             "the type-oriented algorithm provided by Wong and Ibarra (2022) and "
+                             "evaluates the corrected ordinates of a kinematic variable.");
 
-  MooseEnum series_type("acceleration velocity displacement", "acceleration");
-  params.addParam<MooseEnum>(
-      "series_type",
-      series_type,
-      "The kineamtic variable whose corrected time history is to be evaluated. The default is "
-      "'acceleration'.");
+  params.addRequiredParam<FunctionName>(
+      "function", "The PiecewiseLinear function providing the acceleration to be corrected.");
 
-  params.addParam<FileName>(
-      "data_file", "The name of a CSV file containing raw acceleration time history data.");
-  params.addParam<std::string>(
-      "time_name",
-      "The header name of the column which contains the time values in the data file. If not "
-      "specified, they are assumed to be in the first column index.");
-  params.addParam<std::string>(
-      "acceleration_name",
-      "The header name for the column which contains the acceleration values in the data file. If "
-      "not specified, they are assumed to be in the second column index.");
-
-  params.addParam<std::vector<Real>>("time_values", "The time abscissa values.");
-  params.addParam<std::vector<Real>>("acceleration_values", "The acceleration ordinate values.");
-
-  params.addRequiredParam<Real>("gamma", "The gamma parameter for Newmark time integration.");
-  params.addRequiredParam<Real>("beta", "The beta parameter for Newmark time integration.");
-
-  params.addRangeCheckedParam<unsigned int>(
+  params.addParam<unsigned int>(
       "accel_fit_order",
-      "(0 <= accel_fit_order) & (accel_fit_order < 10)",
-      "If this is provided, the acceleration time history will be adjusted using an nth-order "
-      "polynomial fit of the nominal acceleration data, where n = accel_fit_order (only integer "
-      "values from 0 to 9 are supported).");
+      3,
+      "The degree of the polynomial used to adjust the acceleration.\n\nIf not specified while "
+      "'vel_fit_order' and/or 'disp_fit_order' are, then no acceleration fit is applied.");
   params.addRangeCheckedParam<unsigned int>(
       "vel_fit_order",
-      "(0 <= vel_fit_order) & (vel_fit_order < 10)",
-      "If this is provided, the acceleration time history will be adjusted using an nth-order "
-      "polynomial fit of the nominal velocity data, where n = vel_fit_order (only integer values "
-      "from 0 to 9 are supported).");
+      "vel_fit_order > 0",
+      "The degree of the polynomial used to adjust the velocity. The minimum is one.");
   params.addRangeCheckedParam<unsigned int>(
       "disp_fit_order",
-      "(0 <= disp_fit_order) & (disp_fit_order < 10)",
-      "If this is provided, the acceleration time history will be adjusted using an nth-order "
-      "polynomial fit of the nominal displacement data, where n = disp_fit_order (only integer "
-      "values from 0 to 9 are supported).");
+      "disp_fit_order > 1",
+      "The degree of the polynomial used to adjust the displacement. The minimum is two.");
+  params.addParamNamesToGroup("accel_fit_order vel_fit_order disp_fit_order", "Correction Type");
 
-  params.addParam<Real>("scale_factor",
-                        1.0,
-                        "A scale factor to be applied to the adjusted acceleration time history.");
-  params.declareControllable("scale_factor");
+  MooseEnum kinematic_variables("acceleration velocity displacement", "acceleration");
+  params.addParam<MooseEnum>(
+      "series_output",
+      kinematic_variables,
+      "The kinematic variable whose corrected time history is to be evaluated.");
+
+  params.addRangeCheckedParam<Real>(
+      "gamma",
+      0.5,
+      "(0 <= gamma) & (gamma <= 1)",
+      "The gamma parameter for numerical integration of acceleration by the Newmark-beta rule.");
+  params.addRangeCheckedParam<Real>(
+      "beta",
+      0.25,
+      "(0 <= beta) & (beta <= 0.5)",
+      "The beta parameter for numerical integration of velocity by the Newmark-beta rule.");
+
+  params.addRangeCheckedParam<Real>(
+      "error_on_residual",
+      1e-04,
+      "(0 < error_on_residual) & (error_on_residual < 1)",
+      "The relative residual of the solution to the normal equations that invokes an error.\n\n"
+      "Large residuals may indicate poor or invalid least squares approximations, which can lead "
+      "to unstable and futile adjustments to the time histories.");
+  params.addParamNamesToGroup("error_on_residual", "Advanced");
 
   return params;
 }
 
 BaselineCorrection::BaselineCorrection(const InputParameters & parameters)
-  : Function(parameters),
-    _series(getParam<MooseEnum>("series_type")),
-    _gamma(getParam<Real>("gamma")),
-    _beta(getParam<Real>("beta")),
-    _scale_factor(getParam<Real>("scale_factor"))
+  : PiecewiseBase(parameters), FunctionInterface(this)
 {
-  // determine data source and check parameter consistency
-  if (isParamValid("data_file") && !isParamValid("time_values") &&
-      !isParamValid("acceleration_values"))
-    buildFromFile();
-  else if (!isParamValid("data_file") && isParamValid("time_values") &&
-           isParamValid("acceleration_values"))
-    buildFromXandY();
-  else
-    mooseError("In BaselineCorrection ",
-               _name,
-               ": Either `data_file` or `time_values` and `acceleration_values` must be specified "
-               "exclusively.");
+  const Function * func_ptr = &getFunctionByName(getParam<FunctionName>("function"));
+  if (func_ptr->type() != "PiecewiseLinear")
+    paramError("function",
+               "This must be the name of a PiecewiseLinear object (use 'type = PiecewiseLinear').");
 
-  // size checks
-  if (_time.size() != _accel.size())
-    mooseError("In BaselineCorrection ",
-               _name,
-               ": The length of time and acceleration data must be equal.");
-  if (_time.size() == 0 || _accel.size() == 0)
-    mooseError(
-        "In BaselineCorrection ", _name, ": The length of time and acceleration data must be > 0.");
+  // Convert the function pointer to an instance of PiecewiseBase so its data can be retrieved
+  const PiecewiseBase * const accel_func = dynamic_cast<const PiecewiseBase *>(func_ptr);
 
-  // check that at lease one least squares fit will be applied
-  if (!isParamValid("accel_fit_order") && !isParamValid("vel_fit_order") &&
-      !isParamValid("disp_fit_order"))
-    mooseError("In BaselineCorrection ",
-               _name,
-               ": No values were input for parameters 'accel_fit_order', 'vel_fit_order', or "
-               "'disp_fit_order'. Please specify an integer value from 0 to 9 for at least one "
-               "of these parameters.");
+  // Initialize containers for storing the time histories and the natural time abscissa
+  const auto size = accel_func->functionSize();
+  std::vector<Real> time(size), accel(size), vel(size), disp(size), tau(size);
+  time[0] = accel_func->domain(0);
+  accel[0] = accel_func->range(0);
 
-  // apply baseline correction to raw acceleration time history
-  applyCorrection();
+  // Compute the Jacobian to transform differentials onto the natural time domain
+  const auto jmap = accel_func->domain(size - 1) - time[0];
 
-  // try building a linear interpolation object
-  try
+  // Setup the basic values needed for time integration
+  Real dt, dv, dvo;
+  const auto gamma = getParam<Real>("gamma"), beta = getParam<Real>("beta"), cogamma = 1.0 - gamma,
+             cobeta = 0.5 - beta;
+
+  for (std::size_t i = 1; i < size; ++i)
   {
-    _linear_interp = libmesh_make_unique<LinearInterpolation>(_time, _adj_series);
+    time[i] = accel_func->domain(i);
+    dt = time[i] - time[i - 1];
+    accel[i] = accel_func->range(i);
+
+    // Compute the nominal velocity and displacement by integrating with Newmark's method
+    dvo = dt * accel[i - 1];
+    dv = dt * accel[i];
+    vel[i] = vel[i - 1] + cogamma * dvo + gamma * dv;
+    disp[i] = disp[i - 1] + dt * vel[i - 1] + cobeta * dt * dvo + beta * dt * dv;
+
+    // Compute natural time
+    tau[i] = tau[i - 1] + dt / jmap;
   }
-  catch (std::domain_error & e)
+
+  std::vector<Real> coeffs;
+  const Real rtol = getParam<Real>("error_on_residual");
+  if (parameters.isParamSetByUser("accel_fit_order") ||
+      (!isParamValid("vel_fit_order") && !isParamValid("disp_fit_order")))
   {
-    mooseError("In BaselineCorrection ", _name, ": ", e.what());
+    coeffs.resize(getParam<unsigned int>("accel_fit_order") + 1);
+    fitTimeSeries(&coeffs, 0, tau, accel, jmap, rtol);
+    applyAdjustment(coeffs, tau, accel, vel, disp, jmap);
+  }
+
+  if (isParamValid("vel_fit_order"))
+  {
+    coeffs.resize(getParam<unsigned int>("vel_fit_order"));
+    fitTimeSeries(&coeffs, 1, tau, vel, jmap, rtol);
+    applyAdjustment(coeffs, tau, accel, vel, disp, jmap);
+  }
+
+  if (isParamValid("disp_fit_order"))
+  {
+    coeffs.resize(getParam<unsigned int>("disp_fit_order") - 1);
+    fitTimeSeries(&coeffs, 2, tau, disp, jmap, rtol);
+    applyAdjustment(coeffs, tau, accel, vel, disp, jmap);
+  }
+
+  switch (getParam<MooseEnum>("series_output"))
+  {
+    case 0:
+      setData(time, accel);
+      break;
+    case 1:
+      setData(time, vel);
+      break;
+    case 2:
+      setData(time, disp);
+      break;
   }
 }
 
 Real
-BaselineCorrection::value(Real t, const Point & /*P*/) const
+BaselineCorrection::value(Real t, const Point & /*p*/) const
 {
-  return _scale_factor * _linear_interp->sample(t);
+  return _corrected_series.sample(t);
 }
 
 void
-BaselineCorrection::applyCorrection()
+BaselineCorrection::fitTimeSeries(std::vector<Real> * c,
+                                  const int & nmin,
+                                  const std::vector<Real> & tau,
+                                  const std::vector<Real> & u,
+                                  const Real & jmap,
+                                  const Real & rtol)
 {
-  // store a reference to final array index
-  unsigned int index_end = _accel.size() - 1;
+  mooseAssert(0 <= nmin && nmin <= 2,
+              "The value for the minimum polynomial degree 'nmin' must be 0 for acceleration, 1 "
+              "for velocity, or 2 for displacement.");
+  mooseAssert(tau.size() == u.size(),
+              "The containers for the time series data, 'tau' and 'u', must be of equal size.");
+  mooseAssert(std::round(tau.front() / rtol) * rtol == 0.0 &&
+                  std::round(tau.back() / rtol) * rtol == 1.0 && jmap > 0.0,
+              "The natural time 'tau' domain must be [0, 1] and its Jacobian transform 'jmap' must "
+              "be strictly positive.");
 
-  // Compute unadjusted velocity and displacment time histories
-  Real dt;
-  std::vector<Real> vel, disp;
-  vel.push_back(0);
-  disp.push_back(0);
-  for (unsigned int i = 0; i < index_end; ++i)
+  auto num_coeffs = c->size();
+  DenseMatrix<Real> mat(num_coeffs, num_coeffs);
+  DenseVector<Real> rhs(num_coeffs), coeffs(num_coeffs);
+
+  // Setup the basic values needed for assembling the system of normal equations
+  Real dtau;
+  const auto nminsq = MathUtils::pow(nmin, 2), a0 = (nminsq - 3 * nmin + 2) / 2,
+             a1 = (nminsq - 5 * nmin + 6) / 2, a2 = (nminsq - nmin - 4) / 2;
+
+  for (MooseIndex(coeffs) k = 0; k < num_coeffs; ++k)
   {
-    dt = _time[i + 1] - _time[i];
+    // Compute the normal matrix
+    for (MooseIndex(coeffs) j = 0; j < num_coeffs; ++j)
+      mat(k, j) = (a0 * MathUtils::pow(j, 2) + a1 * j - a2) / (k + j + 2.0 * nmin + 1.0);
 
-    vel.push_back(BaselineCorrectionUtils::newmarkGammaIntegrate(
-        _accel[i], _accel[i + 1], vel[i], _gamma, dt));
-    disp.push_back(BaselineCorrectionUtils::newmarkBetaIntegrate(
-        _accel[i], _accel[i + 1], vel[i], disp[i], _beta, dt));
-  }
-
-  // initialize polyfits and adjusted time history arrays with nominal ones
-  unsigned int order;
-  DenseVector<Real> coeffs;
-  std::vector<Real> p_fit, adj_accel = _accel, adj_vel = vel, adj_disp = disp;
-
-  // adjust time histories with acceleration fit if desired
-  if (isParamValid("accel_fit_order"))
-  {
-    order = getParam<unsigned int>("accel_fit_order");
-    coeffs = BaselineCorrectionUtils::getAccelerationFitCoeffs(
-        order, adj_accel, _time, index_end, _gamma);
-
-    for (unsigned int i = 0; i <= index_end; ++i)
+    // Compute the vector on the right-hand side by trapezoidal integration
+    for (MooseIndex(tau) i = 0; i < tau.size() - 1; ++i)
     {
-      p_fit = BaselineCorrectionUtils::computePolynomials(order, coeffs, _time[i]);
-      adj_accel[i] -= p_fit[0];
-      adj_vel[i] -= p_fit[1];
-      adj_disp[i] -= p_fit[2];
+      dtau = tau[i + 1] - tau[i];
+      MathUtils::addScaled(dtau, MathUtils::pow(tau[i], k + nmin) * u[i], rhs(k));
+      MathUtils::addScaled(dtau, MathUtils::pow(tau[i + 1], k + nmin) * u[i + 1], rhs(k));
     }
+    rhs(k) /= 2.0 * MathUtils::pow(jmap, nmin);
   }
 
-  // adjust with velocity fit
-  if (isParamValid("vel_fit_order"))
-  {
-    order = getParam<unsigned int>("vel_fit_order");
-    coeffs = BaselineCorrectionUtils::getVelocityFitCoeffs(
-        order, adj_accel, adj_vel, _time, index_end, _beta);
+  // Solve the system for the polynomial coefficients using LU factorization with partial pivoting
+  //
+  // Note: A copy of the normal matrix is created because it will be modified by the 'lu_solve()'
+  //       method, and yet it is still needed afterward to calculate the residual.
+  const DenseMatrix<Real> mat_copy = mat;
+  mat.lu_solve(rhs, coeffs);
+  *c = coeffs.get_values();
 
-    for (unsigned int i = 0; i <= index_end; ++i)
-    {
-      p_fit = BaselineCorrectionUtils::computePolynomials(order, coeffs, _time[i]);
-      adj_accel[i] -= p_fit[0];
-      adj_vel[i] -= p_fit[1];
-      adj_disp[i] -= p_fit[2];
-    }
-  }
+  if (std::any_of(c->cbegin(), c->cend(), [](const Real & k) { return !std::isfinite(k); }))
+    mooseError("Failed to compute a least squares polynomial of degree (",
+               num_coeffs + nmin - 1,
+               ") - one or more of the coefficients are undefined.\n\nTry using a lower order for "
+               "the fit. Otherwise, there may be an issue with the raw time series data.");
 
-  // adjust with displacement fit
-  if (isParamValid("disp_fit_order"))
-  {
-    order = getParam<unsigned int>("disp_fit_order");
-    coeffs = BaselineCorrectionUtils::getDisplacementFitCoeffs(order, adj_disp, _time, index_end);
-
-    for (unsigned int i = 0; i <= index_end; ++i)
-    {
-      p_fit = BaselineCorrectionUtils::computePolynomials(order, coeffs, _time[i]);
-      adj_accel[i] -= p_fit[0];
-      adj_vel[i] -= p_fit[1];
-      adj_disp[i] -= p_fit[2];
-    }
-  }
-
-  // copy adjusted values for specified time series to a global variable (would it be faster to set
-  // _adj_series with a std::map that pairs '_series' with 'adj_accel', etc.? Probably not...)
-  if (_series == "acceleration")
-    _adj_series = adj_accel;
-  else if (_series == "velocity")
-    _adj_series = adj_vel;
-  else
-    _adj_series = adj_disp;
+  // Compute the relative residual to assess the accuracy of the best-fit
+  DenseVector<Real> resultant(num_coeffs);
+  mat_copy.vector_mult(resultant, coeffs);
+  resultant.add(-1.0, rhs);
+  const auto res = resultant.l2_norm() / rhs.l2_norm();
+  if (res > rtol)
+    mooseError("Failed to compute a least squares polynomial of degree (",
+               num_coeffs + nmin - 1,
+               ") within the specified tolerance (",
+               rtol,
+               " < ",
+               res,
+               ").\n\nConsider using a lower order or a greater tolerance.");
 }
 
 void
-BaselineCorrection::buildFromFile()
+BaselineCorrection::applyAdjustment(const std::vector<Real> & c,
+                                    const std::vector<Real> & tau,
+                                    std::vector<Real> & accel,
+                                    std::vector<Real> & vel,
+                                    std::vector<Real> & disp,
+                                    const Real & jmap)
 {
-  // Read data from CSV file
-  MooseUtils::DelimitedFileReader reader(getParam<FileName>("data_file"), &_communicator);
-  reader.read();
-
-  // Check if specific column headers were input
-  const bool time_header = isParamValid("time_name"),
-             accel_header = isParamValid("acceleration_name");
-
-  if (time_header && !accel_header)
-    mooseError("In BaselineCorrection ",
-               _name,
-               ": A column header name was specified for the for the time data. Please specify a ",
-               "header for the acceleration data using the 'acceleration_name' parameter.");
-  else if (!time_header && accel_header)
-    mooseError("In BaselineCorrection ",
-               _name,
-               ": A column header name was specified for the for the acceleration data. Please "
-               "specify a header for the time data using the 'time_name' parameter.");
-
-  // Obtain acceleration time history from file data
-  if (time_header && accel_header)
-  {
-    _time = reader.getData(getParam<std::string>("time_name"));
-    _accel = reader.getData(getParam<std::string>("acceleration_name"));
-  }
-  else
-  {
-    _time = reader.getData(0);
-    _accel = reader.getData(1);
-  }
+  for (MooseIndex(tau) i = 0; i < tau.size(); ++i)
+    for (MooseIndex(c) k = 0; k < c.size(); ++k)
+    {
+      accel[i] -= (MathUtils::pow(k, 2) + 3.0 * k + 2.0) * c[k] * MathUtils::pow(tau[i], k);
+      vel[i] -= jmap * (k + 2.0) * c[k] * MathUtils::pow(tau[i], k + 1);
+      disp[i] -= MathUtils::pow(jmap, 2) * c[k] * MathUtils::pow(tau[i], k + 2);
+    }
 }
 
 void
-BaselineCorrection::buildFromXandY()
+BaselineCorrection::setData(const std::vector<Real> & t, const std::vector<Real> & u)
 {
-  _time = getParam<std::vector<Real>>("time_values");
-  _accel = getParam<std::vector<Real>>("acceleration_values");
+  PiecewiseBase::setData(t, u);
+  _corrected_series.setData(_raw_x, _raw_y);
 }
