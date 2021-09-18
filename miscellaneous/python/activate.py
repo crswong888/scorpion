@@ -2,35 +2,46 @@
 #          confident that there is no way around this in Python.
 #
 # Then again, it inadvertently creates a simple alias for deactivating the venv, i.e., 'exit'. This
-# isn't the best, but it's alot easier than calling the path of the activate script.
+# isn't the best, but it's a lot easier than calling the path of the activate script.
 
 import os
 import psutil
 import subprocess
 
-def activate(executable, extension, abort):
+def activate_venv(args=None):
     """
     Strips the name of the current directory and uses it to activate a corresponding virtual
-    environment stored in %USERPROFILE%\.venv\<directory name>-env
+    environment stored in %USERPROFILE%\.venv\<directory name>-env in the current shell.
     """
     script = os.path.join(os.path.expanduser('~'),
-                          '.venv',
-                          '{}-env'.format(os.path.basename(os.getcwd())),
-                          'Scripts',
-                          'activate' + extension)
-    subprocess.call(' '.join([executable, script, abort]))
+                      '.venv',
+                      '{}-env'.format(os.path.basename(os.getcwd())),
+                      'Scripts',
+                      'activate')
 
-# Determine type of shell to know which activation script needs to be called
-shell = psutil.Process(os.getppid()).name()
-if shell == 'cmd.exe':
-    activate(shell + ' /k', '.bat', '|| exit')
-elif shell == 'powershell.exe':
-    # Ensure that running signed scripts is enabled in the current current PowerShell session
-    ep = subprocess.check_output([shell, 'Get-ExecutionPolicy']).decode('utf-8').strip()
-    subprocess.call([shell, 'Set-ExecutionPolicy -Scope CurrentUser RemoteSigned -force'])
+    if args is None:
+        args = list()
+    else:
+        if not isinstance(args, list) or \
+        (isinstance(args, list) and not all([isinstance(a, str) for a in args])):
+           raise Exception("Error: 'args' must be a list of all strings.")
 
-    # Run script and reset execution policy
-    activate(shell + ' -NoExit', '.ps1', '; if (-not $?) { exit }')
-    subprocess.call([shell, 'Set-ExecutionPolicy -Scope CurrentUser', ep, '-force'])
-else:
-    raise NotImplementedError # I haven't tried this any other shells
+    # Determine the type of shell to know which activation script needs to be called
+    shell = psutil.Process(os.getppid()).name()
+    if shell == 'cmd.exe':
+        args = ''.join([' && {}'.format(a) for a in args]) + '" || exit'
+        subprocess.call(shell + ' /k "' + script + '.bat' + args)
+    elif shell == 'powershell.exe':
+        # Ensure that running signed scripts is enabled in the current PowerShell session
+        ep = subprocess.check_output([shell, 'Get-ExecutionPolicy']).decode('utf-8').strip()
+        subprocess.call([shell, 'Set-ExecutionPolicy -Scope CurrentUser RemoteSigned -force'])
+
+        # Run script and reset execution policy
+        args = ''.join(['; if ($?) {{ {} }}'.format(a) for a in args]) + '; if (-not $?) { exit }'
+        subprocess.call(' '.join([shell, '-NoExit', script + '.ps1']) + args)
+        subprocess.call([shell, 'Set-ExecutionPolicy -Scope CurrentUser', ep, '-force'])
+    else:
+        raise NotImplementedError # I haven't tested this in any other shells
+
+if __name__ == '__main__':
+    activate_venv()
