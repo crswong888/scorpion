@@ -14,10 +14,10 @@ def activate_venv(args=None):
     environment stored in %USERPROFILE%\.venv\<directory name>-env in the current shell.
     """
     script = os.path.join(os.path.expanduser('~'),
-                      '.venv',
-                      '{}-env'.format(os.path.basename(os.getcwd())),
-                      'Scripts',
-                      'activate')
+                          '.venv',
+                          '{}-env'.format(os.path.basename(os.getcwd())),
+                          'Scripts',
+                          'activate')
 
     if args is None:
         args = list()
@@ -32,14 +32,9 @@ def activate_venv(args=None):
         args = ''.join([' && {}'.format(a) for a in args]) + '" || exit'
         subprocess.call(shell + ' /k "' + script + '.bat' + args)
     elif shell == 'powershell.exe':
-        # Ensure that running signed scripts is enabled in the current PowerShell session
-        ep = subprocess.check_output([shell, 'Get-ExecutionPolicy']).decode('utf-8').strip()
-        subprocess.call([shell, 'Set-ExecutionPolicy -Scope CurrentUser RemoteSigned -force'])
-
-        # Run script and reset execution policy
         args = ''.join(['; if ($?) {{ {} }}'.format(a) for a in args]) + '; if (-not $?) { exit }'
-        subprocess.call(' '.join([shell, '-NoExit', script + '.ps1']) + args)
-        subprocess.call([shell, 'Set-ExecutionPolicy -Scope CurrentUser', ep, '-force'])
+        subprocess.call(' '.join([shell, '-NoExit -ExecutionPolicy RemoteSigned',
+                                  script + '.ps1']) + args)
     else:
         raise NotImplementedError # I haven't tested this in any other shells
 
